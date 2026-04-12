@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent — Response Templates Analysis</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;background:#f7f7f8;color:#1a1a1a;padding-left:220px}
+
+/* Sidebar */
+.sidenav{position:fixed;top:0;left:0;bottom:0;width:220px;background:#fff;border-right:1px solid #eee;padding:24px 0;display:flex;flex-direction:column;z-index:200;box-shadow:2px 0 8px rgba(0,0,0,.04);overflow-y:auto}
+.sidenav-logo{font-weight:800;font-size:13px;color:#e55a00;padding:0 18px 16px;border-bottom:1px solid #eee;margin-bottom:8px;line-height:1.3}
+.sidenav-logo span{display:block;font-size:10px;color:#bbb;font-weight:400;margin-top:3px}
+.sidenav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#ccc;padding:12px 18px 4px}
+.sidenav a{text-decoration:none;font-size:12px;font-weight:500;color:#999;padding:8px 18px;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;transition:all .15s;line-height:1.4}
+.sidenav a:hover{color:#555;background:#fafafa}
+.sidenav a.active{color:#e55a00;border-left-color:#e55a00;background:#fff8f5}
+.sidenav-meta{margin-top:auto;padding:16px 18px 0;font-size:10px;color:#ccc;line-height:1.6;border-top:1px solid #eee}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#e55a00 0%,#ff8c42 100%);color:#fff;padding:48px 48px}
+.hero-tag{display:inline-block;background:rgba(255,255,255,.2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+.hero h1{font-size:26px;font-weight:800;margin-bottom:8px}
+.hero p{font-size:13px;opacity:.85;max-width:640px;line-height:1.6}
+.hero-stats{display:flex;gap:32px;margin-top:24px}
+.hero-stat .num{font-size:22px;font-weight:800}
+.hero-stat .lbl{font-size:11px;opacity:.75;margin-top:2px}
+
+/* Container */
+.container{max-width:1100px;margin:0 auto;padding:40px 40px}
+.bc-section{margin-bottom:72px;scroll-margin-top:64px}
+.sub-section{margin-bottom:48px;scroll-margin-top:64px}
+
+/* BC Header */
+.bc-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:24px}
+.bc-icon{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px}
+.bc-num{font-size:11px;font-weight:700;color:#e55a00;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.bc-title{font-size:19px;font-weight:700;color:#1a1a1a}
+.bc-subtitle{font-size:12px;color:#888;margin-top:3px}
+
+.sub-header{margin-bottom:20px}
+.sub-num{font-size:10px;font-weight:700;color:#e55a00;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.sub-title{font-size:16px;font-weight:700;color:#1a1a1a}
+
+/* Problem box */
+.problem-box{background:#fff8f5;border:1px solid #fde0cc;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:12px;color:#7a3a10;line-height:1.6}
+.problem-box strong{color:#c44a00}
+
+/* Options */
+.options-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#aaa;margin-bottom:12px}
+.option-block{background:#fff;border:1px solid #eee;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.option-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.option-header:hover{background:#fafafa}
+.option-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.opt-current{background:#e8f5e9;color:#2e7d32}
+.opt-phase1{background:#e3f2fd;color:#1565c0}
+.opt-backlog{background:#f3e5f5;color:#6a1b9a}
+.opt-recommended{background:#fff3e0;color:#e65100}
+.option-name{font-size:12px;font-weight:600;color:#1a1a1a;flex:1}
+.option-chevron{color:#ccc;font-size:11px;transition:transform .2s}
+.option-body{border-top:1px solid #f0f0f0;padding:12px 14px;display:none}
+.option-body.open{display:block}
+.option-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.meta-item{font-size:11px;line-height:1.5}
+.meta-item .mk{font-weight:700;color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:1px}
+.meta-item .mv{color:#444}
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pros{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:8px 10px;font-size:11px;color:#166534}
+.cons{background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:8px 10px;font-size:11px;color:#991b1b}
+.pros-cons-label{font-size:10px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.pros li,.cons li{margin-bottom:2px;padding-left:2px}
+.pros ul,.cons ul{padding-left:14px}
+
+/* Approach box */
+.approach-box{background:#f0f7ff;border:1px solid #c5daf5;border-radius:10px;padding:14px 16px;margin-top:16px;font-size:12px;color:#1a4f8a;line-height:1.6}
+.approach-box strong{color:#0a3a6e}
+.approach-box .phase-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.approach-box .phase-row:last-child{margin-bottom:0}
+.phase-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;margin-top:1px}
+.phase-now{background:#dcfce7;color:#166534}
+.phase-roadmap{background:#fef9c3;color:#854d0e}
+
+/* Chat mockup */
+.mockup-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#bbb;margin-bottom:8px;margin-top:14px}
+.chat-wrap{background:#f3f4f6;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.bubble-user{align-self:flex-end;background:#FEF5EE;color:#1a1a1a;padding:8px 12px;border-radius:16px 16px 4px 16px;font-size:12px;max-width:85%;line-height:1.5;border:1px solid #fde0cc}
+.bubble-user.sent{background:#e55a00;color:#fff;border-color:#e55a00}
+.bubble-agent{align-self:flex-start;max-width:96%;width:100%}
+.agent-text{background:#fff;border:1px solid #e8e8e8;border-radius:4px 16px 16px 16px;padding:10px 12px;font-size:12px;line-height:1.7;color:#333;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.agent-text strong{font-weight:600;color:#1a1a1a}
+.agent-text ul,.agent-text ol{padding-left:16px;margin:4px 0}
+.agent-text li{margin-bottom:2px}
+.action-bar{display:flex;gap:8px;margin-top:5px;padding-left:2px}
+.action-icon{font-size:13px;color:#bbb;cursor:pointer}
+
+/* Media grid */
+.media-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0}
+.media-thumb{background:#e8edf5;border-radius:7px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:11px;color:#8896b0;position:relative;overflow:hidden}
+.media-thumb.video::after{content:'▶';position:absolute;background:rgba(0,0,0,.4);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px}
+.video-badge{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.45);color:#fff;font-size:9px;padding:2px 5px;border-radius:4px}
+.media-more{background:#d0d5df;border-radius:7px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#5a6070}
+
+/* Collapsed blocks */
+.cblock{border:1px solid #e8e8e8;border-radius:8px;margin-top:8px;overflow:hidden;background:#fff;cursor:pointer}
+.cblock-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px}
+.cblock-header:hover{background:#fafafa}
+.cblock-left{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#333}
+.cblock-cnt{font-size:10px;background:#f0f0f0;color:#888;border-radius:10px;padding:1px 6px;font-weight:500}
+.cblock-chev{color:#ccc;font-size:9px;transition:transform .2s}
+.cblock-body{border-top:1px solid #f0f0f0;display:none}
+.cblock-body.open{display:block}
+.src-item{display:flex;gap:8px;padding:8px 12px;align-items:flex-start;border-bottom:1px solid #f8f8f8}
+.src-item:last-child{border-bottom:none}
+.src-num{width:18px;height:18px;border-radius:50%;background:#e55a00;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.src-title{font-size:12px;color:#e55a00;font-weight:500}
+.src-sub{font-size:10px;color:#888}
+.file-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #f8f8f8}
+.file-item:last-child{border-bottom:none}
+.ext-badge{font-size:9px;font-weight:700;border-radius:3px;padding:2px 4px;text-transform:uppercase;min-width:28px;text-align:center}
+.ext-pdf{background:#fff3e0;color:#e65100}
+.ext-xlsx{background:#e8f5e9;color:#2e7d32}
+.file-name{font-size:11px;color:#333;flex:1}
+.file-size{font-size:10px;color:#aaa;white-space:nowrap}
+.ct-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #f8f8f8}
+.ct-item:last-child{border-bottom:none}
+.ct-av{width:28px;height:28px;border-radius:50%;background:#e8edf5;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#556;flex-shrink:0}
+.ct-name{font-size:12px;font-weight:600;color:#333}
+.ct-desc{font-size:10px;color:#888}
+
+/* Card */
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px}
+
+/* Colleague card */
+.colleague-hero{background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);padding:16px 14px;color:#fff}
+.colleague-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;margin-bottom:8px}
+.colleague-name{font-size:14px;font-weight:700}
+.colleague-title-text{font-size:11px;opacity:.75;margin-top:2px}
+.colleague-hint{margin-top:6px;font-size:10px;opacity:.65;background:rgba(255,255,255,.1);padding:3px 8px;border-radius:6px;display:inline-block}
+.colleague-actions{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.contact-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:600;padding:4px 9px;border-radius:7px}
+.colleague-meta{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.meta-row{display:flex;align-items:flex-start;gap:8px}
+.meta-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#bbb;width:72px;flex-shrink:0;padding-top:1px}
+.meta-value{font-size:11px;color:#333}
+.manager-chip{display:inline-flex;align-items:center;gap:4px;background:#f0f7ff;color:#2563eb;font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px}
+
+/* Ticket card */
+.ticket-header{background:#fff8f5;border-bottom:1px solid #fde8db;padding:11px 13px;display:flex;align-items:center;gap:8px}
+.ticket-header-title{font-weight:700;font-size:12px;color:#1a1a1a}
+.ticket-header-sub{font-size:10px;color:#e55a00}
+.ticket-body{padding:12px;display:flex;flex-direction:column;gap:9px}
+.field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#bbb;margin-bottom:2px}
+.field-value{font-size:11px;color:#333;line-height:1.5}
+.card-actions{display:flex;gap:7px;padding:10px 12px;border-top:1px solid #f0f0f0;flex-wrap:wrap}
+.btn{border:none;cursor:pointer;border-radius:7px;font-size:11px;font-weight:600;padding:6px 12px}
+.btn-primary{background:#e55a00;color:#fff}
+.btn-secondary{background:#f5f5f5;color:#444;border:1px solid #e0e0e0}
+.btn-destructive{background:#fff;color:#ef4444;border:1px solid #fca5a5}
+.input-editable{border:1.5px solid #8b5cf6;border-radius:6px;padding:5px 8px;font-size:11px;color:#1a1a1a;background:#fff;width:100%;margin-top:3px;font-family:inherit}
+
+/* Success / Cancelled */
+.success-header{background:#f0fdf4;border-bottom:1px solid #bbf7d0;padding:11px 13px;display:flex;align-items:center;gap:7px}
+.success-title{font-weight:700;font-size:12px;color:#166534}
+.success-body{padding:12px;display:flex;flex-direction:column;gap:7px}
+.ticket-link{font-size:11px;color:#e55a00;text-decoration:underline;font-weight:600}
+.success-footer{padding:9px 12px;background:#fafafa;border-top:1px solid #f0f0f0;font-size:11px;color:#888;line-height:1.5}
+.assigned-badge{display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:16px;padding:2px 8px;font-size:10px;color:#444}
+.cancelled-header{background:#fff5f5;border-bottom:1px solid #fecaca;padding:11px 13px;display:flex;align-items:center;gap:7px}
+.cancelled-title{font-weight:700;font-size:12px;color:#991b1b}
+
+/* Leave */
+.leave-header{background:#fffbf0;border-bottom:1px solid #fde68a;padding:11px 13px;display:flex;align-items:center;gap:8px}
+.leave-type-badge{display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:16px;margin-left:auto}
+.leave-body{padding:12px;display:flex;flex-direction:column;gap:9px}
+.leave-schedule{background:#fafafa;border:1px solid #f0f0f0;border-radius:7px;overflow:hidden}
+.schedule-row{display:flex;align-items:center;padding:6px 10px;border-bottom:1px solid #f0f0f0;font-size:11px}
+.schedule-row:last-child{border-bottom:none}
+.schedule-date{color:#333;font-weight:600;flex:1}
+.session-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:16px}
+.session-full{background:#e8f5e9;color:#2e7d32}
+.session-morning{background:#fff3e0;color:#e65100}
+.leave-success-header{background:#f0fdf4;border-bottom:1px solid #bbf7d0;padding:11px 13px;display:flex;align-items:center;gap:7px}
+
+/* Department card */
+.dept-hero{background:linear-gradient(135deg,#e55a00 0%,#ff8c42 100%);padding:14px;color:#fff;display:flex;align-items:center;gap:12px}
+.dept-icon{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.dept-name{font-size:14px;font-weight:700}
+.dept-breadcrumb{font-size:10px;opacity:.75;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.dept-section{padding:0 12px}
+.dept-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#bbb;padding:10px 0 6px}
+.dept-person{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5}
+.dept-person:last-child{border-bottom:none;padding-bottom:10px}
+.dept-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.dept-person-name{font-size:11px;font-weight:600;color:#1a1a1a}
+.dept-person-title{font-size:10px;color:#888}
+
+/* Support contact card */
+.sc-hero{background:linear-gradient(135deg,#e55a00 0%,#ff8c42 100%);padding:14px;color:#fff}
+.sc-name{font-size:14px;font-weight:700}
+.sc-desc{font-size:11px;opacity:.8;margin-top:3px}
+.sc-actions{display:flex;gap:5px;margin-top:10px}
+.sc-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:600;padding:4px 10px;border-radius:7px}
+.sc-body{padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#bbb;margin-bottom:4px}
+.sc-info-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#333;margin-bottom:4px}
+.sc-hours{font-size:11px;color:#333;line-height:1.6}
+.sc-person-section{padding:0 12px 12px}
+.sc-person-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#bbb;padding:8px 0 5px}
+.sc-person{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5}
+.sc-person:last-child{border-bottom:none}
+.sc-person-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* Quick reply */
+.quick-replies{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.qr-btn{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:12px;color:#333;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s}
+.qr-btn:hover{border-color:#e55a00;color:#e55a00;background:#fff8f5}
+
+/* Divider */
+.divider{border:none;border-top:1px solid #eee;margin:48px 0}
+
+/* Notes */
+.note-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.note-item{background:#fff;border:1px solid #eee;border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.note-icon{font-size:15px;flex-shrink:0}
+.note-label{font-size:11px;font-weight:700;color:#555;margin-bottom:3px}
+.note-desc{font-size:11px;color:#777;line-height:1.5}
+
+/* States grid */
+.states-grid{display:grid;gap:16px;margin-bottom:16px}
+.states-grid.cols-2{grid-template-columns:1fr 1fr}
+.states-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.states-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.state-block{}
+.state-name{font-size:11px;font-weight:600;color:#888;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.state-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.dot-yellow{background:#f59e0b}
+.dot-green{background:#22c55e}
+.dot-purple{background:#8b5cf6}
+.dot-red{background:#ef4444}
+.dot-blue{background:#3b82f6}
+.dot-gray{background:#9ca3af}
+
+.footer{text-align:center;padding:32px;font-size:12px;color:#ccc;border-top:1px solid #eee;margin-top:40px;background:#fff}
+</style>
+</head>
+<body>
+
+<nav class="sidenav" id="sidenav">
+  <div class="sidenav-logo">myVNG AI Agents <span>Response Templates Analysis</span></div>
+  <div class="sidenav-section">BC00 — General</div>
+  <a href="#s11">📸 1.1 Media Layout</a>
+  <a href="#s12">🔗 1.2 Nguồn tham khảo</a>
+  <a href="#s13">📎 1.3 Files đính kèm</a>
+  <a href="#s14">🙋 1.4 Support Contacts</a>
+  <a href="#s15">🏢 1.5 Thông tin phòng ban</a>
+  <div class="sidenav-section">BCs khác</div>
+  <a href="#bc01">👤 BC01 — Đồng nghiệp</a>
+  <a href="#bc02">💬 BC02 — IT Q&A</a>
+  <a href="#bc03">🎫 BC03 — IT Ticket</a>
+  <a href="#bcleave">🌴 Nghỉ phép</a>
+  <div class="sidenav-meta">CP-TSE-IT · VNG Corporation<br>Tháng 4/2026</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">Analysis & Proposals</div>
+  <h1>AI Agent — Response Templates</h1>
+  <p>Phân tích hiện trạng, đề xuất giải pháp cải thiện và hướng tiếp cận theo từng Business Case. Mỗi mục bao gồm mockup so sánh trực quan giữa hiện tại và các lựa chọn.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">5</div><div class="lbl">Topics — BC00</div></div>
+    <div class="hero-stat"><div class="num">4</div><div class="lbl">Business Cases</div></div>
+    <div class="hero-stat"><div class="num">1</div><div class="lbl">Bonus Feature</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════ BC00 ══════ -->
+<div class="bc-section" id="bc00">
+  <div class="bc-header">
+    <div class="bc-icon" style="background:#fff3e0">💬</div>
+    <div>
+      <div class="bc-num">Business Case 00</div>
+      <div class="bc-title">General Information & Q&A</div>
+      <div class="bc-subtitle">Agent: VNG Agent OpenAI · Helpdesk Agent OpenAI · ISO Agent OpenAI</div>
+    </div>
+  </div>
+
+  <!-- 1.1 Media -->
+  <div class="sub-section" id="s11">
+    <div class="sub-header">
+      <div class="sub-num">BC00 · 1.1</div>
+      <div class="sub-title">Media Layout (Hình ảnh & Video)</div>
+    </div>
+
+    <div class="problem-box">
+      <strong>Vấn đề gốc:</strong> LLM không có khái niệm "layout ảnh" — chỉ đọc file <code>.md</code> và dump media theo thứ tự xuất hiện trong text, mỗi ảnh/video trên một dòng riêng. Kết quả: response dài, nhiều khoảng trắng, khó scan.
+    </div>
+
+    <div class="options-label">Các giải pháp</div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+        <span class="option-name">Option 1 — Giữ nguyên (xếp dọc)</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Không tốn effort</li><li>Đang hoạt động</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Response dài, nhiều khoảng trắng</li><li>Khó scan, không thân thiện</li></ul></div>
+        </div>
+        <div class="mockup-label">Hiện tại trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin sự kiện uprace 2025</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy các bài đăng về <strong>UpRace 2025</strong>.<br><br>
+              <strong>1. UpRace Day TP.HCM 2025</strong><br>
+              * Sáng 14/12 tại VNG Campus, hơn 1.600 VĐV<br><br>
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:4px 0">🖼 img</div>
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:4px 0">▶ video</div>
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:4px 0">🖼 img</div>
+              <br><strong>2. VNG UpRace Challenge 2025</strong><br>
+              * 24 ngày, 62 đội, tích lũy 226.188 km<br><br>
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:4px 0">▶ video</div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Nếu dev estimate nhanh</span>
+        <span class="option-name">Option 1b — 1 ảnh/video đại diện mỗi bài</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: FE nhỏ</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Đơn giản, vẫn có visual context</li><li>Response gọn hơn Option 1</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>User không biết còn ảnh khác</li><li>Mất một phần thông tin visual</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin sự kiện uprace 2025</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy các bài đăng về <strong>UpRace 2025</strong>.<br><br>
+              <strong>1. UpRace Day TP.HCM 2025</strong><br>
+              * Sáng 14/12 tại VNG Campus, hơn 1.600 VĐV<br>
+              * Cự ly: 5km, 10km, 21km — ghi nhận 21.700+ km
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:8px 0">🖼 img (đại diện bài 1)</div>
+              <strong>2. VNG UpRace Challenge 2025</strong><br>
+              * 24 ngày, 62 đội, tích lũy 226.188 km
+              <div style="background:#e8edf5;border-radius:7px;height:90px;display:flex;align-items:center;justify-content:center;color:#8896b0;font-size:11px;margin:8px 0">▶ video (đại diện bài 2)</div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Backlog</span>
+        <span class="option-name">Option 2 — Grid 4 cột xen kẽ text ★ Đề xuất dài hạn</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: FE medium</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Compact, dễ scan</li><li>Giữ visual context đầy đủ</li><li>Phân biệt ảnh/video rõ ràng</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Cần build grid component + parser</li><li>FE phải detect và group media links</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin sự kiện uprace 2025</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy các bài đăng về <strong>UpRace 2025</strong>.<br><br>
+              <strong>1. UpRace Day TP.HCM 2025</strong><br>
+              * Sáng 14/12 tại VNG Campus — 1.600+ VĐV · 21.700+ km
+              <div class="media-grid" style="margin:8px 0">
+                <div class="media-thumb">🖼</div>
+                <div class="media-thumb">🖼</div>
+                <div class="media-thumb video" style="position:relative">▶<div class="video-badge">Video</div></div>
+                <div class="media-more">+2</div>
+              </div>
+              <strong>2. VNG UpRace Challenge 2025</strong><br>
+              * 24 ngày · 62 đội · 226.188 km tích lũy
+              <div class="media-grid" style="margin:8px 0">
+                <div class="media-thumb video" style="position:relative">▶<div class="video-badge">Video</div></div>
+                <div class="media-thumb">🖼</div>
+                <div class="media-thumb video" style="position:relative">▶<div class="video-badge">Video</div></div>
+                <div class="media-more">+4</div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approach-box">
+      <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1 (giữ nguyên). Nếu dev estimate nhanh thì nâng lên Option 1b trong cùng sprint.</div>
+      <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Backlog</span> Option 2 — grid 4 cột. Đã có mockup trong Figma, tạo task FE khi có bandwidth.</div>
+    </div>
+  </div>
+
+  <!-- 1.2 References -->
+  <div class="sub-section" id="s12">
+    <div class="sub-header">
+      <div class="sub-num">BC00 · 1.2</div>
+      <div class="sub-title">Nguồn tham khảo</div>
+    </div>
+
+    <div class="problem-box">
+      <strong>Vấn đề gốc:</strong> LLM lấy data từ file <code>.md</code> trong KB, tự quyết định format nguồn khi trả về — có thể là inline text, bullet list, hoặc bold link tùy theo câu hỏi. Không có chuẩn thống nhất, FE không control được cách hiển thị.
+    </div>
+
+    <div class="options-label">Các giải pháp</div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+        <span class="option-name">Option 1 — Giữ nguyên (inline text / bullet list)</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>0 effort, đang hoạt động</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Không nhất quán giữa các response</li><li>Khó scan, lẫn vào nội dung chính</li></ul></div>
+        </div>
+        <div class="mockup-label">Hiện tại trông như nào (2 dạng)</div>
+        <div class="states-grid cols-2">
+          <div class="state-block">
+            <div class="state-name"><span class="state-dot dot-gray"></span>Dạng 1 — Inline text</div>
+            <div class="chat-wrap">
+              <div class="bubble-agent">
+                <div class="agent-text">
+                  ...thông tin UpRace 2025.<br><br>
+                  <strong>Nguồn:</strong> HD-VNG-022-1 – Hướng dẫn bảo vệ dữ liệu cá nhân
+                </div>
+                <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="state-block">
+            <div class="state-name"><span class="state-dot dot-gray"></span>Dạng 2 — Bullet list</div>
+            <div class="chat-wrap">
+              <div class="bubble-agent">
+                <div class="agent-text">
+                  ...thông tin UpRace 2025.<br><br>
+                  <strong>Danh sách các nguồn tham khảo:</strong>
+                  <ol style="padding-left:16px;margin-top:4px">
+                    <li>TC-VNG-022-2: bổ sung lớp kiểm soát kỹ thuật...</li>
+                    <li>TC-VNG-024: áp vào trường hợp bạn dùng cloud...</li>
+                  </ol>
+                </div>
+                <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Backlog</span>
+        <span class="option-name">Option 2 — Collapsed block ★ Đề xuất dài hạn</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE + FE medium</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Gọn, không lấn át nội dung chính</li><li>Nhất quán, user chủ động xem khi cần</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>BE cần extract references ra khỏi text</li><li>FE cần build component</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy các bài đăng về <strong>UpRace 2025</strong>.<br>
+              <strong>1. UpRace Day TP.HCM 2025</strong> — sáng 14/12 tại VNG Campus...<br>
+              <strong>2. VNG UpRace Challenge 2025</strong> — 24 ngày, 62 đội...
+              <div class="cblock" onclick="toggleBlock(this)">
+                <div class="cblock-header">
+                  <div class="cblock-left">🔍 Nguồn tham khảo <span class="cblock-cnt">2</span></div>
+                  <span class="cblock-chev">▶</span>
+                </div>
+                <div class="cblock-body">
+                  <div class="src-item"><div class="src-num">1</div><div><div class="src-title">VNG UpRace Challenge 2025 & Lễ tổng kết</div><div class="src-sub">Communication</div></div></div>
+                  <div class="src-item"><div class="src-num">2</div><div><div class="src-title">UpRace Day TP.HCM 2025</div><div class="src-sub">Documents</div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approach-box">
+      <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1, giữ nguyên.</div>
+      <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Backlog</span> Option 2 — collapsed block. Đã có mockup trong Figma, cần BE + FE phối hợp.</div>
+    </div>
+  </div>
+
+  <!-- 1.3 Files -->
+  <div class="sub-section" id="s13">
+    <div class="sub-header">
+      <div class="sub-num">BC00 · 1.3</div>
+      <div class="sub-title">Files đính kèm</div>
+    </div>
+
+    <div class="problem-box">
+      <strong>Vấn đề gốc:</strong> Hiện tại hoàn toàn chưa có — crawl pipeline chưa lưu metadata files, agent không biết bài viết có file đính kèm, response không show gì cả. Đây là gap cần fill từ BE trước khi FE có thể làm gì.<br><br>
+      <strong>Lưu ý:</strong> BE phải update crawl pipeline để lưu file metadata (name, type, size, url) trước — đây là prerequisite bắt buộc cho tất cả options.
+    </div>
+
+    <div class="options-label">Các giải pháp</div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1</span>
+        <span class="option-name">Option 1 — Text link thuần</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE nhỏ</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Nhanh, ít effort</li><li>FE không cần thay đổi</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Không phân biệt file type</li><li>Không có file size</li><li>Trông không khác gì link thường</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-agent">
+            <div class="agent-text">
+              ...thông tin UpRace 2025.<br><br>
+              File đính kèm:<br>
+              • <span style="color:#e55a00;text-decoration:underline">25 11 25 ĐẾN 09 12 25 (1).xlsx</span><br>
+              • <span style="color:#e55a00;text-decoration:underline">Helpdesk - VI - Android connect to VNG Corp.pdf</span>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Nếu dev estimate nhanh</span>
+        <span class="option-name">Option 1b — Inline chip/badge</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE nhỏ + FE nhỏ</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Visual hơn Option 1</li><li>Phân biệt được file type</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Nhiều file thì hơi lộn xộn</li><li>LLM có thể paraphrase → FE không detect được</li></ul></div>
+        </div>
+        <div style="background:#fff8f0;border:1px solid #fde0cc;border-radius:7px;padding:8px 10px;font-size:11px;color:#7a3a10;margin-bottom:10px">
+          ⚠️ <strong>Risk:</strong> Hoạt động nếu format link trong <code>.md</code> cố định và LLM giữ nguyên. Nếu LLM paraphrase thành text thường → FE không detect được → render sai.
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-agent">
+            <div class="agent-text">
+              ...thông tin UpRace 2025.<br><br>
+              File đính kèm:
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;color:#2e7d32">📊 xlsx · 3MB</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:#fff3e0;border:1px solid #ffe0b2;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;color:#e65100">📄 pdf · 2MB</span>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Backlog</span>
+        <span class="option-name">Option 2 — Collapsed block ★ Đề xuất dài hạn</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE medium + FE medium</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Rõ ràng, đầy đủ thông tin</li><li>Nhất quán với các blocks khác</li><li>Nút download trực tiếp</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>BE cần update crawl pipeline</li><li>FE cần build component</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-agent">
+            <div class="agent-text">
+              ...thông tin UpRace 2025.
+              <div class="cblock" onclick="toggleBlock(this)">
+                <div class="cblock-header">
+                  <div class="cblock-left">📎 File đính kèm <span class="cblock-cnt">2</span></div>
+                  <span class="cblock-chev">▶</span>
+                </div>
+                <div class="cblock-body">
+                  <div class="file-item"><span class="ext-badge ext-xlsx">xlsx</span><span class="file-name">25 11 25 ĐẾN 09 12 25 (1).xlsx</span><span class="file-size">3MB ↓</span></div>
+                  <div class="file-item"><span class="ext-badge ext-pdf">pdf</span><span class="file-name">Helpdesk - VI - Android connect to VNG Corp.pdf</span><span class="file-size">2MB ↓</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approach-box">
+      <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1 hoặc 1b tùy dev estimate — BE update crawl pipeline trước.</div>
+      <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Backlog</span> Option 2 — collapsed block. Đã có mockup trong Figma.</div>
+    </div>
+  </div>
+
+  <!-- 1.4 Support Contacts -->
+  <div class="sub-section" id="s14">
+    <div class="sub-header">
+      <div class="sub-num">BC00 · 1.4</div>
+      <div class="sub-title">Support Contacts</div>
+    </div>
+
+    <div class="problem-box">
+      <strong>Vấn đề gốc:</strong> Hiện tại support contacts được crawl về KB dạng file <code>.md</code>. Agent đọc từ <code>.md</code> và trả về dạng text — tên, email, SĐT, giờ hỗ trợ — lẫn vào nội dung chính. Dạng text khó lướt nhanh, không click được. Khi contact đổi thông tin → <code>.md</code> không tự cập nhật → data có thể sai theo thời gian.
+    </div>
+
+    <div class="options-label">Các giải pháp</div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+        <span class="option-name">Option 1 — Giữ nguyên (text từ .md)</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>0 effort, đang hoạt động</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Text thuần khó lướt nhanh</li><li>Không click được, lẫn vào nội dung</li><li>Data có thể không đồng bộ khi contact thay đổi</li></ul></div>
+        </div>
+        <div class="mockup-label">Hiện tại trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin liên lạc quầy lễ tân</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Thông tin liên lạc <strong>quầy Lễ tân (Reception)</strong> tại VNG Campus:<br><br>
+              • Email: manpt@vng.com.vn<br>
+              • Số điện thoại: (+84) 398799248<br>
+              • Giờ hỗ trợ: Thứ 2 – Thứ 6, 08:30 – 17:30<br>
+              • Nhân sự: manpt – Mẫn. Phó Thục, lamtn2 – Lam. Trần Nhật (2)
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+        <span class="option-name">Option 2 — Build tool "Ask Support Contact Info", exact match</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE large + FE medium</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Data luôn đúng, đồng bộ từ hệ thống</li><li>Visual rõ ràng, click được</li><li>Tương tự pattern BC01, BC03</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Phải hỏi đúng tên contact thì tool mới trả đúng</li><li>Cần build tool mới ở BE</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin liên lạc quầy lễ tân</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              Đây là thông tin liên hệ quầy <strong>Lễ tân</strong> tại VNG Campus:
+              <div class="card" style="margin-top:8px">
+                <div class="sc-hero">
+                  <div class="sc-name">Reception – VNG Campus</div>
+                  <div class="sc-desc">Hỗ trợ lễ tân và hành chính tại VNG Campus</div>
+                  <div class="sc-actions">
+                    <div class="sc-btn">📱 Zalo</div>
+                    <div class="sc-btn">🟦 Teams</div>
+                    <div class="sc-btn">✉️ Mail</div>
+                  </div>
+                </div>
+                <div class="sc-body">
+                  <div>
+                    <div class="sc-section-label">Thông tin liên lạc</div>
+                    <div class="sc-info-item">📞 (+84) 398799248</div>
+                    <div class="sc-info-item">✉️ manpt@vng.com.vn</div>
+                    <div class="sc-info-item">📍 VNG Campus</div>
+                  </div>
+                  <div>
+                    <div class="sc-section-label">Giờ hỗ trợ</div>
+                    <div class="sc-hours">Monday – Friday<br><strong>8:30 – 17:30</strong><br>Weekend: Offline</div>
+                  </div>
+                </div>
+                <div class="sc-person-section">
+                  <div class="sc-person-label">Nhân sự phụ trách</div>
+                  <div class="sc-person"><div class="sc-person-av" style="background:#4caf50">PT</div><div><div style="font-size:11px;font-weight:600;color:#1a1a1a">Mẫn. Phó Thục</div><div style="font-size:10px;color:#888">Receptionist cum Administrative Collaborator</div></div></div>
+                  <div class="sc-person"><div class="sc-person-av" style="background:#2196f3">TN</div><div><div style="font-size:11px;font-weight:600;color:#1a1a1a">Lam. Trần Nhật (2)</div><div style="font-size:10px;color:#888">Receptionist cum Administrative Collaborator</div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+        <span class="option-name">Option 3 — Build tool + fuzzy search + disambiguation flow ★ Đề xuất dài hạn</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE large + FE large</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>UX tốt nhất — hỏi không chính xác vẫn ra được</li><li>Agent gợi ý danh sách để user chọn</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Effort lớn nhất</li><li>Cần build tool + fuzzy search ở BE</li><li>Cần quick reply buttons component (define riêng)</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">tìm contact hỗ trợ IT</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy một vài support contacts liên quan đến IT, bạn đang cần liên hệ bộ phận nào?
+              <div class="quick-replies">
+                <button class="qr-btn">IT Helpdesk — Hỗ trợ sự cố IT</button>
+                <button class="qr-btn">Internal Communications — Truyền thông nội bộ</button>
+                <button class="qr-btn">HR Business Partner — Hỗ trợ nhân sự IT</button>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approach-box">
+      <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1, giữ nguyên.</div>
+      <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Roadmap</span> Option 2 → Option 3. Cần estimate effort và lên kế hoạch riêng, tương tự BC01 và BC03.</div>
+    </div>
+  </div>
+
+  <!-- 1.5 Department -->
+  <div class="sub-section" id="s15">
+    <div class="sub-header">
+      <div class="sub-num">BC00 · 1.5</div>
+      <div class="sub-title">Thông tin phòng ban</div>
+    </div>
+
+    <div class="problem-box">
+      <strong>Vấn đề gốc:</strong> Thông tin phòng ban đang được crawl về KB dạng file <code>.md</code>. Agent đọc và trả về dạng text bullet list — mã phòng, tên, cây tổ chức, trưởng phòng, HRBP, admin — dài và khó scan.<br><br>
+      Tool hiện tại dùng exact match — phải hỏi đúng tên đầy đủ như "Information Technology" thì mới ra. Hỏi "IT" hay "phòng công nghệ" thì không ra.
+    </div>
+
+    <div class="options-label">Các giải pháp</div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+        <span class="option-name">Option 1 — Giữ nguyên (text từ .md)</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>0 effort</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Text dài, khó scan</li><li>Không visual, không click được</li><li>Phải hỏi đúng tên đầy đủ</li></ul></div>
+        </div>
+        <div class="mockup-label">Hiện tại trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin phòng financial technology</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              <strong>Overview</strong><br>
+              Phòng <strong>Financial Technology</strong> là một Department thuộc khối Payment tại VNG.<br><br>
+              <strong>Chi tiết:</strong>
+              <ul style="padding-left:16px;margin-top:4px">
+                <li>Mã phòng ban: PFT</li>
+                <li>Tên phòng ban: Financial Technology</li>
+                <li>Loại phòng ban: Department</li>
+                <li>Đơn vị kinh doanh: Payment (mã PY)</li>
+                <li>Cây tổ chức: SMT/PY/TEP/PFT</li>
+                <li>Trưởng phòng: domain nhanp – Nhã. Nguyễn Phong</li>
+                <li>HRBP: domain haitt5, phuongnnx, thynx</li>
+                <li>Admin phòng: domain diepdt2</li>
+                <li>Link tham khảo nội bộ: <span style="color:#e55a00;text-decoration:underline">https://my-uat.vng.vn/department?data=PFT</span></li>
+              </ul>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+        <span class="option-name">Option 2 — Build tool "Get Department Info", exact match</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE large + FE medium</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Visual rõ ràng, dễ scan</li><li>Data luôn đồng bộ từ hệ thống</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Phải hỏi đúng tên đầy đủ mới ra được</li><li>Cần build tool mới — không phải config source</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin phòng financial technology</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              Dưới đây là thông tin của phòng <strong>Financial Technology</strong>:
+              <div class="card" style="margin-top:8px">
+                <div class="dept-hero">
+                  <div class="dept-icon">🏢</div>
+                  <div><div class="dept-name">Financial Technology</div><div class="dept-breadcrumb">VNG › Payment › Technical & Product › Financial Technology</div></div>
+                </div>
+                <div class="dept-section">
+                  <div class="dept-section-label">Trưởng phòng</div>
+                  <div class="dept-person"><div class="dept-av" style="background:#e55a00">NP</div><div><div class="dept-person-name">Nhã. Nguyễn Phong</div><div class="dept-person-title">Senior Manager, Head of Financial Technology</div></div></div>
+                </div>
+                <div class="dept-section">
+                  <div class="dept-section-label">Admin phòng</div>
+                  <div class="dept-person"><div class="dept-av" style="background:#9c27b0">DT</div><div><div class="dept-person-name">Diệp. Đình Thị (2)</div><div class="dept-person-title">C&B Specialist</div></div></div>
+                </div>
+                <div class="dept-section">
+                  <div class="dept-section-label">HR Business Partner</div>
+                  <div class="dept-person"><div class="dept-av" style="background:#e55a00">HT</div><div><div class="dept-person-name">Hải. Trần Thanh (5)</div><div class="dept-person-title">Manager, Zalopay HR</div></div></div>
+                  <div class="dept-person"><div class="dept-av" style="background:#ff9800">PN</div><div><div class="dept-person-name">Phương. Nguyễn Ngô Xuân</div><div class="dept-person-title">Associate HR, Zalopay HR</div></div></div>
+                  <div class="dept-person"><div class="dept-av" style="background:#00bcd4">TX</div><div><div class="dept-person-name">Thy. Nguyễn Xuân</div><div class="dept-person-title">Lead HR, Zalopay HR</div></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option-block">
+      <div class="option-header" onclick="toggleOption(this)">
+        <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+        <span class="option-name">Option 3 — Build tool + fuzzy search + disambiguation flow ★ Đề xuất dài hạn</span>
+        <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE large + FE large</span>
+        <span class="option-chevron">▼</span>
+      </div>
+      <div class="option-body">
+        <div class="pros-cons">
+          <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Hỏi tên tắt, mô tả, không chính xác vẫn ra được</li><li>Agent gợi ý danh sách để user chọn</li></ul></div>
+          <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Effort lớn nhất</li><li>Cần quick reply buttons component</li></ul></div>
+        </div>
+        <div class="mockup-label">Sẽ trông như nào</div>
+        <div class="chat-wrap">
+          <div class="bubble-user sent">thông tin phòng Technology</div>
+          <div class="bubble-agent">
+            <div class="agent-text">
+              Mình tìm thấy một vài phòng ban phù hợp với nhu cầu tìm kiếm của bạn:
+              <ol style="padding-left:16px;margin:8px 0;font-size:12px">
+                <li><strong>Information Technology (IT)</strong> — Phòng ban cung cấp dịch vụ, hệ thống, thiết bị IT</li>
+                <li><strong>Financial Technology (PFT)</strong> — Cung cấp dịch vụ liên quan đến hệ thống tài chính</li>
+                <li><strong>Consumer Technology (PCT)</strong> — Thiết bị điện tử, phần mềm cho người dùng cuối</li>
+              </ol>
+              Bạn muốn xem thông tin của phòng ban cụ thể nào?
+              <div class="quick-replies">
+                <button class="qr-btn">Xem thông tin phòng Information Technology (IT)</button>
+                <button class="qr-btn">Xem thông tin phòng Financial Technology (PFT)</button>
+                <button class="qr-btn">Xem thông tin phòng Consumer Technology (PCT)</button>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="approach-box">
+      <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1, giữ nguyên.</div>
+      <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Roadmap</span> Option 2 trước → Option 3 sau. Cần estimate và lên kế hoạch riêng.</div>
+      <div style="margin-top:8px;font-size:11px;color:#4a6fa5">📌 Lưu ý: Với câu hỏi "phòng nào phụ trách sản phẩm X" — LLM có thể trả lời từ KB rồi gợi ý user xem department card. Scope reverse lookup để backlog riêng.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════ BC01 ══════ -->
+<div class="bc-section" id="bc01">
+  <div class="bc-header">
+    <div class="bc-icon" style="background:#e8f0fe">👤</div>
+    <div>
+      <div class="bc-num">Business Case 01</div>
+      <div class="bc-title">Tra cứu thông tin đồng nghiệp</div>
+      <div class="bc-subtitle">Tool: Ask Colleagues Info · Agent: VNG Agent OpenAI</div>
+    </div>
+  </div>
+
+  <div class="problem-box">
+    <strong>Vấn đề gốc:</strong> Agent trả thông tin đồng nghiệp dạng text bullet — họ tên, chức danh, phòng ban, email, SĐT, quản lý — lẫn vào response. Khó scan, không click được trực tiếp vào Zalo/Teams/Email.<br><br>
+    Tool hiện tại dùng <strong>exact match theo domain account</strong> — phải hỏi đúng <code>dongdt</code>, <code>quylph</code>... mới ra. Hỏi theo tên, chức danh, hay mô tả thì không trả được.
+  </div>
+
+  <div class="options-label">Các giải pháp</div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+      <span class="option-name">Option 1 — Giữ nguyên (text bullet)</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Đang hoạt động, 0 effort</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Text khó scan, không click được</li><li>Không visual, không trực quan</li></ul></div>
+      </div>
+      <div class="mockup-label">Hiện tại trông như nào</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">anh quylph là ai</div>
+        <div class="bubble-agent">
+          <div class="agent-text">
+            Dưới đây là thông tin về <strong>Lê Phạm Hoàng Quý</strong>:<br>
+            • Họ tên: Lê Phạm Hoàng Quý<br>
+            • Chức danh: Lead Software Engineer<br>
+            • Phòng ban: Information Technology<br>
+            • Công ty: VNG<br>
+            • Văn phòng: VNG Campus<br>
+            • Số điện thoại: (+84) 0123456789<br>
+            • Email: quylph@vng.local<br>
+            • Quản lý trực tiếp: Lê Thanh Tú (tult)<br><br>
+            Bạn có thể gọi Lê Phạm Hoàng Quý là <strong>anh</strong> nhé.
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-recommended">★ Đề xuất — Phase 1</span>
+      <span class="option-name">Option 2 — Contact card trong message, exact match</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: FE medium</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Visual rõ ràng, dễ scan</li><li>Click trực tiếp Zalo/Teams/Email/Org Chart</li><li>Tool BE giữ nguyên — chỉ nâng FE</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Vẫn phải hỏi đúng domain account</li></ul></div>
+      </div>
+      <div class="mockup-label">Sẽ trông như nào</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">cho tôi xem thông tin liên hệ của anh quylph</div>
+        <div class="bubble-agent">
+          <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+            Dưới đây là thông tin của <strong>anh Quý</strong>:
+            <div class="card" style="margin-top:8px">
+              <div class="colleague-hero">
+                <div class="colleague-avatar">QL</div>
+                <div class="colleague-name">Quý. Lê Phạm Hoàng</div>
+                <div class="colleague-title-text">Lead Software Engineer · Information Technology</div>
+                <div class="colleague-hint">💬 Bạn có thể gọi là "anh Quý" trong tiếng Việt</div>
+                <div class="colleague-actions">
+                  <div class="contact-btn">💬 Zalo</div>
+                  <div class="contact-btn">🟦 Teams</div>
+                  <div class="contact-btn">✉️ Email</div>
+                  <div class="contact-btn">🏢 Org Chart</div>
+                </div>
+              </div>
+              <div class="colleague-meta">
+                <div class="meta-row"><div class="meta-label">Phòng ban</div><div class="meta-value">Information Technology · Business Operations</div></div>
+                <div class="meta-row"><div class="meta-label">Văn phòng</div><div class="meta-value">VNG Campus</div></div>
+                <div class="meta-row"><div class="meta-label">Điện thoại</div><div class="meta-value">(+84) 0333268168</div></div>
+                <div class="meta-row"><div class="meta-label">Email</div><div class="meta-value" style="color:#e55a00">quylph@vng.com.vn</div></div>
+                <div class="meta-row"><div class="meta-label">Quản lý</div><div class="meta-value"><span class="manager-chip">👤 Tú. Lê Thanh — IT Manager</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+      <span class="option-name">Option 3 — Contact card + multi-attribute search (NLP)</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE medium + FE medium</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Không cần biết domain — hỏi tự nhiên</li><li>LLM tự extract tên + chức danh + phòng từ câu hỏi</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>BE cần nâng cấp tool để nhận nhiều attributes</li><li>Nếu không match chính xác vẫn không ra</li></ul></div>
+      </div>
+      <div class="mockup-label">Sẽ trông như nào</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">cho tôi thông tin anh Quý bên IT, hình như là Tech Lead</div>
+        <div class="bubble-agent">
+          <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+            <div class="card">
+              <div class="colleague-hero">
+                <div class="colleague-avatar">QL</div>
+                <div class="colleague-name">Quý. Lê Phạm Hoàng</div>
+                <div class="colleague-title-text">Lead Software Engineer · Information Technology</div>
+                <div class="colleague-hint">💬 Bạn có thể gọi là "anh Quý" trong tiếng Việt</div>
+                <div class="colleague-actions">
+                  <div class="contact-btn">💬 Zalo</div>
+                  <div class="contact-btn">🟦 Teams</div>
+                  <div class="contact-btn">✉️ Email</div>
+                  <div class="contact-btn">🏢 Org Chart</div>
+                </div>
+              </div>
+              <div class="colleague-meta">
+                <div class="meta-row"><div class="meta-label">Phòng ban</div><div class="meta-value">Information Technology · Business Operations</div></div>
+                <div class="meta-row"><div class="meta-label">Email</div><div class="meta-value" style="color:#e55a00">quylph@vng.com.vn</div></div>
+                <div class="meta-row"><div class="meta-label">Quản lý</div><div class="meta-value"><span class="manager-chip">👤 Tú. Lê Thanh — IT Manager</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-backlog">Phase 2 — Roadmap</span>
+      <span class="option-name">Option 4 — Contact card + fuzzy search + disambiguation flow ★ Đề xuất dài hạn</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE large + FE large</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Sai chính tả, thiếu thông tin vẫn ra được gợi ý</li><li>UX tốt nhất</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Effort lớn nhất</li><li>Cần quick reply buttons component</li></ul></div>
+      </div>
+      <div class="mockup-label">Sẽ trông như nào — user hỏi không chính xác</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">anh Quí bên IT (sai chính tả)</div>
+        <div class="bubble-agent">
+          <div class="agent-text">
+            Mình tìm thấy vài người tên Quý/Quí trong IT, bạn đang tìm ai trong số này?
+            <div class="quick-replies">
+              <button class="qr-btn">Quý. Lê Phạm Hoàng — Lead Software Engineer · IT</button>
+              <button class="qr-btn">Quý. Nguyễn Minh — DevOps Engineer · IT</button>
+            </div>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="approach-box">
+    <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 2 — nâng FE lên contact card, tool BE giữ nguyên. Đã có mockup trong Figma.</div>
+    <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Roadmap</span> Option 3 → Option 4. Cần estimate và lên kế hoạch riêng.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════ BC02 ══════ -->
+<div class="bc-section" id="bc02">
+  <div class="bc-header">
+    <div class="bc-icon" style="background:#e8f5e9">💬</div>
+    <div>
+      <div class="bc-num">Business Case 02</div>
+      <div class="bc-title">IT Support Q&A</div>
+      <div class="bc-subtitle">Agent: Helpdesk Agent OpenAI · RAG thuần từ KB</div>
+    </div>
+  </div>
+
+  <div class="problem-box">
+    <strong>Đặc điểm:</strong> Đây là RAG thuần — agent chỉ đọc KB và trả lời, không gọi tool, không cần action từ user. Response dạng text markdown (bold, bullet list) — phù hợp với loại nội dung này. Không cần build tool hay thay đổi gì thêm ở phase này.
+  </div>
+
+  <div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">✓ Không cần thay đổi response template</div>
+    <div style="font-size:12px;color:#444;line-height:1.6">Chất lượng câu trả lời phụ thuộc trực tiếp vào độ đầy đủ của KB. Các cải tiến về nguồn tham khảo, files, contacts sẽ apply tự động khi BC00 hoàn thành.</div>
+  </div>
+
+  <div class="approach-box">
+    <div class="phase-row"><span class="phase-badge phase-now">Action cần làm</span> Lên plan push các team leader trong IT chủ động viết docs và cung cấp cho KB — để agent có thể trả lời được các câu hỏi đặc thù của từng team, không chỉ thông tin chung chung. BA/PO phối hợp với IT leads để thực hiện.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════ BC03 ══════ -->
+<div class="bc-section" id="bc03">
+  <div class="bc-header">
+    <div class="bc-icon" style="background:#fff3e0">🎫</div>
+    <div>
+      <div class="bc-num">Business Case 03</div>
+      <div class="bc-title">Tạo IT Helpdesk Ticket</div>
+      <div class="bc-subtitle">Tool: Auto Create IT Helpdesk Ticket · Agent: Helpdesk Agent OpenAI</div>
+    </div>
+  </div>
+
+  <div class="problem-box">
+    <strong>Vấn đề gốc:</strong> Agent draft ticket dạng text — tiêu đề, mô tả — rồi hỏi user muốn "gửi / chỉnh sửa / hủy" bằng cách <strong>gõ text</strong>. User phải nhớ các từ khóa như "ok", "gửi đi", "hủy" để thao tác. Không trực quan, dễ nhầm, không có visual rõ ràng về trạng thái ticket.
+  </div>
+
+  <div class="options-label">Các giải pháp</div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+      <span class="option-name">Option 1 — Giữ nguyên (text)</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Đang hoạt động, 0 effort</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Không trực quan</li><li>User phải nhớ từ khóa để thao tác</li><li>Không có visual state rõ ràng</li></ul></div>
+      </div>
+      <div class="mockup-label">Hiện tại trông như nào</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">máy in không hoạt động cần tạo yêu cầu hỗ trợ</div>
+        <div class="bubble-agent">
+          <div class="agent-text">
+            Tôi đã tạo thông tin ticket như sau:<br><br>
+            📋 <strong>Tiêu đề:</strong> Máy in không hoạt động<br>
+            ✏️ <strong>Mô tả:</strong> Người dùng báo cáo máy in không hoạt động và cần được hỗ trợ từ IT Helpdesk.<br><br>
+            Bạn muốn làm gì tiếp theo?<br>
+            • ✅ <strong>Gửi ticket</strong> – nhập 'ok', 'gửi đi', hoặc 'đồng ý'<br>
+            • ✏️ <strong>Chỉnh sửa</strong> tiêu đề hoặc mô tả trước khi gửi<br>
+            • ❌ <strong>Hủy</strong> – nhập 'hủy' nếu không muốn tạo ticket
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-recommended">★ Đề xuất — Phase 2</span>
+      <span class="option-name">Option 2 — Ticket card với 4 states</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE medium + FE medium</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Trực quan, không cần nhớ từ khóa</li><li>UX rõ ràng theo từng bước</li><li>Đã có mockup trong Figma</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Cần FE build component</li><li>BE handle state transitions</li></ul></div>
+      </div>
+      <div class="mockup-label">4 states — click để xem từng state</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="ticket-tabs">
+        <button onclick="showTicketState('draft')" id="tab-draft" class="btn btn-primary" style="font-size:11px;padding:5px 10px">● Draft</button>
+        <button onclick="showTicketState('sent')" id="tab-sent" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Sent</button>
+        <button onclick="showTicketState('editing')" id="tab-editing" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Editing</button>
+        <button onclick="showTicketState('cancelled')" id="tab-cancelled" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Cancelled</button>
+      </div>
+
+      <div id="ticket-state-draft">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">máy in không hoạt động</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="ticket-header">
+                  <span style="font-size:16px">🎫</span>
+                  <div><div class="ticket-header-title">Thông tin yêu cầu IT Helpdesk</div><div class="ticket-header-sub">Xem lại và xác nhận trước khi gửi</div></div>
+                </div>
+                <div class="ticket-body">
+                  <div><div class="field-label">Tiêu đề</div><div class="field-value">Không thể kết nối máy in trên Windows</div></div>
+                  <div><div class="field-label">Mô tả</div><div class="field-value">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN, cài Papercut, kiểm tra Print Spooler — chưa giải quyết.</div></div>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary">✅ Gửi ticket</button>
+                  <button class="btn btn-secondary">✏️ Chỉnh sửa</button>
+                  <button class="btn btn-destructive">✕ Hủy</button>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ticket-state-sent" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">máy in không hoạt động</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="success-header"><span style="font-size:16px">✅</span><div class="success-title">Ticket hỗ trợ IT đã được gửi!</div></div>
+                <div class="success-body">
+                  <div><div class="field-label">Mã ticket</div><div><a class="ticket-link">WO-1104 — Xem trên TSE Services ↗</a></div></div>
+                  <div><div class="field-label">Tiêu đề</div><div class="field-value">Không thể kết nối máy in trên Windows</div></div>
+                  <div><div class="field-label">Mô tả</div><div class="field-value">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN...</div></div>
+                  <div><div class="field-label">Kỹ thuật viên phụ trách</div><div class="field-value"><span class="assigned-badge">👤 Thanh. Đặng Đình Minh</span></div></div>
+                </div>
+                <div class="success-footer">Đội ngũ IT sẽ xem xét và liên hệ với bạn trong thời gian sớm nhất.</div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ticket-state-editing" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">máy in không hoạt động</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="ticket-header" style="background:#f5f0ff;border-color:#e0d0ff">
+                  <span style="font-size:16px">✏️</span>
+                  <div><div class="ticket-header-title">Thông tin yêu cầu IT Helpdesk</div><div class="ticket-header-sub" style="color:#7c3aed">Đang chỉnh sửa — thay đổi trực tiếp bên dưới</div></div>
+                </div>
+                <div class="ticket-body">
+                  <div><div class="field-label">Tiêu đề</div><input class="input-editable" value="Không thể kết nối máy in trên Windows"></div>
+                  <div><div class="field-label">Mô tả</div><textarea class="input-editable" style="height:60px;resize:none">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN, cài Papercut, kiểm tra Print Spooler — chưa giải quyết.</textarea></div>
+                </div>
+                <div class="card-actions">
+                  <button class="btn" style="background:#7c3aed;color:#fff">💾 Lưu thay đổi</button>
+                  <button class="btn btn-secondary">Hủy chỉnh sửa</button>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ticket-state-cancelled" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">máy in không hoạt động</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="cancelled-header"><span style="font-size:16px">✕</span><div class="cancelled-title">Yêu cầu đã được hủy</div></div>
+                <div class="ticket-body">
+                  <div><div class="field-label">Tiêu đề</div><div class="field-value" style="color:#aaa">Không thể kết nối máy in trên Windows</div></div>
+                  <div><div class="field-label">Mô tả</div><div class="field-value" style="color:#aaa">Người dùng không thể kết nối máy in...</div></div>
+                </div>
+              </div>
+              Đã hủy yêu cầu hỗ trợ. Nếu vấn đề vẫn còn, bạn có thể tạo lại bất cứ lúc nào nhé. 😊
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="approach-box">
+    <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1, giữ nguyên.</div>
+    <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Roadmap</span> Option 2 — ticket card 4 states. Đã có mockup trong Figma, cần BE + FE phối hợp.</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════ LEAVE ══════ -->
+<div class="bc-section" id="bcleave">
+  <div class="bc-header">
+    <div class="bc-icon" style="background:#e8f5e9">🌴</div>
+    <div>
+      <div class="bc-num">Bonus — Đã triển khai</div>
+      <div class="bc-title">Tạo đơn nghỉ phép / WFH</div>
+      <div class="bc-subtitle">Tool: Create Request for Leave · Agent: VNG Agent OpenAI</div>
+    </div>
+  </div>
+
+  <div class="problem-box">
+    <strong>Vấn đề gốc:</strong> Tương tự BC03 — agent draft đơn dạng text, hỏi user confirm bằng cách gõ "có" / "không". Đơn nghỉ phép phức tạp hơn ticket vì có loại nghỉ, ngày, buổi sáng/chiều/cả ngày — nếu chỉ dùng text thì khó verify thông tin trước khi gửi.
+  </div>
+
+  <div class="options-label">Các giải pháp</div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-phase1">Phase 1 — Release ngay</span>
+      <span class="option-name">Option 1 — Giữ nguyên (text)</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: 0</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Đang hoạt động, 0 effort</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Không trực quan, khó verify thông tin</li><li>User phải gõ text để confirm</li></ul></div>
+      </div>
+      <div class="mockup-label">Hiện tại trông như nào</div>
+      <div class="chat-wrap">
+        <div class="bubble-user sent">Tạo giúp tôi lịch nghỉ phép ngày mai, với lý do đi khám bệnh</div>
+        <div class="bubble-agent">
+          <div class="agent-text">
+            Đây là thông tin <strong>đơn xin nghỉ phép</strong> của bạn:<br><br>
+            <strong>Loại</strong>: Nghỉ phép<br>
+            <strong>Từ ngày</strong>: 02/04/2026<br>
+            <strong>Đến ngày</strong>: 02/04/2026<br>
+            <strong>Lý do</strong>: Đi khám bệnh<br>
+            <strong>Lịch nghỉ</strong>: 02/04/2026: Cả ngày<br><br>
+            Vui lòng trả lời <strong>có</strong> để gửi đơn, hoặc cho tôi biết nếu bạn muốn chỉnh sửa.
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-header" onclick="toggleOption(this)">
+      <span class="option-tag opt-recommended">★ Đề xuất — Phase 2</span>
+      <span class="option-name">Option 2 — Leave card với 4 states</span>
+      <span class="option-tag" style="background:#f0f0f0;color:#888">Effort: BE medium + FE medium</span>
+      <span class="option-chevron">▼</span>
+    </div>
+    <div class="option-body">
+      <div class="pros-cons">
+        <div class="pros"><div class="pros-cons-label">✓ Ưu điểm</div><ul><li>Trực quan, dễ verify ngày/buổi trước khi gửi</li><li>UX rõ ràng theo từng bước</li><li>Đã có mockup trong Figma</li></ul></div>
+        <div class="cons"><div class="pros-cons-label">✗ Nhược điểm</div><ul><li>Cần FE build component + BE handle state transitions</li></ul></div>
+      </div>
+      <div class="mockup-label">4 states — click để xem từng state</div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button onclick="showLeaveState('draft')" id="ltab-draft" class="btn btn-primary" style="font-size:11px;padding:5px 10px">● Draft</button>
+        <button onclick="showLeaveState('sent')" id="ltab-sent" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Sent</button>
+        <button onclick="showLeaveState('editing')" id="ltab-editing" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Editing</button>
+        <button onclick="showLeaveState('cancelled')" id="ltab-cancelled" class="btn btn-secondary" style="font-size:11px;padding:5px 10px">● Cancelled</button>
+      </div>
+
+      <div id="leave-state-draft">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">Tôi muốn đăng ký nghỉ phép ngày 10 và sáng 11/4, lý do cá nhân</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="leave-header">
+                  <span style="font-size:16px">🌴</span>
+                  <div><div class="ticket-header-title">Đơn nghỉ phép</div><div class="ticket-header-sub" style="color:#92400e">Xem lại và xác nhận trước khi gửi</div></div>
+                  <span class="leave-type-badge">Annual Leave</span>
+                </div>
+                <div class="leave-body">
+                  <div><div class="field-label">Thời gian</div><div class="field-value">10/04/2026 → 11/04/2026</div></div>
+                  <div><div class="field-label">Lý do</div><div class="field-value">Nghỉ phép cá nhân</div></div>
+                  <div><div class="field-label">Chi tiết lịch</div>
+                    <div class="leave-schedule">
+                      <div class="schedule-row"><span class="schedule-date">Thứ Năm, 10/04/2026</span><span class="session-badge session-full">Cả ngày</span></div>
+                      <div class="schedule-row"><span class="schedule-date">Thứ Sáu, 11/04/2026</span><span class="session-badge session-morning">Buổi sáng</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-actions">
+                  <button class="btn btn-primary">✅ Gửi đơn</button>
+                  <button class="btn btn-secondary">✏️ Chỉnh sửa</button>
+                  <button class="btn btn-destructive">✕ Hủy</button>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="leave-state-sent" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">Tôi muốn đăng ký nghỉ phép ngày 10 và sáng 11/4</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="leave-success-header"><span style="font-size:16px">✅</span><div class="success-title">Đơn nghỉ phép đã được gửi!</div></div>
+                <div class="leave-body">
+                  <div><div class="field-label">Loại nghỉ</div><div><span class="leave-type-badge" style="margin-left:0">Annual Leave</span></div></div>
+                  <div><div class="field-label">Thời gian</div><div class="field-value">10/04/2026 → 11/04/2026</div></div>
+                  <div><div class="field-label">Chi tiết lịch</div>
+                    <div class="leave-schedule">
+                      <div class="schedule-row"><span class="schedule-date">Thứ Năm, 10/04/2026</span><span class="session-badge session-full">Cả ngày</span></div>
+                      <div class="schedule-row"><span class="schedule-date">Thứ Sáu, 11/04/2026</span><span class="session-badge session-morning">Buổi sáng</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="success-footer">Đơn đã được gửi đến quản lý trực tiếp để phê duyệt.</div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="leave-state-editing" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">Tôi muốn đăng ký nghỉ phép ngày 10 và sáng 11/4</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="leave-header" style="background:#f5f0ff;border-color:#e0d0ff">
+                  <span style="font-size:16px">✏️</span>
+                  <div><div class="ticket-header-title">Đơn nghỉ phép</div><div class="ticket-header-sub" style="color:#7c3aed">Đang chỉnh sửa — thay đổi trực tiếp bên dưới</div></div>
+                  <span class="leave-type-badge">Annual Leave ▾</span>
+                </div>
+                <div class="leave-body">
+                  <div><div class="field-label">Thời gian</div><div style="display:flex;gap:6px"><input class="input-editable" value="10/04/2026" style="width:45%"> → <input class="input-editable" value="11/04/2026" style="width:45%"></div></div>
+                  <div><div class="field-label">Lý do</div><input class="input-editable" value="Nghỉ phép cá nhân"></div>
+                  <div><div class="field-label">Chi tiết lịch</div>
+                    <div class="leave-schedule">
+                      <div class="schedule-row"><span class="schedule-date">Thứ Năm, 10/04/2026</span><select class="input-editable" style="width:auto;padding:2px 6px"><option selected>Cả ngày</option><option>Buổi sáng</option><option>Buổi chiều</option></select></div>
+                      <div class="schedule-row"><span class="schedule-date">Thứ Sáu, 11/04/2026</span><select class="input-editable" style="width:auto;padding:2px 6px"><option>Cả ngày</option><option selected>Buổi sáng</option><option>Buổi chiều</option></select></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-actions">
+                  <button class="btn" style="background:#7c3aed;color:#fff">💾 Lưu thay đổi</button>
+                  <button class="btn btn-secondary">Hủy chỉnh sửa</button>
+                </div>
+              </div>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="leave-state-cancelled" style="display:none">
+        <div class="chat-wrap">
+          <div class="bubble-user sent">Tôi muốn đăng ký nghỉ phép ngày 10 và sáng 11/4</div>
+          <div class="bubble-agent">
+            <div class="agent-text" style="padding:0;background:none;border:none;box-shadow:none">
+              <div class="card">
+                <div class="cancelled-header"><span style="font-size:16px">✕</span><div class="cancelled-title">Đơn nghỉ phép đã được hủy</div></div>
+                <div class="leave-body">
+                  <div><div class="field-label">Loại nghỉ</div><div class="field-value" style="color:#aaa">Annual Leave</div></div>
+                  <div><div class="field-label">Thời gian</div><div class="field-value" style="color:#aaa">10/04/2026 → 11/04/2026</div></div>
+                  <div><div class="field-label">Chi tiết lịch</div>
+                    <div class="leave-schedule">
+                      <div class="schedule-row"><span class="schedule-date" style="color:#aaa">Thứ Năm, 10/04/2026</span><span class="session-badge" style="background:#f0f0f0;color:#aaa">Cả ngày</span></div>
+                      <div class="schedule-row"><span class="schedule-date" style="color:#aaa">Thứ Sáu, 11/04/2026</span><span class="session-badge" style="background:#f0f0f0;color:#aaa">Buổi sáng</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              Đã hủy đơn nghỉ phép. Nếu bạn cần tạo lại, hãy nhắn cho tôi bất cứ lúc nào nhé. 😊
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="approach-box">
+    <div class="phase-row"><span class="phase-badge phase-now">Phase 1 — Release ngay</span> Option 1, giữ nguyên.</div>
+    <div class="phase-row"><span class="phase-badge phase-roadmap">Phase 2 — Roadmap</span> Option 2 — leave card 4 states. Đã có mockup trong Figma, cần BE + FE phối hợp.</div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">myVNG AI Agents · CP-TSE-IT · VNG Corporation · Tháng 4/2026</div>
+
+<script>
+function toggleOption(header) {
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.option-chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function toggleBlock(block) {
+  const body = block.querySelector('.cblock-body');
+  const chev = block.querySelector('.cblock-chev');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+function showTicketState(state) {
+  ['draft','sent','editing','cancelled'].forEach(s => {
+    document.getElementById('ticket-state-'+s).style.display = s===state ? '' : 'none';
+    const tab = document.getElementById('tab-'+s);
+    tab.className = s===state ? 'btn btn-primary' : 'btn btn-secondary';
+    tab.style.fontSize = '11px'; tab.style.padding = '5px 10px';
+  });
+}
+
+function showLeaveState(state) {
+  ['draft','sent','editing','cancelled'].forEach(s => {
+    document.getElementById('leave-state-'+s).style.display = s===state ? '' : 'none';
+    const tab = document.getElementById('ltab-'+s);
+    tab.className = s===state ? 'btn btn-primary' : 'btn btn-secondary';
+    tab.style.fontSize = '11px'; tab.style.padding = '5px 10px';
+  });
+}
+
+// Highlight active sidenav on scroll
+const sections = document.querySelectorAll('[id]');
+const navLinks = document.querySelectorAll('.sidenav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#'+current) a.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

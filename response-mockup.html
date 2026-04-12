@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent — Long-term Vision</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F7F7F7;color:#171719;font-size:16px;line-height:1.5}
+
+/* ── Layout ── */
+.page{max-width:780px;margin:0 auto;padding:48px 24px 80px}
+
+/* ── Header ── */
+.page-header{text-align:center;margin-bottom:56px}
+.page-tag{display:inline-block;background:#F15B24;color:#fff;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:16px}
+.page-title{font-size:28px;font-weight:700;color:#171719;margin-bottom:10px}
+.page-desc{font-size:14px;color:#717482;max-width:560px;margin:0 auto;line-height:1.7}
+.interact-hint-global{display:inline-flex;align-items:center;gap:6px;background:#FEF5EE;border:1px solid #fcd9c0;border-radius:8px;padding:8px 14px;font-size:12px;color:#c44a00;margin-top:16px}
+
+/* ── Section ── */
+.section{margin-bottom:64px}
+.section-label{font-size:11px;font-weight:700;color:#F15B24;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.section-title{font-size:20px;font-weight:700;color:#171719;margin-bottom:4px}
+.section-desc{font-size:13px;color:#717482;margin-bottom:14px}
+.interact-hint{display:inline-flex;align-items:center;gap:6px;background:#F3F3F4;border-radius:6px;padding:5px 10px;font-size:11px;color:#717482;margin-bottom:12px}
+.divider{border:none;border-top:1px solid #E4E4E7;margin:56px 0}
+
+/* ── Chat frame ── */
+.chat-frame{background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:20px}
+
+/* ── Messages ── */
+.msg-user{display:flex;justify-content:flex-end}
+.user-bubble{background:#FEF5EE;border:1px solid #fcd9c0;border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:14px;color:#171719;max-width:75%;line-height:1.5}
+.msg-agent{display:flex;flex-direction:column;gap:4px}
+.agent-text{font-size:14px;line-height:1.7;color:#171719}
+.agent-text p{margin-bottom:6px}
+.agent-text strong{font-weight:600}
+.agent-text ul,.agent-text ol{padding-left:18px;margin:4px 0}
+.agent-text li{margin-bottom:2px}
+.action-bar{display:flex;gap:4px;margin-top:6px}
+.act-btn{width:32px;height:32px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#717482}
+.act-btn:hover{background:#F3F3F4}
+.act-btn svg{width:15px;height:15px}
+
+/* ── Media grid ── */
+.media-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.media-thumb{background:#F3F3F4;border-radius:8px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.media-thumb svg{width:20px;height:20px;color:#B4B2A9}
+.media-more{background:#E5E5E7;border-radius:8px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#717482}
+.video-badge{position:absolute;bottom:5px;left:5px;background:rgba(0,0,0,.45);border-radius:4px;padding:2px 5px;font-size:9px;font-weight:600;color:#fff;display:flex;align-items:center;gap:2px}
+
+/* ── Collapsed blocks ── */
+.blocks{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.cblock{border:1px solid #E4E4E7;border-radius:8px;overflow:hidden;background:#fff}
+.cblock-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none}
+.cblock-hdr:hover{background:#F7F7F7}
+.cblock-left{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#171719}
+.cblock-left svg{width:14px;height:14px;color:#717482;flex-shrink:0}
+.cblock-cnt{font-size:11px;color:#717482;background:#F3F3F4;border-radius:10px;padding:1px 7px}
+.cblock-chev{font-size:9px;color:#717482;transition:transform .2s}
+.cblock-body{border-top:1px solid #E4E4E7;display:none}
+.cblock-body.open{display:block}
+
+/* Block items */
+.src-item{display:flex;gap:10px;padding:9px 12px;align-items:flex-start}
+.src-item+.src-item{border-top:1px solid #F3F3F4}
+.src-num{min-width:20px;height:20px;border-radius:50%;background:#F15B24;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.src-title{font-size:13px;color:#F15B24;font-weight:500;line-height:1.4}
+.src-sub{font-size:11px;color:#717482}
+.file-item{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.file-item+.file-item{border-top:1px solid #F3F3F4}
+.ext{font-size:9px;font-weight:700;border-radius:4px;padding:2px 5px;text-transform:uppercase;min-width:30px;text-align:center}
+.ext-pdf{background:#FFF3E0;color:#E65100}
+.ext-xlsx{background:#E8F5E9;color:#2E7D32}
+.fn{font-size:12px;color:#171719;flex:1}
+.fs{font-size:11px;color:#717482;white-space:nowrap}
+.ct-item{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.ct-item+.ct-item{border-top:1px solid #F3F3F4}
+.ct-av{width:32px;height:32px;border-radius:50%;background:#F3F3F4;border:1px solid #E4E4E7;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#717482}
+.ct-name{font-size:13px;font-weight:500;color:#171719}
+.ct-desc{font-size:11px;color:#717482;line-height:1.4}
+
+/* ── Card base ── */
+.card{background:#fff;border:1px solid #E4E4E7;border-radius:8px;overflow:hidden;margin-top:10px}
+.card-hero{background:linear-gradient(135deg,#F15B24 0%,#F76B1C 100%);padding:16px;color:#fff}
+.card-hero-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.card-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.card-avatar-sq{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.card-hero-name{font-size:15px;font-weight:700;line-height:1.3}
+.card-hero-sub{font-size:11px;opacity:.8;margin-top:2px}
+.card-hero-hint{font-size:10px;opacity:.7;background:rgba(255,255,255,.15);padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.card-hero-breadcrumb{font-size:10px;opacity:.75;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.card-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer}
+.card-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.meta-row{display:flex;align-items:flex-start;gap:8px}
+.meta-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#B4B2A9;width:72px;flex-shrink:0;padding-top:1px}
+.meta-val{font-size:12px;color:#171719}
+.meta-val a{color:#F15B24;text-decoration:none}
+.manager-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF5EE;color:#F15B24;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px}
+
+/* Department card sections */
+.dept-section{padding:0 14px}
+.dept-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#B4B2A9;padding:10px 0 6px}
+.dept-person{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F3F3F4}
+.dept-person:last-child{border-bottom:none;padding-bottom:10px}
+.dept-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.dept-pname{font-size:12px;font-weight:600;color:#171719}
+.dept-ptitle{font-size:10px;color:#717482}
+
+/* Support contact card */
+.sc-body{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc-slbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#B4B2A9;margin-bottom:5px}
+.sc-info{display:flex;align-items:center;gap:6px;font-size:12px;color:#171719;margin-bottom:4px}
+.sc-hours{font-size:12px;color:#171719;line-height:1.6}
+.sc-staff{padding:0 14px 12px}
+.sc-staff-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#B4B2A9;padding:8px 0 5px}
+.sc-person{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F3F3F4}
+.sc-person:last-child{border-bottom:none}
+
+/* Ticket / Leave card */
+.card-header{padding:11px 14px;border-bottom:1px solid #E4E4E7;display:flex;align-items:center;gap:8px}
+.card-header-title{font-size:13px;font-weight:600;color:#171719}
+.card-header-sub{font-size:11px;color:#F15B24}
+.card-header-sub.editing{color:#7C3AED}
+.card-header-sub.success{color:#16A34A}
+.card-header-sub.cancelled{color:#DC2626}
+.card-content{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.field-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#B4B2A9;margin-bottom:3px}
+.field-val{font-size:13px;color:#171719;line-height:1.5}
+.field-val.muted{color:#B4B2A9}
+.card-footer{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #E4E4E7;flex-wrap:wrap}
+.card-footer.success-bg{background:#ECFDF5;border-top-color:#bbf7d0}
+.card-footer.error-bg{background:#FEF2F2;border-top-color:#fecaca}
+.card-footer-note{font-size:11px;color:#717482;line-height:1.5}
+
+.btn{border:none;cursor:pointer;border-radius:6px;font-size:12px;font-weight:600;padding:7px 14px;font-family:inherit}
+.btn-primary{background:#F15B24;color:#fff}
+.btn-primary:hover{background:#d94e1a}
+.btn-secondary{background:#F3F3F4;color:#171719;border:1px solid #E4E4E7}
+.btn-destructive{background:#fff;color:#DC2626;border:1px solid #fca5a5}
+.btn-purple{background:#7C3AED;color:#fff}
+.input-edit{border:1.5px solid #7C3AED;border-radius:6px;padding:6px 8px;font-size:12px;color:#171719;background:#fff;width:100%;font-family:inherit;margin-top:3px}
+textarea.input-edit{height:56px;resize:none}
+
+.ticket-link{font-size:12px;color:#F15B24;font-weight:500}
+.assigned-chip{display:inline-flex;align-items:center;gap:4px;background:#F3F3F4;border-radius:999px;padding:3px 10px;font-size:11px;color:#171719}
+
+/* Leave schedule */
+.schedule{background:#F7F7F7;border:1px solid #F3F3F4;border-radius:6px;overflow:hidden;margin-top:4px}
+.sched-row{display:flex;align-items:center;padding:7px 10px;border-bottom:1px solid #F3F3F4;font-size:12px}
+.sched-row:last-child{border-bottom:none}
+.sched-date{flex:1;font-weight:500;color:#171719}
+.sched-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+.sb-full{background:#ECFDF5;color:#166534}
+.sb-morning{background:#FFF3E0;color:#9A3412}
+.leave-type-badge{display:inline-block;background:#FEF9C3;color:#854D0E;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:auto}
+
+/* State tabs */
+.state-tabs{display:flex;gap:6px;margin-bottom:12px}
+.stab{font-size:11px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid #E4E4E7;background:#fff;cursor:pointer;color:#717482;font-family:inherit}
+.stab.active{background:#F15B24;border-color:#F15B24;color:#fff}
+
+/* Quick reply */
+.quick-replies{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.qr-btn{background:#fff;border:1px solid #E4E4E7;border-radius:8px;padding:9px 14px;font-size:13px;color:#171719;cursor:pointer;text-align:left;font-family:inherit;transition:all .15s}
+.qr-btn:hover{border-color:#F15B24;color:#F15B24;background:#FEF5EE}
+
+.footer{text-align:center;font-size:12px;color:#B4B2A9;padding-top:32px;border-top:1px solid #E4E4E7}
+.clickable-person{cursor:pointer;transition:background .15s}
+.clickable-person:hover{background:#FEF5EE}
+.clickable-person:hover .dept-pname,.clickable-person:hover .sc-pname{color:#F15B24}
+.person-arrow{color:#E4E4E7;font-size:12px;margin-left:auto;flex-shrink:0}
+.clickable-person:hover .person-arrow{color:#F15B24}
+.sc-pname{font-size:12px;font-weight:600;color:#171719}
+.sc-ptitle{font-size:10px;color:#717482}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Header -->
+<div class="page-header">
+  <div class="page-tag">Long-term Vision</div>
+  <h1 class="page-title">AI Agent — Response Templates</h1>
+  <p class="page-desc">Đây là vision dài hạn về trải nghiệm người dùng khi tương tác với AI Agent trên myVNG.</p>
+  <div class="interact-hint-global">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    File này là live mockup — bạn có thể click và tương tác trực tiếp với các thành phần
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     SECTION 1 — BC00 Chat response
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">BC00 · General Information & Q&A</div>
+  <div class="section-title">Chat response với media & thông tin bổ sung</div>
+  <div class="section-desc">Agent trả lời thông tin từ KB — bài viết, sự kiện, tài liệu — kèm media, files đính kèm và nguồn tham khảo.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Click vào các blocks phía dưới để mở rộng
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">thông tin sự kiện uprace 2025</div></div>
+    <div class="msg-agent">
+      <div class="agent-text">
+        <p>Mình tìm thấy các bài đăng nội bộ của VNG về <strong>UpRace 2025</strong>, bao gồm UpRace Day tại TP.HCM và Lễ tổng kết/trao giải của VNG UpRace Challenge 2025.</p>
+        <p><strong>1. UpRace Day TP.HCM 2025</strong></p>
+        <ul>
+          <li>Sáng 14/12 tại VNG Campus, hơn 1.600 VĐV</li>
+          <li>Cự ly: 5km, 10km, 21km — ghi nhận 21.700+ km</li>
+        </ul>
+      </div>
+      <div class="media-grid">
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div class="video-badge">▶ Video</div></div>
+        <div class="media-more">+2</div>
+      </div>
+      <div class="agent-text" style="margin-top:8px">
+        <p><strong>2. VNG UpRace Challenge 2025 & Lễ tổng kết</strong></p>
+        <ul>
+          <li>24 ngày, 62 đội, 950+ Starter, 226.188 km tích lũy</li>
+          <li>Lễ trao giải 25/12, có Lucky Draw</li>
+        </ul>
+      </div>
+      <div class="media-grid">
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div class="video-badge">▶ Video</div></div>
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div class="media-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><div class="video-badge">▶ Video</div></div>
+        <div class="media-more">+4</div>
+      </div>
+      <div class="blocks">
+        <div class="cblock">
+          <div class="cblock-hdr" onclick="toggleBlock(this)">
+            <div class="cblock-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>File đính kèm<span class="cblock-cnt">2</span></div>
+            <span class="cblock-chev">▶</span>
+          </div>
+          <div class="cblock-body">
+            <div class="file-item"><span class="ext ext-xlsx">xlsx</span><span class="fn">25 11 25 ĐẾN 09 12 25 (1).xlsx</span><span class="fs">3MB ↓</span></div>
+            <div class="file-item"><span class="ext ext-pdf">pdf</span><span class="fn">Helpdesk - VI - Android connect to VNG Corp.pdf</span><span class="fs">2MB ↓</span></div>
+          </div>
+        </div>
+        <div class="cblock">
+          <div class="cblock-hdr" onclick="toggleBlock(this)">
+            <div class="cblock-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Hỗ trợ<span class="cblock-cnt">2</span></div>
+            <span class="cblock-chev">▶</span>
+          </div>
+          <div class="cblock-body">
+            <div class="ct-item"><div class="ct-av">IC</div><div><div class="ct-name">Internal Communications</div><div class="ct-desc">Support and answers questions related to internal communication activities.</div></div></div>
+            <div class="ct-item"><div class="ct-av">HR</div><div><div class="ct-name">Human Resources</div><div class="ct-desc">Support and answers questions related to HR activities.</div></div></div>
+          </div>
+        </div>
+        <div class="cblock">
+          <div class="cblock-hdr" onclick="toggleBlock(this)">
+            <div class="cblock-left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Nguồn tham khảo<span class="cblock-cnt">2</span></div>
+            <span class="cblock-chev">▶</span>
+          </div>
+          <div class="cblock-body">
+            <div class="src-item"><div class="src-num">1</div><div><div class="src-title">VNG UpRace Challenge 2025 & Lễ tổng kết – trao giải</div><div class="src-sub">Communication</div></div></div>
+            <div class="src-item"><div class="src-num">2</div><div><div class="src-title">UpRace Day TP.HCM 2025</div><div class="src-sub">Documents</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn" title="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn" title="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn" title="Dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════
+     SECTION 2 — Support contacts
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">BC00 · Support Contacts</div>
+  <div class="section-title">Hỏi thông tin kênh hỗ trợ</div>
+  <div class="section-desc">Khi user hỏi về kênh hỗ trợ, Agent gợi ý danh sách và hiển thị thông tin liên hệ đầy đủ.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Click một trong các nút gợi ý để xem contact card
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">tìm contact hỗ trợ IT cho mình</div></div>
+    <div class="msg-agent" id="sc-step1">
+      <div class="agent-text">
+        <p>Mình tìm thấy một vài support contacts liên quan đến IT, bạn đang cần liên hệ bộ phận nào?</p>
+      </div>
+      <div class="quick-replies">
+        <button class="qr-btn" onclick="showSCCard()">IT Helpdesk — Hỗ trợ sự cố kỹ thuật IT</button>
+        <button class="qr-btn" onclick="showSCCard()">Internal Communications — Truyền thông nội bộ</button>
+        <button class="qr-btn" onclick="showSCCard()">HR Business Partner — Hỗ trợ nhân sự IT</button>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+    <div id="sc-card" style="display:none">
+      <div class="msg-user"><div class="user-bubble">IT Helpdesk — Hỗ trợ sự cố kỹ thuật IT</div></div>
+      <div class="msg-agent">
+        <div class="agent-text"><p>Đây là thông tin liên hệ của <strong>IT Helpdesk</strong>:</p></div>
+        <div class="card">
+          <div class="card-hero">
+            <div class="card-hero-top">
+              <div class="card-avatar-sq">🛠</div>
+              <div><div class="card-hero-name">IT Helpdesk</div><div class="card-hero-sub">Hỗ trợ sự cố và yêu cầu kỹ thuật IT</div></div>
+            </div>
+            <div class="card-actions">
+              <div class="card-btn">📱 Zalo</div>
+              <div class="card-btn">🟦 Teams</div>
+              <div class="card-btn">✉️ Mail</div>
+            </div>
+          </div>
+          <div class="sc-body">
+            <div>
+              <div class="sc-slbl">Thông tin liên lạc</div>
+              <div class="sc-info">📞 (+84) 398799248</div>
+              <div class="sc-info">✉️ helpdesk@vng.com.vn</div>
+              <div class="sc-info">📍 VNG Campus</div>
+            </div>
+            <div>
+              <div class="sc-slbl">Giờ hỗ trợ</div>
+              <div class="sc-hours">Monday – Friday<br><strong>8:30 – 17:30</strong><br>Weekend: Offline</div>
+            </div>
+          </div>
+          <div class="sc-staff">
+            <div class="sc-staff-lbl">Nhân sự phụ trách</div>
+            <div class="sc-person clickable-person" onclick="triggerQuery('Xem thông tin HuyPG')"><div class="dept-av" style="background:#F15B24;width:28px;height:28px;font-size:10px">HG</div><div style="margin-left:8px"><div class="sc-pname">Huy. Phan Gia (2)</div><div class="sc-ptitle">IT Support Engineer</div></div><span class="person-arrow">›</span></div>
+            <div class="sc-person clickable-person" onclick="triggerQuery('Xem thông tin MinhTD')"><div class="dept-av" style="background:#7C3AED;width:28px;height:28px;font-size:10px">MT</div><div style="margin-left:8px"><div class="sc-pname">Minh. Thanh Đặng</div><div class="sc-ptitle">IT Support Engineer</div></div><span class="person-arrow">›</span></div>
+          </div>
+          <div class="sc-staff" style="border-top:1px solid #F3F3F4">
+            <div class="sc-staff-lbl">Quản lý</div>
+            <div class="sc-person clickable-person" onclick="triggerQuery('Xem thông tin anhHN4')"><div class="dept-av" style="background:#9C27B0;width:28px;height:28px;font-size:10px">HN</div><div style="margin-left:8px"><div class="sc-pname">Ánh. Hà Ngọc (4)</div><div class="sc-ptitle">Operations Manager</div></div><span class="person-arrow">›</span></div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════
+     SECTION 3 — Department
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">BC00 · Thông tin phòng ban</div>
+  <div class="section-title">Hỏi thông tin phòng ban</div>
+  <div class="section-desc">Khi user hỏi về phòng ban, Agent tìm và gợi ý các phòng phù hợp để user chọn, sau đó hiển thị thông tin đầy đủ.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Click một trong các nút gợi ý để xem department card. Nhấn vào tên nhân viên trong card để xem thông tin của họ.
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">Thông tin của phòng ban Technology</div></div>
+    <div class="msg-agent" id="dept-step1">
+      <div class="agent-text">
+        <p>Mình tìm thấy một vài phòng ban phù hợp với nhu cầu tìm kiếm của bạn:</p>
+        <ol>
+          <li><strong>Information Technology (IT)</strong> — Phòng ban cung cấp dịch vụ, hệ thống, thiết bị IT</li>
+          <li><strong>Financial Technology (PFT)</strong> — Cung cấp dịch vụ liên quan đến hệ thống tài chính</li>
+          <li><strong>Consumer Technology (PCT)</strong> — Thiết bị điện tử, phần mềm và ứng dụng cho người dùng cuối</li>
+        </ol>
+        <p style="margin-top:8px">Bạn mong muốn xem thông tin của phòng ban cụ thể nào?</p>
+      </div>
+      <div class="quick-replies">
+        <button class="qr-btn" onclick="showDeptCard()">Xem thông tin phòng Information Technology (IT)</button>
+        <button class="qr-btn" onclick="showDeptCard()">Xem thông tin phòng Financial Technology (PFT)</button>
+        <button class="qr-btn" onclick="showDeptCard()">Xem thông tin phòng Consumer Technology (PCT)</button>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+    <div id="dept-card" style="display:none">
+      <div class="msg-user"><div class="user-bubble">Financial Technology (PFT)</div></div>
+      <div class="msg-agent">
+        <div class="agent-text"><p>Dưới đây là thông tin của phòng <strong>Financial Technology</strong>:</p></div>
+        <div class="card">
+          <div class="card-hero">
+            <div class="card-hero-top">
+              <div class="card-avatar-sq">🏢</div>
+              <div><div class="card-hero-name">Financial Technology</div><div class="card-hero-breadcrumb">VNG › Payment › Technical & Product › Financial Technology</div></div>
+            </div>
+          </div>
+          <div class="dept-section">
+            <div class="dept-section-lbl">Trưởng phòng</div>
+            <div class="dept-person clickable-person" onclick="triggerQuery('Xem thông tin nhanp')"><div class="dept-av" style="background:#F15B24">NP</div><div style="margin-left:8px"><div class="dept-pname">Nhã. Nguyễn Phong</div><div class="dept-ptitle">Senior Manager, Head of Financial Technology</div></div><span class="person-arrow">›</span></div>
+          </div>
+          <div class="dept-section">
+            <div class="dept-section-lbl">Admin phòng</div>
+            <div class="dept-person clickable-person" onclick="triggerQuery('Xem thông tin diepdt2')"><div class="dept-av" style="background:#9C27B0">DT</div><div style="margin-left:8px"><div class="dept-pname">Diệp. Đình Thị (2)</div><div class="dept-ptitle">C&B Specialist</div></div><span class="person-arrow">›</span></div>
+          </div>
+          <div class="dept-section">
+            <div class="dept-section-lbl">HR Business Partner</div>
+            <div class="dept-person clickable-person" onclick="triggerQuery('Xem thông tin haitt5')"><div class="dept-av" style="background:#F15B24">HT</div><div style="margin-left:8px"><div class="dept-pname">Hải. Trần Thanh (5)</div><div class="dept-ptitle">Manager, Zalopay HR</div></div><span class="person-arrow">›</span></div>
+            <div class="dept-person clickable-person" onclick="triggerQuery('Xem thông tin phuongnnx')"><div class="dept-av" style="background:#FF9800">PN</div><div style="margin-left:8px"><div class="dept-pname">Phương. Nguyễn Ngô Xuân</div><div class="dept-ptitle">Associate HR, Zalopay HR</div></div><span class="person-arrow">›</span></div>
+            <div class="dept-person clickable-person" onclick="triggerQuery('Xem thông tin thynx')"><div class="dept-av" style="background:#00BCD4">TX</div><div style="margin-left:8px"><div class="dept-pname">Thy. Nguyễn Xuân</div><div class="dept-ptitle">Lead HR, Zalopay HR</div></div><span class="person-arrow">›</span></div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════
+     SECTION 4 — BC01 Colleague
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">BC01 · Tra cứu thông tin đồng nghiệp</div>
+  <div class="section-title">Hỏi thông tin đồng nghiệp</div>
+  <div class="section-desc">Khi user hỏi về đồng nghiệp, Agent hiển thị contact card với đầy đủ thông tin và các nút liên hệ trực tiếp.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Các nút Zalo / Teams / Email / Org Chart có thể click để liên hệ trực tiếp. Nhấn vào chip Quản lý để xem thông tin người đó.
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">cho tôi thông tin anh Quý bên IT, hình như là Tech Lead</div></div>
+    <div class="msg-agent">
+      <div class="agent-text"><p>Dưới đây là thông tin của <strong>anh Quý</strong>:</p></div>
+      <div class="card">
+        <div class="card-hero">
+          <div class="card-hero-top">
+            <div class="card-avatar">QL</div>
+            <div>
+              <div class="card-hero-name">Quý. Lê Phạm Hoàng</div>
+              <div class="card-hero-sub">Lead Software Engineer · Information Technology</div>
+            </div>
+          </div>
+          <div class="card-hero-hint">💬 Bạn có thể gọi là "anh Quý" trong tiếng Việt</div>
+          <div class="card-actions">
+            <div class="card-btn">💬 Zalo</div>
+            <div class="card-btn">🟦 Teams</div>
+            <div class="card-btn">✉️ Email</div>
+            <div class="card-btn">🏢 Org Chart</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="meta-row"><div class="meta-lbl">Phòng ban</div><div class="meta-val">Information Technology · Business Operations</div></div>
+          <div class="meta-row"><div class="meta-lbl">Văn phòng</div><div class="meta-val">VNG Campus</div></div>
+          <div class="meta-row"><div class="meta-lbl">Điện thoại</div><div class="meta-val">(+84) 0333268168</div></div>
+          <div class="meta-row"><div class="meta-lbl">Email</div><div class="meta-val"><a>quylph@vng.com.vn</a></div></div>
+          <div class="meta-row"><div class="meta-lbl">Quản lý</div><div class="meta-val"><span class="manager-chip" style="cursor:pointer" onclick="triggerQuery('Xem thông tin tult')" title="Click để xem thông tin">👤 Tú. Lê Thanh — IT Manager ›</span></div></div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════
+     SECTION 5 — BC03 IT Ticket
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">BC03 · Tạo IT Helpdesk Ticket</div>
+  <div class="section-title">Tạo yêu cầu hỗ trợ IT</div>
+  <div class="section-desc">Thay vì gõ text để confirm, user tương tác trực tiếp với ticket card qua các nút bấm.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Click <strong>Gửi ticket</strong>, <strong>Chỉnh sửa</strong>, hoặc <strong>Hủy</strong> trên card để xem trạng thái tương ứng. Hoặc click trực tiếp vào các tab phía trên.
+  </div>
+  <div class="state-tabs">
+    <button class="stab active" onclick="showTicket('draft',this)">Draft</button>
+    <button class="stab" onclick="showTicket('sent',this)">Đã gửi</button>
+    <button class="stab" onclick="showTicket('editing',this)">Đang chỉnh sửa</button>
+    <button class="stab" onclick="showTicket('cancelled',this)">Đã hủy</button>
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">máy in không hoạt động</div></div>
+    <div class="msg-agent">
+      <div class="agent-text">
+        <p>Dưới đây là <strong>checklist nhanh</strong> để bạn tự kiểm tra khi không kết nối được máy in:</p>
+        <ol>
+          <li><strong>Kiểm tra kết nối mạng / VPN</strong> — Bạn đang dùng mạng công ty hay mạng ngoài? Nếu Confluence yêu cầu VPN, hãy mở VPN → reconnect → thử lại.</li>
+          <li><strong>Kiểm tra Papercut</strong> — Mở Papercut Client, đăng nhập lại bằng tài khoản VNG và thử in lại.</li>
+          <li><strong>Kiểm tra Print Spooler</strong> — Vào Services → tìm Print Spooler → Restart.</li>
+        </ol>
+        <p style="margin-top:8px">Nếu đã thử các bước trên mà vẫn chưa được, mình có thể giúp bạn tạo ticket yêu cầu hỗ trợ.</p>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+    <div class="msg-user"><div class="user-bubble">tôi đã thử rồi nhưng vẫn không được, hãy tạo yêu cầu hỗ trợ giúp tôi</div></div>
+
+    <div id="ticket-draft" class="msg-agent">
+      <div class="agent-text"><p>Mình đã tạo thông tin ticket hỗ trợ bên dưới, bạn kiểm tra và nhấn <strong>Gửi</strong> khi đã đúng nhé.</p></div>
+      <div class="card">
+        <div class="card-header"><span style="font-size:18px">🎫</span><div><div class="card-header-title">Thông tin yêu cầu IT Helpdesk</div><div class="card-header-sub">Xem lại và xác nhận trước khi gửi</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Tiêu đề</div><div class="field-val">Không thể kết nối máy in trên Windows</div></div>
+          <div><div class="field-lbl">Mô tả</div><div class="field-val">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN, cài Papercut, kiểm tra Print Spooler — chưa giải quyết.</div></div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-primary" onclick="showTicket('sent', document.querySelectorAll('.stab')[1])">✅ Gửi ticket</button>
+          <button class="btn btn-secondary" onclick="showTicket('editing', document.querySelectorAll('.stab')[2])">✏️ Chỉnh sửa</button>
+          <button class="btn btn-destructive" onclick="showTicket('cancelled', document.querySelectorAll('.stab')[3])">✕ Hủy</button>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="ticket-sent" class="msg-agent" style="display:none">
+      <div class="agent-text"><p>Mình đã gửi ticket hỗ trợ cho bạn thành công!</p></div>
+      <div class="card">
+        <div class="card-header" style="background:#ECFDF5;border-bottom-color:#bbf7d0"><span style="font-size:18px">✅</span><div><div class="card-header-title" style="color:#166534">Ticket hỗ trợ IT đã được gửi!</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Mã ticket</div><div class="field-val"><span class="ticket-link">WO-1104 — Xem trên TSE Services ↗</span></div></div>
+          <div><div class="field-lbl">Tiêu đề</div><div class="field-val">Không thể kết nối máy in trên Windows</div></div>
+          <div><div class="field-lbl">Mô tả</div><div class="field-val">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN...</div></div>
+          <div><div class="field-lbl">Kỹ thuật viên</div><div class="field-val"><span class="assigned-chip">👤 Thanh. Đặng Đình Minh</span></div></div>
+        </div>
+        <div class="card-footer" style="background:#fafafa"><span class="card-footer-note">Đội ngũ IT sẽ xem xét và liên hệ với bạn trong thời gian sớm nhất.</span></div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="ticket-editing" class="msg-agent" style="display:none">
+      <div class="agent-text"><p>Bạn có thể chỉnh sửa thông tin ticket bên dưới.</p></div>
+      <div class="card">
+        <div class="card-header" style="background:#F5F0FF;border-bottom-color:#e0d0ff"><span style="font-size:18px">✏️</span><div><div class="card-header-title">Thông tin yêu cầu IT Helpdesk</div><div class="card-header-sub editing">Đang chỉnh sửa — thay đổi trực tiếp bên dưới</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Tiêu đề</div><input class="input-edit" value="Không thể kết nối máy in trên Windows"></div>
+          <div><div class="field-lbl">Mô tả</div><textarea class="input-edit">Người dùng không thể kết nối máy in. Đã thử: kiểm tra mạng VNG Corp, tắt VPN, cài Papercut, kiểm tra Print Spooler — chưa giải quyết.</textarea></div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-purple" onclick="showTicket('draft', document.querySelectorAll('.stab')[0])">💾 Lưu thay đổi</button>
+          <button class="btn btn-secondary" onclick="showTicket('draft', document.querySelectorAll('.stab')[0])">Hủy chỉnh sửa</button>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="ticket-cancelled" class="msg-agent" style="display:none">
+      <div class="card">
+        <div class="card-header" style="background:#FEF2F2;border-bottom-color:#fecaca"><span style="font-size:18px">✕</span><div><div class="card-header-title" style="color:#DC2626">Yêu cầu đã được hủy</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Tiêu đề</div><div class="field-val muted">Không thể kết nối máy in trên Windows</div></div>
+          <div><div class="field-lbl">Mô tả</div><div class="field-val muted">Người dùng không thể kết nối máy in...</div></div>
+        </div>
+      </div>
+      <div class="agent-text" style="margin-top:8px"><p>Đã hủy yêu cầu hỗ trợ. Nếu vấn đề vẫn còn, bạn có thể tạo lại bất cứ lúc nào nhé. 😊</p></div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════
+     SECTION 6 — Leave
+═══════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Bonus · Tạo đơn nghỉ phép / WFH</div>
+  <div class="section-title">Tạo đơn nghỉ phép</div>
+  <div class="section-desc">Tương tự IT Ticket — user xác nhận và chỉnh sửa đơn nghỉ phép trực tiếp trên card, không cần gõ text.</div>
+  <div class="interact-hint">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l6 6m-11-4a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg>
+    Click <strong>Gửi đơn</strong>, <strong>Chỉnh sửa</strong>, hoặc <strong>Hủy</strong> trên card để xem trạng thái tương ứng. Hoặc click trực tiếp vào các tab phía trên.
+  </div>
+  <div class="state-tabs">
+    <button class="stab active" onclick="showLeave('draft',this)">Draft</button>
+    <button class="stab" onclick="showLeave('sent',this)">Đã gửi</button>
+    <button class="stab" onclick="showLeave('editing',this)">Đang chỉnh sửa</button>
+    <button class="stab" onclick="showLeave('cancelled',this)">Đã hủy</button>
+  </div>
+  <div class="chat-frame">
+    <div class="msg-user"><div class="user-bubble">tôi muốn đăng ký nghỉ phép ngày 10 và sáng 11/4, lý do cá nhân</div></div>
+
+    <div id="leave-draft" class="msg-agent">
+      <div class="agent-text"><p>Mình đã tạo đơn nghỉ phép bên dưới, bạn kiểm tra và nhấn <strong>Gửi đơn</strong> khi đã đúng nhé.</p></div>
+      <div class="card">
+        <div class="card-header" style="background:#FFFBEB;border-bottom-color:#fde68a">
+          <span style="font-size:18px">🌴</span>
+          <div><div class="card-header-title">Đơn nghỉ phép</div><div class="card-header-sub" style="color:#92400E">Xem lại và xác nhận trước khi gửi</div></div>
+          <span class="leave-type-badge" style="margin-left:auto">Annual Leave</span>
+        </div>
+        <div class="card-content">
+          <div><div class="field-lbl">Thời gian</div><div class="field-val">10/04/2026 → 11/04/2026</div></div>
+          <div><div class="field-lbl">Lý do</div><div class="field-val">Nghỉ phép cá nhân</div></div>
+          <div><div class="field-lbl">Chi tiết lịch</div>
+            <div class="schedule">
+              <div class="sched-row"><span class="sched-date">Thứ Năm, 10/04/2026</span><span class="sched-badge sb-full">Cả ngày</span></div>
+              <div class="sched-row"><span class="sched-date">Thứ Sáu, 11/04/2026</span><span class="sched-badge sb-morning">Buổi sáng</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-primary" onclick="showLeave('sent', document.querySelectorAll('#leave-draft').length > 0 ? document.querySelectorAll('.stab')[4] : null)">✅ Gửi đơn</button>
+          <button class="btn btn-secondary" onclick="showLeave('editing', null)">✏️ Chỉnh sửa</button>
+          <button class="btn btn-destructive" onclick="showLeave('cancelled', null)">✕ Hủy</button>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="leave-sent" class="msg-agent" style="display:none">
+      <div class="agent-text"><p>Đơn nghỉ phép của bạn đã được gửi thành công!</p></div>
+      <div class="card">
+        <div class="card-header" style="background:#ECFDF5;border-bottom-color:#bbf7d0"><span style="font-size:18px">✅</span><div><div class="card-header-title" style="color:#166534">Đơn nghỉ phép đã được gửi!</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Loại nghỉ</div><div class="field-val"><span class="leave-type-badge" style="margin-left:0">Annual Leave</span></div></div>
+          <div><div class="field-lbl">Thời gian</div><div class="field-val">10/04/2026 → 11/04/2026</div></div>
+          <div><div class="field-lbl">Chi tiết lịch</div>
+            <div class="schedule">
+              <div class="sched-row"><span class="sched-date">Thứ Năm, 10/04/2026</span><span class="sched-badge sb-full">Cả ngày</span></div>
+              <div class="sched-row"><span class="sched-date">Thứ Sáu, 11/04/2026</span><span class="sched-badge sb-morning">Buổi sáng</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer" style="background:#fafafa"><span class="card-footer-note">Đơn đã được gửi đến quản lý trực tiếp để phê duyệt.</span></div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="leave-editing" class="msg-agent" style="display:none">
+      <div class="agent-text"><p>Bạn có thể chỉnh sửa thông tin đơn nghỉ phép bên dưới.</p></div>
+      <div class="card">
+        <div class="card-header" style="background:#F5F0FF;border-bottom-color:#e0d0ff">
+          <span style="font-size:18px">✏️</span>
+          <div><div class="card-header-title">Đơn nghỉ phép</div><div class="card-header-sub editing">Đang chỉnh sửa — thay đổi trực tiếp bên dưới</div></div>
+          <span class="leave-type-badge" style="margin-left:auto">Annual Leave ▾</span>
+        </div>
+        <div class="card-content">
+          <div><div class="field-lbl">Thời gian</div><div style="display:flex;gap:6px;align-items:center"><input class="input-edit" value="10/04/2026" style="flex:1"> → <input class="input-edit" value="11/04/2026" style="flex:1"></div></div>
+          <div><div class="field-lbl">Lý do</div><input class="input-edit" value="Nghỉ phép cá nhân"></div>
+          <div><div class="field-lbl">Chi tiết lịch</div>
+            <div class="schedule">
+              <div class="sched-row"><span class="sched-date">Thứ Năm, 10/04/2026</span><select class="input-edit" style="width:auto;padding:3px 6px;margin:0"><option selected>Cả ngày</option><option>Buổi sáng</option><option>Buổi chiều</option></select></div>
+              <div class="sched-row"><span class="sched-date">Thứ Sáu, 11/04/2026</span><select class="input-edit" style="width:auto;padding:3px 6px;margin:0"><option>Cả ngày</option><option selected>Buổi sáng</option><option>Buổi chiều</option></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="btn btn-purple" onclick="showLeave('draft',null)">💾 Lưu thay đổi</button>
+          <button class="btn btn-secondary" onclick="showLeave('draft',null)">Hủy chỉnh sửa</button>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+
+    <div id="leave-cancelled" class="msg-agent" style="display:none">
+      <div class="card">
+        <div class="card-header" style="background:#FEF2F2;border-bottom-color:#fecaca"><span style="font-size:18px">✕</span><div><div class="card-header-title" style="color:#DC2626">Đơn nghỉ phép đã được hủy</div></div></div>
+        <div class="card-content">
+          <div><div class="field-lbl">Loại nghỉ</div><div class="field-val muted">Annual Leave</div></div>
+          <div><div class="field-lbl">Thời gian</div><div class="field-val muted">10/04/2026 → 11/04/2026</div></div>
+          <div><div class="field-lbl">Chi tiết lịch</div>
+            <div class="schedule">
+              <div class="sched-row"><span class="sched-date" style="color:#B4B2A9">Thứ Năm, 10/04/2026</span><span class="sched-badge" style="background:#F3F3F4;color:#B4B2A9">Cả ngày</span></div>
+              <div class="sched-row"><span class="sched-date" style="color:#B4B2A9">Thứ Sáu, 11/04/2026</span><span class="sched-badge" style="background:#F3F3F4;color:#B4B2A9">Buổi sáng</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="agent-text" style="margin-top:8px"><p>Đã hủy đơn nghỉ phép. Nếu bạn cần tạo lại, hãy nhắn cho mình bất cứ lúc nào nhé. 😊</p></div>
+      <div class="action-bar">
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+        <button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">CP-TSE-IT · VNG Corporation · Tháng 4/2026</div>
+</div>
+
+<script>
+function toggleBlock(hdr) {
+  const body = hdr.nextElementSibling;
+  const chev = hdr.querySelector('.cblock-chev');
+  const open = body.classList.toggle('open');
+  chev.style.transform = open ? 'rotate(90deg)' : '';
+}
+
+function showSCCard() {
+  document.getElementById('sc-card').style.display = '';
+  document.querySelector('#sc-card').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function showDeptCard() {
+  document.getElementById('dept-card').style.display = '';
+  document.querySelector('#dept-card').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function showTicket(state, tabEl) {
+  ['draft','sent','editing','cancelled'].forEach(s => {
+    document.getElementById('ticket-'+s).style.display = s===state ? '' : 'none';
+  });
+  document.querySelectorAll('.state-tabs')[0].querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+  const idx = {draft:0,sent:1,editing:2,cancelled:3}[state];
+  document.querySelectorAll('.state-tabs')[0].querySelectorAll('.stab')[idx].classList.add('active');
+}
+
+function showLeave(state, tabEl) {
+  ['draft','sent','editing','cancelled'].forEach(s => {
+    document.getElementById('leave-'+s).style.display = s===state ? '' : 'none';
+  });
+  document.querySelectorAll('.state-tabs')[1].querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+  const idx = {draft:0,sent:1,editing:2,cancelled:3}[state];
+  document.querySelectorAll('.state-tabs')[1].querySelectorAll('.stab')[idx].classList.add('active');
+}
+
+function triggerQuery(text) {
+  const existing = document.querySelector('.query-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'query-toast';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#171719;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s;font-family:inherit;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+  toast.innerHTML = '💬 Agent nhận câu hỏi mới: <strong style="color:#ffa07a">"' + text + '"</strong>';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.style.opacity = '1', 10);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2800);
+}
+</script>
+</body>
+</html>
