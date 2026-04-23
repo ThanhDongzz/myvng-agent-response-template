@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Onboard First Approver — Mockups v0.2</title>
+<style>
+  :root {
+    --vng-orange: #E8590C;
+    --vng-orange-hover: #D14F0A;
+    --vng-orange-50: #FFF3EC;
+    --bg-page: #F7F7F7;
+    --bg-panel: #FFFFFF;
+    --bg-subtle: #F3F3F4;
+    --text-fg: #171719;
+    --text-muted: #717482;
+    --text-subtle: #9B9EAA;
+    --border-default: #E5E7EB;
+    --border-subtle: #EEF0F2;
+    --badge-open-bg: #FFF3EC;
+    --badge-open-text: #E8590C;
+    --text-completed: #171719;
+    --danger: #DC2626;
+    --danger-bg: #FEF2F2;
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--text-fg); background: var(--bg-page); font-size: 14px; line-height: 1.5; }
+  button { font-family: inherit; }
+
+  .mockup-shell {
+    position: sticky; top: 0; z-index: 100;
+    background: #1f2937; color: #fff;
+    padding: 10px 20px;
+    display: flex; gap: 8px; align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    flex-wrap: wrap;
+  }
+  .mockup-shell .label { font-size: 12px; font-weight: 600; opacity: .7; margin-right: 12px; letter-spacing: .05em; text-transform: uppercase; }
+  .mockup-tab {
+    background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.15);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .mockup-tab:hover { background: rgba(255,255,255,.08); }
+  .mockup-tab.active { background: var(--vng-orange); border-color: var(--vng-orange); }
+  .mockup-hint { margin-left: auto; font-size: 11.5px; opacity: .6; font-style: italic; }
+
+  .mockup-screen { display: none; }
+  .mockup-screen.active { display: block; }
+
+  .admin-layout { display: flex; min-height: calc(100vh - 45px); }
+
+  .sidebar {
+    width: 220px; background: #fff; border-right: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    padding: 20px 18px; display: flex; align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .sidebar-brand .logo {
+    font-weight: 900; color: var(--vng-orange); font-size: 28px; letter-spacing: -1px;
+    font-family: "Segoe UI Black", Impact, sans-serif;
+  }
+  .sidebar-nav { padding: 12px 0; }
+  .sidebar-item {
+    padding: 10px 18px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-size: 14px; color: var(--text-fg);
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover { background: var(--bg-subtle); }
+  .sidebar-item.expanded { font-weight: 500; }
+  .sidebar-item .chevron { margin-left: auto; font-size: 10px; opacity: .5; }
+  .sidebar-item.active-parent { color: var(--vng-orange); font-weight: 500; }
+  .sidebar-subitem {
+    padding: 9px 18px 9px 44px; font-size: 13px; cursor: pointer;
+    color: var(--text-fg); border-left: 3px solid transparent;
+  }
+  .sidebar-subitem:hover { background: var(--bg-subtle); }
+  .sidebar-subitem.active {
+    background: var(--vng-orange-50); color: var(--vng-orange);
+    border-left-color: var(--vng-orange); font-weight: 500;
+  }
+
+  .main { flex: 1; display: flex; flex-direction: column; background: var(--bg-page); min-width: 0; }
+
+  .header {
+    background: #fff; padding: 16px 28px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-breadcrumb { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .header-breadcrumb .active { color: var(--vng-orange); }
+  .header-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .header-user .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #FDBA74, #E8590C); }
+
+  .content { padding: 24px 28px; flex: 1; }
+
+  .filter-bar {
+    background: #fff; border-radius: 8px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 16px; border: 1px solid var(--border-subtle);
+  }
+
+  .filter-dropdown { position: relative; min-width: 180px; }
+  .filter-dropdown-btn {
+    width: 100%; padding: 9px 36px 9px 14px;
+    border: 1px solid var(--border-default); border-radius: 6px;
+    background: #fff; font-size: 13px; color: var(--text-fg);
+    cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 6px;
+    position: relative;
+  }
+  .filter-dropdown-btn::after {
+    content: "▾"; position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%); color: var(--text-muted); font-size: 10px;
+  }
+  .filter-dropdown-btn.open { border-color: var(--vng-orange); box-shadow: 0 0 0 3px var(--vng-orange-50); }
+  .filter-dropdown-btn .label-text { color: var(--text-muted); font-weight: 500; margin-right: 4px; }
+  .filter-dropdown-btn .value-text { color: var(--text-fg); font-weight: 500; }
+
+  .filter-dropdown-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border-default);
+    border-radius: 8px; box-shadow: var(--shadow-md);
+    z-index: 40; overflow: hidden; display: none;
+  }
+  .filter-dropdown-menu.show { display: block; }
+  .filter-dropdown-item {
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    color: var(--text-fg);
+  }
+  .filter-dropdown-item:hover { background: var(--bg-subtle); }
+  .filter-dropdown-item.selected {
+    background: var(--vng-orange-50); color: var(--vng-orange); font-weight: 600;
+  }
+
+  .filter-date-btn {
+    padding: 9px 14px; border: 1px solid var(--border-default);
+    border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px;
+    color: var(--text-fg); display: flex; align-items: center; gap: 6px;
+  }
+  .filter-date-btn:hover { border-color: var(--vng-orange); }
+  .filter-date-btn .label-text { color: var(--text-muted); font-weight: 500; }
+
+  .search-group { display: flex; flex: 0 1 360px; min-width: 260px; }
+  .search-input {
+    flex: 1; padding: 9px 14px; border: 1px solid var(--border-default);
+    border-right: none; border-radius: 6px 0 0 6px; font-size: 13px;
+    outline: none; min-width: 0;
+  }
+  .search-input:focus { border-color: var(--vng-orange); }
+  .search-btn {
+    background: var(--vng-orange); color: #fff; border: none;
+    padding: 9px 14px; border-radius: 0 6px 6px 0; cursor: pointer;
+    font-size: 13px;
+  }
+
+  .filter-spacer { flex: 1; }
+
+  .btn-ghost {
+    padding: 9px 14px; border: 1px solid var(--border-default);
+    border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px;
+    color: var(--text-fg);
+  }
+  .btn-ghost:hover { background: var(--bg-subtle); }
+
+  .panel {
+    background: #fff; border-radius: 8px; padding: 20px;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .table-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; gap: 12px;
+  }
+  .total-count { font-size: 13px; color: var(--text-muted); }
+  .total-count strong { color: var(--text-fg); }
+
+  .table-actions { display: flex; gap: 8px; }
+  .btn-primary {
+    background: var(--vng-orange); color: #fff; border: none;
+    padding: 9px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: var(--vng-orange-hover); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-secondary {
+    background: #fff; color: var(--vng-orange); border: 1px solid var(--vng-orange);
+    padding: 9px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-secondary:hover { background: var(--vng-orange-50); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 12px 14px; font-weight: 600;
+    color: var(--text-muted); font-size: 12px; letter-spacing: .02em;
+    text-transform: uppercase; border-bottom: 1px solid var(--border-default);
+    background: #FAFBFC;
+  }
+  tbody td {
+    padding: 14px 14px; border-bottom: 1px solid var(--border-subtle);
+    vertical-align: middle;
+  }
+  tbody tr:hover { background: #FAFBFC; }
+  tbody td .code { font-family: "SF Mono", Consolas, monospace; font-size: 12.5px; color: var(--text-muted); }
+  tbody td .name-primary { font-weight: 500; color: var(--text-fg); }
+  tbody td .email { color: var(--text-muted); font-size: 12.5px; }
+  tbody td .dept { font-family: "SF Mono", Consolas, monospace; font-size: 12px; color: var(--text-muted); }
+
+  .badge {
+    display: inline-flex; align-items: center; padding: 3px 10px;
+    border-radius: 10px; font-size: 11.5px; font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .badge-open { background: var(--badge-open-bg); color: var(--badge-open-text); }
+  .badge-completed {
+    color: var(--text-completed); background: transparent;
+    padding-left: 0; padding-right: 0; font-weight: 500;
+  }
+  .badge-completed::before {
+    content: "✓"; color: #16A34A; margin-right: 4px; font-weight: 700;
+  }
+
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .row-btn {
+    padding: 5px 12px; border: 1px solid var(--border-default);
+    border-radius: 5px; background: #fff; cursor: pointer; font-size: 12px;
+    color: var(--text-fg); font-weight: 500;
+  }
+  .row-btn:hover { background: var(--bg-subtle); border-color: var(--text-muted); }
+  .row-btn.danger { color: var(--danger); border-color: var(--border-default); }
+  .row-btn.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+
+  .pagination {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);
+    font-size: 13px; color: var(--text-muted);
+  }
+  .pager-controls { display: flex; gap: 4px; }
+  .pager-btn {
+    width: 32px; height: 32px; border: 1px solid var(--border-default);
+    background: #fff; border-radius: 5px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--text-fg);
+  }
+  .pager-btn:hover { background: var(--bg-subtle); }
+  .pager-btn.active { background: var(--vng-orange); color: #fff; border-color: var(--vng-orange); }
+  .pager-btn.disabled { color: var(--text-subtle); cursor: not-allowed; }
+
+  .modal-backdrop {
+    background: rgba(15, 23, 42, 0.45); padding: 40px 20px;
+    min-height: calc(100vh - 45px);
+    display: flex; align-items: flex-start; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal {
+    background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 560px; overflow: hidden;
+  }
+  .modal-wide { max-width: 640px; }
+  .modal-header {
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close {
+    background: transparent; border: none; cursor: pointer;
+    font-size: 22px; color: var(--text-muted); padding: 4px; line-height: 1;
+  }
+  .modal-close:hover { color: var(--text-fg); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer {
+    padding: 14px 24px; border-top: 1px solid var(--border-subtle);
+    display: flex; justify-content: flex-end; gap: 10px; background: #FAFBFC;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block; font-size: 13px; font-weight: 600;
+    margin-bottom: 6px; color: var(--text-fg);
+  }
+  .field label .req { color: var(--danger); margin-left: 2px; }
+  .field label .hint { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .input-like, input[type="text"], input[type="date"] {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border-default);
+    border-radius: 6px; font-size: 13px; outline: none; font-family: inherit;
+    background: #fff;
+  }
+  .input-like:focus, input:focus { border-color: var(--vng-orange); box-shadow: 0 0 0 3px var(--vng-orange-50); }
+  .input-readonly { background: var(--bg-subtle); color: var(--text-fg); cursor: not-allowed; }
+
+  .combobox { position: relative; }
+  .combobox-input {
+    width: 100%; padding: 10px 14px 10px 38px;
+    position: relative; display: flex; align-items: center;
+    min-height: 40px;
+  }
+  .combobox-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    opacity: .5; pointer-events: none;
+  }
+  .combobox-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border-default);
+    border-radius: 8px; box-shadow: var(--shadow-md);
+    max-height: 320px; overflow-y: auto; z-index: 50;
+  }
+  .combobox-item {
+    padding: 10px 14px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; border-bottom: 1px solid var(--border-subtle);
+  }
+  .combobox-item:last-child { border-bottom: none; }
+  .combobox-item:hover, .combobox-item.highlighted { background: var(--bg-subtle); }
+  .combobox-item .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #D1D5DB; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 600;
+  }
+  .combobox-item .avatar.color-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .combobox-item .avatar.color-2 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+  .combobox-item .avatar.color-3 { background: linear-gradient(135deg, #10B981, #059669); }
+  .combobox-item .info { flex: 1; min-width: 0; }
+  .combobox-item .info .name { font-weight: 600; font-size: 13.5px; color: var(--text-fg); }
+  .combobox-item .info .job { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+  .combobox-item .info .dept { font-size: 12px; color: var(--text-subtle); }
+
+  .field-selected {
+    padding: 10px 14px; background: #fff;
+    border: 1px solid var(--border-default); border-radius: 6px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .field-selected .name { font-weight: 500; color: var(--text-fg); flex: 1; }
+  .field-selected .clear {
+    background: transparent; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 18px; padding: 0 4px; line-height: 1;
+  }
+  .field-selected .clear:hover { color: var(--text-fg); }
+  .field-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .dropzone {
+    border: 2px dashed var(--border-default); border-radius: 10px;
+    padding: 40px 24px; text-align: center; cursor: pointer;
+    background: #FAFBFC; transition: all .15s;
+  }
+  .dropzone:hover { border-color: var(--vng-orange); background: var(--vng-orange-50); }
+  .dropzone .icon { font-size: 32px; margin-bottom: 10px; }
+  .dropzone .primary { font-weight: 500; margin-bottom: 4px; color: var(--text-fg); }
+  .dropzone .hint { font-size: 12px; color: var(--text-muted); }
+  .template-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--vng-orange); font-size: 13px; text-decoration: none;
+    padding: 10px 0; font-weight: 500;
+  }
+  .template-link:hover { text-decoration: underline; }
+
+  .dialog { max-width: 440px; }
+  .dialog-icon-box {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--danger-bg); color: var(--danger);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 14px;
+  }
+  .dialog p { font-size: 13.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.55; }
+  .dialog strong { color: var(--text-fg); font-weight: 600; }
+
+  .btn-danger {
+    background: var(--danger); color: #fff; border: none;
+    padding: 9px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-weight: 500;
+  }
+  .btn-danger:hover { background: #B91C1C; }
+
+  .mock-note {
+    background: #FEF3C7; border-left: 3px solid #D97706;
+    padding: 10px 14px; font-size: 12px; color: #92400E; margin-bottom: 16px;
+    border-radius: 0 6px 6px 0;
+  }
+  .mock-note strong { color: #78350F; }
+
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="mockup-shell">
+  <span class="label">Mockup:</span>
+  <button class="mockup-tab active" data-screen="s1">1. List view</button>
+  <button class="mockup-tab" data-screen="s2">2. Add new</button>
+  <button class="mockup-tab" data-screen="s3">3. Upload file</button>
+  <button class="mockup-tab" data-screen="s4">4. Edit</button>
+  <button class="mockup-tab" data-screen="s5">5. Delete confirm</button>
+  <span class="mockup-hint">Click Add new / Edit / Delete / × / Cancel trong mockup để điều hướng</span>
+</div>
+
+<!-- SCREEN 1: LIST VIEW -->
+<div class="mockup-screen active" id="s1">
+  <div class="admin-layout">
+    <div class="sidebar-slot"></div>
+    <div class="main">
+      <div class="header-slot"></div>
+      <div class="content">
+        <div class="filter-bar">
+          <div class="filter-dropdown" id="statusDropdown">
+            <button class="filter-dropdown-btn" onclick="toggleStatusDropdown()">
+              <span class="label-text">Status:</span>
+              <span class="value-text" id="statusValue">All</span>
+            </button>
+            <div class="filter-dropdown-menu" id="statusMenu">
+              <div class="filter-dropdown-item selected" onclick="selectStatus('All')">All</div>
+              <div class="filter-dropdown-item" onclick="selectStatus('Open')">Open</div>
+              <div class="filter-dropdown-item" onclick="selectStatus('Completed')">Completed</div>
+            </div>
+          </div>
+
+          <button class="filter-date-btn">
+            <span class="label-text">Onboard date:</span>
+            <span>All</span>
+            <span style="color: var(--text-muted); font-size: 10px; margin-left: 4px;">▾</span>
+          </button>
+
+          <div class="filter-spacer"></div>
+
+          <div class="search-group">
+            <input class="search-input" placeholder="Search Employee or First Approver">
+            <button class="search-btn">🔍</button>
+          </div>
+
+          <button class="btn-ghost">Reset Filter</button>
+        </div>
+
+        <div class="panel">
+          <div class="table-topbar">
+            <span class="total-count">Total: <strong>14</strong></span>
+            <div class="table-actions">
+              <button class="btn-secondary" onclick="goTo('s2')">+ Add new</button>
+              <button class="btn-secondary" onclick="goTo('s3')">⬆ Upload file</button>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;">No</th>
+                <th>Employee code</th>
+                <th>Employee name</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>First Approver</th>
+                <th>Onboard date</th>
+                <th>Status</th>
+                <th style="width: 150px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td><td><span class="code">VG-00201</span></td>
+                <td><div class="name-primary">Quyên. Phạm Thị</div></td>
+                <td><span class="email">quyenpt@vng.com.vn</span></td>
+                <td><span class="dept">SMT/BO/HR</span></td>
+                <td><div class="name-primary">Điệp. Đinh Thị</div></td>
+                <td>21/04/2026</td>
+                <td><span class="badge badge-open">Open</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn" onclick="goTo('s4')">Edit</button>
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td>2</td><td><span class="code">VG-00420</span></td>
+                <td><div class="name-primary">Quý. Nguyễn Phú</div></td>
+                <td><span class="email">quynp@vng.com.vn</span></td>
+                <td><span class="dept">SMT/PY/BOP/OPCS</span></td>
+                <td><div class="name-primary">Điệp. Đinh Thị</div></td>
+                <td>21/04/2026</td>
+                <td><span class="badge badge-open">Open</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn" onclick="goTo('s4')">Edit</button>
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td>3</td><td><span class="code">VG-00782</span></td>
+                <td><div class="name-primary">Quỳnh. Lê Thị Mai</div></td>
+                <td><span class="email">quynhltm@vng.com.vn</span></td>
+                <td><span class="dept">SMT/GE/TEG/TO</span></td>
+                <td><div class="name-primary">Điệp. Đinh Thị</div></td>
+                <td>21/04/2026</td>
+                <td><span class="badge badge-completed">Completed</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td>4</td><td><span class="code">VG-00815</span></td>
+                <td><div class="name-primary">Vy. Lâm Ngọc Thảo</div></td>
+                <td><span class="email">vytc2@vng.com.vn</span></td>
+                <td><span class="dept">SMT/VNGG/GP/RES</span></td>
+                <td><div class="name-primary">Khanh. Lê Duy</div></td>
+                <td>20/04/2026</td>
+                <td><span class="badge badge-open">Open</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn" onclick="goTo('s4')">Edit</button>
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td>5</td><td><span class="code">VG-00890</span></td>
+                <td><div class="name-primary">Hưng. Trần Văn</div></td>
+                <td><span class="email">hungtv3@vng.com.vn</span></td>
+                <td><span class="dept">ZP/TECH/DEV</span></td>
+                <td><div class="name-primary">Nam. Nguyễn Hoài</div></td>
+                <td>20/04/2026</td>
+                <td><span class="badge badge-completed">Completed</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td>6</td><td><span class="code">VG-00912</span></td>
+                <td><div class="name-primary">Linh. Phạm Thùy</div></td>
+                <td><span class="email">linhpt8@vng.com.vn</span></td>
+                <td><span class="dept">ZLP/BD/MKT</span></td>
+                <td><div class="name-primary">An. Đỗ Bình</div></td>
+                <td>18/04/2026</td>
+                <td><span class="badge badge-open">Open</span></td>
+                <td><div class="row-actions">
+                  <button class="row-btn" onclick="goTo('s4')">Edit</button>
+                  <button class="row-btn danger" onclick="goTo('s5')">Delete</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="pagination">
+            <span>Showing 1-6 of 14 records</span>
+            <div class="pager-controls">
+              <button class="pager-btn disabled">‹</button>
+              <button class="pager-btn active">1</button>
+              <button class="pager-btn">2</button>
+              <button class="pager-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: ADD NEW -->
+<div class="mockup-screen" id="s2">
+  <div class="admin-layout">
+    <div class="sidebar-slot"></div>
+    <div class="main">
+      <div class="header-slot"></div>
+      <div class="modal-backdrop" onclick="backdropClose(event, 's1')">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">Add new Onboard record</div>
+            <button class="modal-close" onclick="goTo('s1')">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="field">
+              <label>Employee <span class="req">*</span></label>
+              <div class="field-selected">
+                <div class="name">Vy. Lâm Ngọc Thảo</div>
+                <button class="clear">×</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>First Approver <span class="req">*</span></label>
+              <div class="combobox" id="faCombobox">
+                <div class="input-like combobox-input" onclick="toggleFaDropdown()" style="cursor: text;">
+                  <span class="combobox-icon">🔍</span>
+                  <span id="faQuery" style="color: var(--text-muted);">Search by domain, name, or code</span>
+                </div>
+                <div class="combobox-dropdown" id="faDropdown" style="display: none;">
+                  <div class="combobox-item">
+                    <div class="avatar color-1">Đ</div>
+                    <div class="info">
+                      <div class="name">Đông. Lê Thanh (2)</div>
+                      <div class="job">Software Engineer</div>
+                      <div class="dept">Enterprise Application Services</div>
+                    </div>
+                  </div>
+                  <div class="combobox-item">
+                    <div class="avatar color-2">Đ</div>
+                    <div class="info">
+                      <div class="name">Đông. Mai Trung</div>
+                      <div class="job">Senior Software Engineer, Zalo PC</div>
+                      <div class="dept">Zalo Communication</div>
+                    </div>
+                  </div>
+                  <div class="combobox-item highlighted">
+                    <div class="avatar color-3">Đ</div>
+                    <div class="info">
+                      <div class="name">Đông. Nguyễn Giang</div>
+                      <div class="job">Senior UI/UX Designer, Zalo</div>
+                      <div class="dept">Zalo Tech Platform</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Onboard date <span class="req">*</span></label>
+              <input type="date" value="2026-04-25">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" onclick="goTo('s1')">Cancel</button>
+            <button class="btn-primary" disabled>Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: UPLOAD -->
+<div class="mockup-screen" id="s3">
+  <div class="admin-layout">
+    <div class="sidebar-slot"></div>
+    <div class="main">
+      <div class="header-slot"></div>
+      <div class="modal-backdrop" onclick="backdropClose(event, 's1')">
+        <div class="modal modal-wide" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">Upload file Onboard records</div>
+            <button class="modal-close" onclick="goTo('s1')">×</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+              Upload file Excel (.xlsx) để import nhiều records cùng lúc. File phải có đúng 3 cột: <strong>employee_domain</strong>, <strong>first_approver_domain</strong>, <strong>onboard_date</strong>.
+            </p>
+            <a href="#" class="template-link" onclick="event.preventDefault()">⬇ Download template.xlsx</a>
+            <div class="dropzone">
+              <div class="icon">📂</div>
+              <div class="primary">Kéo thả file .xlsx vào đây</div>
+              <div class="hint">hoặc <span style="color: var(--vng-orange); text-decoration: underline;">click để chọn file</span></div>
+              <div style="margin-top: 10px; font-size: 11px; color: var(--text-subtle);">Max 5MB · chỉ nhận .xlsx</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" onclick="goTo('s1')">Cancel</button>
+            <button class="btn-primary" disabled>Upload</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: EDIT -->
+<div class="mockup-screen" id="s4">
+  <div class="admin-layout">
+    <div class="sidebar-slot"></div>
+    <div class="main">
+      <div class="header-slot"></div>
+      <div class="modal-backdrop" onclick="backdropClose(event, 's1')">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-title">Edit Onboard record</div>
+            <button class="modal-close" onclick="goTo('s1')">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="field">
+              <label>Employee <span class="hint">(readonly)</span></label>
+              <input type="text" value="Vy. Lâm Ngọc Thảo" readonly class="input-readonly">
+            </div>
+            <div class="field">
+              <label>First Approver <span class="req">*</span></label>
+              <div class="field-selected">
+                <div class="name">Khanh. Lê Duy</div>
+                <button class="clear">×</button>
+              </div>
+              <div class="field-hint">Click × để đổi sang người khác</div>
+            </div>
+            <div class="field">
+              <label>Onboard date <span class="req">*</span></label>
+              <input type="date" value="2026-04-20">
+            </div>
+            <div class="field" style="margin-bottom: 0;">
+              <label>Status</label>
+              <div style="padding: 8px 0;">
+                <span class="badge badge-open">Open</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" onclick="goTo('s1')">Cancel</button>
+            <button class="btn-primary" onclick="goTo('s1')">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: DELETE -->
+<div class="mockup-screen" id="s5">
+  <div class="admin-layout">
+    <div class="sidebar-slot"></div>
+    <div class="main">
+      <div class="header-slot"></div>
+      <div class="modal-backdrop" onclick="backdropClose(event, 's1')">
+        <div class="modal dialog" onclick="event.stopPropagation()">
+          <div class="modal-body" style="padding: 24px 24px 8px;">
+            <div class="dialog-icon-box">🗑</div>
+            <div class="modal-title">Delete Onboard record?</div>
+            <p>
+              Xóa record Onboard cho <strong>Vy. Lâm Ngọc Thảo</strong> (<strong>vytc2</strong>)?<br>
+              Hành động này không thể hoàn tác.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" onclick="goTo('s1')">Cancel</button>
+            <button class="btn-danger" onclick="goTo('s1')">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SIDEBAR_HTML = `
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span class="logo">VNG</span></div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-item">💼 Work <span class="chevron">▾</span></div>
+        <div class="sidebar-item">📚 Wiki <span class="chevron">▾</span></div>
+        <div class="sidebar-item">📞 Contacts <span class="chevron">▾</span></div>
+        <div class="sidebar-item">🗂 Master Data <span class="chevron">▾</span></div>
+        <div class="sidebar-item active-parent expanded">🎴 Staff Card <span class="chevron">▴</span></div>
+        <div class="sidebar-subitem">Approvers</div>
+        <div class="sidebar-subitem active">Onboard</div>
+        <div class="sidebar-item">❓ Support Center <span class="chevron">▾</span></div>
+        <div class="sidebar-item">💳 Expenses <span class="chevron">▾</span></div>
+        <div class="sidebar-item">🤖 Chatbot <span class="chevron">▾</span></div>
+        <div class="sidebar-item">⚙️ App Setting <span class="chevron">▾</span></div>
+      </nav>
+    </aside>
+  `;
+  const HEADER_HTML = `
+    <div class="header">
+      <div>
+        <div class="header-title">myVNG Dashboard</div>
+        <div class="header-breadcrumb">Staff Card / <span class="active">Onboard</span></div>
+      </div>
+      <div class="header-user">
+        <div class="avatar"></div>
+        <span>Đồng. Đỗ Thanh ▾</span>
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('.sidebar-slot').forEach(s => s.outerHTML = SIDEBAR_HTML);
+  document.querySelectorAll('.header-slot').forEach(s => s.outerHTML = HEADER_HTML);
+
+  const tabs = document.querySelectorAll('.mockup-tab');
+  const screens = document.querySelectorAll('.mockup-screen');
+
+  function goTo(screenId) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.screen === screenId));
+    screens.forEach(s => s.classList.toggle('active', s.id === screenId));
+    window.scrollTo(0, 0);
+  }
+  function backdropClose(e, screenId) {
+    if (e.target.classList.contains('modal-backdrop')) goTo(screenId);
+  }
+  tabs.forEach(tab => tab.addEventListener('click', () => goTo(tab.dataset.screen)));
+
+  function toggleStatusDropdown() {
+    const btn = document.querySelector('#statusDropdown .filter-dropdown-btn');
+    const menu = document.getElementById('statusMenu');
+    btn.classList.toggle('open');
+    menu.classList.toggle('show');
+  }
+  function selectStatus(val) {
+    document.getElementById('statusValue').textContent = val;
+    document.querySelectorAll('#statusMenu .filter-dropdown-item').forEach(i => {
+      i.classList.toggle('selected', i.textContent === val);
+    });
+    toggleStatusDropdown();
+  }
+
+  // First Approver combobox toggle
+  function toggleFaDropdown() {
+    const dd = document.getElementById('faDropdown');
+    if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  }
+
+  document.addEventListener('click', (e) => {
+    // close status dropdown on outside click
+    const dd = document.getElementById('statusDropdown');
+    if (dd && !dd.contains(e.target)) {
+      const btn = dd.querySelector('.filter-dropdown-btn');
+      const menu = document.getElementById('statusMenu');
+      if (btn && btn.classList.contains('open')) {
+        btn.classList.remove('open');
+        menu.classList.remove('show');
+      }
+    }
+    // close FA dropdown on outside click
+    const fa = document.getElementById('faCombobox');
+    if (fa && !fa.contains(e.target)) {
+      const faDd = document.getElementById('faDropdown');
+      if (faDd) faDd.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
