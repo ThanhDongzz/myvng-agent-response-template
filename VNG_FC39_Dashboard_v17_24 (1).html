@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VNG Group — FC3+9 Financial Performance Dashboard v17</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --primary:#E25A2C; --primary-light:#FBDDD0;
+  --secondary:#2D3748; --accent:#5DAB3D; --accent-light:#DCEDD3;
+  --negative:#E25A2C; --negative-light:#FBDDD0;
+  --warning:#C97328; --warning-light:#F8E4D2;
+  --neutral:#B5B2A8; --neutral-light:#EBE9E2;
+  --bg:#F7F8FC; --card:#FFFFFF; --muted:#B5B2A8;
+  --text:#1A202C; --text-light:#718096; --border:#E2E8F0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1A202C 0%,#2D3748 100%);padding:28px 32px 20px;color:white;}
+.header-inner{display:flex;align-items:center;max-width:1280px;margin:0 auto;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-logo{width:40px;height:40px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:white;flex-shrink:0;}
+.header h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+.header p{font-size:13px;opacity:0.7;margin-top:2px;}
+.header-right{display:flex;gap:12px;align-items:center;}
+.lang-toggle{display:flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.25);}
+.lang-btn{padding:7px 16px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);transition:all .2s;letter-spacing:.5px;}
+.lang-btn.active{background:rgba(255,255,255,0.2);color:white;}
+.print-btn{padding:7px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:white;cursor:pointer;font-size:12px;font-weight:600;}
+.print-btn:hover{background:rgba(255,255,255,0.15);}
+
+/* NAV */
+.nav{padding:0 32px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.nav-inner{display:flex;max-width:1280px;margin:0 auto;overflow-x:auto;}
+.nav-btn{padding:14px 22px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:transparent;color:var(--text-light);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.nav-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+.nav-btn:hover{color:var(--primary);}
+
+.content{padding:0 32px 40px;max-width:1280px;margin:0 auto;}
+.section{display:none;} .section.active{display:block;}
+.section-title{margin:28px 0 18px;}
+.section-title h2{font-size:20px;font-weight:700;letter-spacing:-.3px;}
+.section-title p{font-size:13px;color:var(--text-light);margin-top:4px;}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+.kpi-card{background:var(--card);border-radius:12px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--border);border-left:4px solid var(--primary);}
+.kpi-label{font-size:11px;color:var(--text-light);font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;}
+.kpi-value{font-size:28px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.1;}
+.kpi-unit{font-size:11px;color:var(--text-light);margin-bottom:12px;}
+.kpi-vars{display:flex;gap:14px;flex-wrap:wrap;}
+.kpi-var-label{font-size:10px;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;}
+.kpi-var-value{font-size:13px;font-weight:700;}
+.positive{color:var(--accent);} .negative{color:var(--negative);} .warning-color{color:var(--warning);}
+
+/* ALERT */
+.alert-box{margin-top:22px;padding:18px 22px;border-radius:12px;}
+.alert-green{background:linear-gradient(135deg,#F0FFF4,#C6F6D5);border:1px solid #9AE6B4;}
+.alert-green-title{font-size:14px;font-weight:700;color:#276749;margin-bottom:8px;}
+.alert-green-text{font-size:13px;color:var(--text);line-height:1.6;}
+.alert-yellow{background:#FFFBEB;border:1px solid #FBD38D;}
+.alert-yellow-title{font-size:13px;font-weight:700;color:#B7791F;margin-bottom:8px;}
+.alert-yellow-text{font-size:12px;color:var(--text);line-height:1.7;}
+
+/* CHARTS */
+.chart-card{margin-top:20px;background:var(--card);border-radius:12px;padding:20px 22px;border:1px solid var(--border);}
+.chart-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.chart-sub{font-size:12px;color:var(--text-light);margin-bottom:14px;}
+canvas{max-height:360px;}
+
+/* GRIDS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:18px;}
+@media(max-width:900px){.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+/* ISSUE CARDS */
+.issue-card{background:var(--card);border-radius:10px;border:1px solid var(--border);overflow:hidden;}
+.issue-card.alert{border-left:4px solid var(--negative);}
+.issue-card.warning{border-left:4px solid var(--warning);}
+.issue-card.note{border-left:4px solid var(--secondary);}
+.issue-header{padding:11px 16px 8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.issue-title{font-weight:700;font-size:13px;color:var(--text);}
+.issue-tag{font-size:9.5px;padding:3px 9px;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.issue-tag.alert{background:var(--negative-light);color:var(--negative);}
+.issue-tag.warning{background:var(--warning-light);color:var(--warning);}
+.issue-tag.note{background:#E2E8F0;color:var(--secondary);}
+.issue-body{padding:4px 16px 14px;font-size:12px;line-height:1.55;color:var(--text);}
+.issue-body ul{padding-left:16px;margin-top:5px;}
+.issue-body li{margin-bottom:4px;}
+.issue-body strong{font-weight:700;} .issue-body em{color:var(--negative);font-style:normal;font-weight:700;}
+
+/* BU CARDS */
+.bu-card{background:var(--card);border-radius:12px;border:1px solid var(--border);border-top:3px solid var(--muted);overflow:hidden;}
+.bu-card-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;}
+.bu-card-name{font-size:14px;font-weight:700;}
+.bu-card-status{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.bu-card-body{padding:0 18px 14px;font-size:12px;line-height:1.5;}
+.bu-section-block{margin-bottom:9px;}
+.bu-section-block:last-child{margin-bottom:0;}
+.bu-section-label{font-size:9.5px;text-transform:uppercase;color:var(--primary);font-weight:700;letter-spacing:.6px;margin-bottom:3px;}
+.so-what{margin-top:8px;padding:8px 10px;background:#FFF7F0;border-radius:6px;border-left:3px solid var(--primary);}
+.so-what .bu-section-label{color:var(--primary);}
+.so-what p{font-weight:500;color:#5C2A05;}
+
+/* HEATMAP */
+.heatmap-wrapper{margin-top:20px;background:var(--card);border-radius:12px;padding:20px 22px;border:1px solid var(--border);}
+.heatmap-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.heatmap-sub{font-size:12px;color:var(--text-light);margin-bottom:14px;}
+.heatmap{display:grid;gap:4px;font-size:12px;overflow-x:auto;}
+.heatmap-row{display:grid;grid-template-columns:130px repeat(4,1fr);gap:4px;align-items:center;min-width:520px;}
+.heatmap-label{font-weight:600;padding:8px 6px;font-size:12px;}
+.heatmap-cell{padding:12px 8px;text-align:center;border-radius:6px;font-weight:700;font-size:12.5px;color:white;cursor:default;transition:transform .15s;}
+.heatmap-cell:hover{transform:scale(1.05);z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.15);position:relative;}
+.heatmap-cell.empty{background:#EDF2F7;color:var(--muted);}
+.heatmap-header{font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;padding:6px 4px;text-align:center;}
+.heatmap-legend{display:flex;gap:14px;align-items:center;margin-top:12px;font-size:11px;color:var(--text-light);flex-wrap:wrap;}
+.heatmap-legend-item{display:flex;align-items:center;gap:6px;}
+.heatmap-legend-swatch{width:14px;height:14px;border-radius:3px;}
+
+/* TABS */
+.tab-bar{display:flex;gap:4px;margin-bottom:16px;background:#EDF2F7;border-radius:8px;padding:3px;width:fit-content;}
+.tab-btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:var(--text-light);transition:all .2s;}
+.tab-btn.active{background:var(--card);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.tab-bar-sm{display:flex;gap:4px;background:#EDF2F7;border-radius:8px;padding:3px;}
+.tab-btn-sm{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;background:transparent;color:var(--text-light);transition:all .2s;}
+.tab-btn-sm.active{background:var(--card);color:var(--secondary);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.controls-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:10px 12px;text-align:right;color:var(--text-light);font-weight:600;font-size:12px;white-space:nowrap;border-bottom:2px solid var(--border);}
+th:first-child{text-align:left;}
+td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);}
+td:first-child{text-align:left;font-weight:600;}
+.total-row{background:#F7FAFC;font-weight:700;}
+.bu-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:middle;}
+tr:hover td{background:#FAFAFA;}
+
+/* ===== KEY TAKEAWAYS ===== */
+.kt-layout{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:20px;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.06);}
+@media(max-width:900px){.kt-layout{grid-template-columns:1fr;}}
+.kt-col{display:flex;flex-direction:column;}
+.kt-col-header{padding:14px 20px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:white;display:flex;align-items:center;gap:8px;}
+.kt-col-header .kt-icon{font-size:16px;}
+.kt-recap .kt-col-header{background:#4A5568;}
+.kt-thismonth .kt-col-header{background:var(--primary);}
+.kt-sowhat .kt-col-header{background:#2D5282;}
+.kt-cta .kt-col-header{background:#1A202C;}
+.kt-col-body{padding:16px 20px 20px;font-size:12.5px;line-height:1.7;color:var(--text);flex:1;}
+.kt-recap{border-right:1px solid var(--border);}
+.kt-thismonth{border-right:1px solid var(--border);}
+.kt-sowhat{border-right:1px solid var(--border);border-top:1px solid var(--border);}
+.kt-cta{border-top:1px solid var(--border);}
+.kt-col-body ul{list-style:none;padding:0;}
+.kt-col-body ul li{padding:6px 0 6px 0;border-bottom:1px dashed var(--border);display:flex;gap:8px;align-items:flex-start;}
+.kt-col-body ul li:last-child{border-bottom:none;padding-bottom:0;}
+.kt-bullet{flex-shrink:0;width:6px;height:6px;border-radius:50%;margin-top:7px;}
+.kt-recap .kt-bullet{background:#4A5568;}
+.kt-thismonth .kt-bullet{background:var(--primary);}
+.kt-sowhat .kt-bullet{background:#2D5282;}
+.kt-cta-item{padding:10px 14px;border-radius:8px;margin-bottom:8px;border:1px solid;}
+.kt-cta-item:last-child{margin-bottom:0;}
+.kt-cta-item.action{background:#FFFBEB;border-color:#F6E05E;}
+.kt-cta-item.open{background:#FFF5F5;border-color:#FEB2B2;}
+.kt-cta-item.alert-item{background:#FFFAF0;border-color:#F6AD55;}
+.kt-cta-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.kt-cta-tag.action{color:#744210;}
+.kt-cta-tag.open{color:#9B2C2C;}
+.kt-cta-tag.alert-tag{color:#C05621;}
+.kt-cta-body{font-size:12px;line-height:1.6;color:var(--text);}
+
+/* APPENDIX */
+.app-card{background:var(--card);border-radius:12px;padding:20px 22px;border:1px solid var(--border);margin-top:20px;}
+.app-card-title{font-size:15px;font-weight:700;margin-bottom:4px;padding-bottom:10px;border-bottom:2px solid var(--primary);display:inline-block;}
+.app-subtitle{font-size:12px;color:var(--text-light);margin-bottom:14px;margin-top:4px;}
+.narrative-section{margin-top:14px;}
+.narrative-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--primary);margin-bottom:5px;}
+.narrative-text{font-size:12.5px;line-height:1.65;color:var(--text);margin-bottom:12px;}
+.narrative-text ul{padding-left:18px;margin-top:5px;}
+.narrative-text li{margin-bottom:5px;}
+.narrative-divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.struc-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px;}
+.struc-table th{padding:8px 10px;text-align:left;color:var(--text-light);font-size:11px;font-weight:700;border-bottom:2px solid var(--border);}
+.struc-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+.struc-table tr:hover td{background:#FAFAFA;}
+
+.footer{padding:16px 32px;border-top:1px solid var(--border);background:var(--card);text-align:center;}
+.footer span{font-size:11px;color:var(--muted);}
+
+@media print{
+  body{background:white;}
+  .nav,.lang-toggle,.print-btn,.controls-row,.tab-bar,.tab-bar-sm{display:none!important;}
+  .header{background:white!important;color:black!important;padding:14px 16px;border-bottom:2px solid var(--primary);}
+  .section{display:block!important;page-break-after:always;}
+  .section:last-child{page-break-after:auto;}
+  .content{padding:8px 16px;max-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">VNG</div>
+      <div>
+        <h1 id="headerTitle">Financial Performance Dashboard</h1>
+        <p id="headerSub">FC3+9 | April 2026 | YTD Q1-2026 &amp; Forecast Full Year</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="print-btn" onclick="window.print()">Print / PDF</button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="langEN" onclick="switchLang('en')">EN</button>
+        <button class="lang-btn" id="langVI" onclick="switchLang('vi')">VI</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-inner" id="navBar">
+    <button class="nav-btn active" onclick="showSection('exec',this)">Executive Summary</button>
+    <button class="nav-btn" onclick="showSection('bu',this)">BU Performance</button>
+    <button class="nav-btn" onclick="showSection('kt',this)">Key Takeaways</button>
+    <button class="nav-btn" onclick="showSection('app',this)">Appendix</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ============================= EXECUTIVE SUMMARY ============================= -->
+<div id="section-exec" class="section active">
+  <div class="section-title">
+    <h2 id="execTitle">Group Performance</h2>
+    <p id="execSub">FC3+9 vs AP26 &amp; A25 (YoY) | All figures in VND Billion unless stated</p>
+  </div>
+
+  <!-- KPI row -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Gross Bookings</div>
+      <div class="kpi-value">10,016</div>
+      <div class="kpi-unit">FY FC3+9 &bull; VND Bn</div>
+      <div class="kpi-vars">
+        <div><span class="kpi-var-label">vs AP26 </span><span class="kpi-var-value positive">+3%</span></div>
+        <div><span class="kpi-var-label">vs A25 </span><span class="kpi-var-value positive">+23%</span></div>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;color:var(--text-light);text-transform:uppercase;font-weight:600;">YTD Q1</span>
+        <span style="font-size:13px;font-weight:700;">2,166</span>
+        <span style="font-size:10px;color:var(--text-light);">vs AP</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">+10%</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Net Revenue</div>
+      <div class="kpi-value">12,521</div>
+      <div class="kpi-unit">FY FC3+9 &bull; VND Bn</div>
+      <div class="kpi-vars">
+        <div><span class="kpi-var-label">vs AP26 </span><span class="kpi-var-value positive">+2%</span></div>
+        <div><span class="kpi-var-label">vs A25 </span><span class="kpi-var-value positive">+24%</span></div>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;color:var(--text-light);text-transform:uppercase;font-weight:600;">YTD Q1</span>
+        <span style="font-size:13px;font-weight:700;">2,143</span>
+        <span style="font-size:10px;color:var(--text-light);">vs AP</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">+5%</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Adj EBITDA</div>
+      <div class="kpi-value">1,880</div>
+      <div class="kpi-unit">FY FC3+9 &bull; VND Bn &nbsp;<span style="color:#C97328;font-weight:700;">incl. +67bn ROUA</span></div>
+      <div class="kpi-vars">
+        <div><span class="kpi-var-label">vs AP26 </span><span class="kpi-var-value positive">+8%</span></div>
+        <div><span class="kpi-var-label">vs A25 </span><span class="kpi-var-value positive">+10%</span></div>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;color:var(--text-light);text-transform:uppercase;font-weight:600;">YTD Q1</span>
+        <span style="font-size:13px;font-weight:700;">462</span>
+        <span style="font-size:10px;color:var(--text-light);">underlying beat vs AP</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">+389bn</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="border-left-color:#2D5282;">
+      <div class="kpi-label" style="color:#2D5282;">Adj EBIT Pre Bonus &#9733;</div>
+      <div class="kpi-value">1,268</div>
+      <div class="kpi-unit">FY FC3+9 &bull; VND Bn &nbsp;<span style="color:var(--accent);font-weight:700;">cleanest metric</span></div>
+      <div class="kpi-vars">
+        <div><span class="kpi-var-label">vs AP26 </span><span class="kpi-var-value positive">+9%</span></div>
+        <div><span class="kpi-var-label">vs A25 </span><span class="kpi-var-value positive">+19%</span></div>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;color:var(--text-light);text-transform:uppercase;font-weight:600;">YTD Q1</span>
+        <span style="font-size:13px;font-weight:700;">566</span>
+        <span style="font-size:10px;color:var(--text-light);">vs AP</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">+285%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary highlight -->
+  <div class="alert-box alert-green" style="margin-top:14px;">
+    <div class="alert-green-title">FC3+9 — Group headline</div>
+    <div class="alert-green-text">
+      Adj EBIT Pre Bonus <strong>1,268bn (+9% vs AP26, +19% YoY)</strong>; forecast stable vs FC2+10. VNGGames drives the beat; Instantia FV drag and GreenNode H2 uncertainty are the main downside risks.
+      vs BF26: NR broadly on track (12,521 vs 12,750, −2%); profitability trails BF (EBIT PB −25%, EBITDA −14%) — reflects post-BF structural changes (DC-STT decon, Instantia).
+    </div>
+  </div>
+
+  <!-- Group P&L chart block -->
+  <div class="chart-card">
+    <div class="chart-title">Group P&amp;L: FC3+9 vs AP26 &amp; A25 (YoY)</div>
+    <div class="chart-sub">Dark bar = YTD Q1 actual (stacked within full-year bar); AP26 (orange line) and A25 (gray dashed) as reference</div>
+    <div id="groupPLGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">Gross Bookings</span><span style="font-size:10px;color:var(--text-light);">VND bn</span></div>
+        <div style="position:relative;height:220px;"><canvas id="cGB"></canvas></div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">Net Revenue</span><span style="font-size:10px;color:var(--text-light);">VND bn</span></div>
+        <div style="position:relative;height:220px;"><canvas id="cNR"></canvas></div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">Adj EBITDA</span><span style="font-size:10px;color:var(--text-light);">VND bn</span></div>
+        <div style="position:relative;height:220px;"><canvas id="cEBITDA"></canvas></div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;"><span style="font-size:12px;font-weight:700;">Adj EBIT (PB)</span><span style="font-size:10px;color:var(--text-light);">VND bn</span></div>
+        <div style="position:relative;height:220px;"><canvas id="cEBIT"></canvas></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:18px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-light);flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:12px;background:#4A5568;display:inline-block;"></span>YTD Q1 Actual</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:12px;background:#E2E8F0;border:1px solid #CBD5E0;display:inline-block;"></span>FC3+9 FY</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:18px;height:3px;background:#E25A2C;display:inline-block;"></span>AP26</span>
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:18px;height:3px;background:#A0AEC0;display:inline-block;border-top:2px dashed #A0AEC0;"></span>A25</span>
+    </div>
+    <div style="overflow-x:auto;margin-top:14px;"><table id="grpTable"></table></div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="heatmap-wrapper">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+      <div>
+        <div class="heatmap-title">BU × Metric Performance Heatmap</div>
+        <div class="heatmap-sub" id="heatmapSub">Variance vs AP26 (FY FC3+9) — green = beats plan, red = misses</div>
+      </div>
+      <div class="tab-bar-sm" id="heatmapTabs" style="margin-bottom:0;">
+        <button class="tab-btn-sm active" onclick="switchHeatmap('ap26',this)">vs AP26</button>
+        <button class="tab-btn-sm" onclick="switchHeatmap('a25',this)">vs A25 (YoY)</button>
+        <button class="tab-btn-sm" onclick="switchHeatmap('bf26',this)">vs BF26</button>
+      </div>
+    </div>
+    <div class="heatmap" id="heatmapGrid"></div>
+    <div class="heatmap-legend">
+      <div class="heatmap-legend-item"><div class="heatmap-legend-swatch" style="background:#22543D"></div><span>Strong beat (+10%+)</span></div>
+      <div class="heatmap-legend-item"><div class="heatmap-legend-swatch" style="background:#48BB78"></div><span>Beat (+1 to +10%)</span></div>
+      <div class="heatmap-legend-item"><div class="heatmap-legend-swatch" style="background:#A0AEC0"></div><span>On plan (±1%)</span></div>
+      <div class="heatmap-legend-item"><div class="heatmap-legend-swatch" style="background:#F56565"></div><span>Miss (-1 to -10%)</span></div>
+      <div class="heatmap-legend-item"><div class="heatmap-legend-swatch" style="background:#9B2C2C"></div><span>Strong miss (-10%+)</span></div>
+    </div>
+  </div>
+
+  <!-- Overview narrative (from deck slide 8 & 9) -->
+  <div class="section-title" style="margin-top:28px;">
+    <h2>Overview Narrative</h2>
+    <p>Group-level commentary — YTD Q1 actual and FY FC3+9 full year</p>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">YTD Q1 2026 — Actual</div>
+      <div class="chart-sub">Headline: YTD delivered solid revenue growth and strong profitability, exceeding both prior year and AP26 targets</div>
+      <div class="narrative-section">
+        <div class="narrative-label">YoY — Revenue</div>
+        <div class="narrative-text">
+          <ul>
+            <li>VNGGames, ZA, Zalopay, ZPS recorded strong growth: +40%, +43%, +54%, +12% YoY respectively.</li>
+            <li>GreenNode −9% YoY — mainly from VRC deconsolidation (Nov 2025).</li>
+            <li>Others swung to YTD loss of −109bn: Instantia −84bn + DC deconsolidation −12bn.</li>
+          </ul>
+        </div>
+        <div class="narrative-label">YoY — Profit</div>
+        <div class="narrative-text">
+          <ul>
+            <li>VNGGames, ZA, Zalopay drive profit growth.</li>
+            <li>Others drag −122bn, mainly Instantia (−93bn, of which −86bn unrealized MTM loss).</li>
+            <li>GreenNode −3% YoY: GPU price decline + VRC deconsolidation.</li>
+          </ul>
+        </div>
+        <div class="narrative-label">vs AP26 — Revenue</div>
+        <div class="narrative-text">Revenue exceeded plan by 5%, mainly driven by VNGG (+13% vs AP in line with bookings growth); partly offset by Instantia (−103bn) and VNG DC deconsolidation (−17bn).</div>
+        <div class="narrative-label">vs AP26 — Profit</div>
+        <div class="narrative-text">Exceeded expectations primarily driven by VNGGames +315bn (+108% vs AP).</div>
+        <div class="narrative-label">NPAT</div>
+        <div class="narrative-text">Significant improvement vs prior year, but includes disposal gain +219bn from VNG DC deconsolidation (one-off, unplanned). <strong>Underlying NPAT excluding disposal: approx. +112bn.</strong></div>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Full Year FC3+9 — Forecast</div>
+      <div class="chart-sub">Headline: Full-year forecast beats A25 and AP26 across all P&L metrics; Group turns net profitable</div>
+      <div class="narrative-section">
+        <div class="narrative-label">YoY — Revenue</div>
+        <div class="narrative-text">All BUs grew except GreenNode and Others. VNGGames, ZA, Zalopay, ZPS demonstrate strong performance. GreenNode declined on VRC deconsolidation, Hydra nearing expiry, and GPU price pressure.</div>
+        <div class="narrative-label">YoY — Profit</div>
+        <div class="narrative-text">
+          <ul>
+            <li>VNGGames profit margin on bookings −1pp YoY: marketing-to-bookings ratio +1pp + higher royalty, channel, staff costs.</li>
+            <li>ZPS profit margin −3pp: marketing-to-bookings +7pp, reflecting international expansion strategy.</li>
+          </ul>
+        </div>
+        <div class="narrative-label">vs AP26 — Revenue &amp; Profit</div>
+        <div class="narrative-text">
+          <ul>
+            <li>Almost all BUs on plan. VNGGames outperforms (+5% revenue, +7% EBIT PB).</li>
+            <li>GreenNode +7% vs AP (ROUA accounting benefit + cost savings).</li>
+            <li>Others underperforms: DC-STT deconsolidation −115bn + Instantia −140bn.</li>
+          </ul>
+        </div>
+        <div class="narrative-label">NPAT</div>
+        <div class="narrative-text"><strong>Turns positive at 22bn</strong> (A25: −118bn, AP: −315bn). Includes disposal gain +219bn from VNG DC deconsolidation (one-off). <em>Note: Adj EBITDA includes ROUA +67bn — does NOT impact Adj EBIT Pre Bonus.</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= BU PERFORMANCE ============================= -->
+<div id="section-bu" class="section">
+  <div class="section-title">
+    <h2>BU Performance Breakdown</h2>
+    <p>FC3+9 by Business Unit | All figures in VND Billion unless stated</p>
+  </div>
+
+  <!-- View toggle -->
+  <div class="tab-bar" id="buViewTabs" style="margin-bottom:16px;">
+    <button class="tab-btn active" onclick="switchBuView('waterfall',this)">By Metric (Waterfall)</button>
+    <button class="tab-btn" onclick="switchBuView('bybu',this)">By BU (Detail)</button>
+  </div>
+
+  <!-- === WATERFALL VIEW === -->
+  <div id="buViewWaterfall">
+    <div class="controls-row" style="margin-bottom:12px;">
+      <div class="tab-bar-sm">
+        <button class="tab-btn-sm active" onclick="switchBuComp('ap26',this)">vs AP26</button>
+        <button class="tab-btn-sm" onclick="switchBuComp('a25',this)">vs A25 (YoY)</button>
+        <button class="tab-btn-sm" onclick="switchBuComp('bf26',this)">vs BF26</button>
+      </div>
+    </div>
+
+    <!-- 3 waterfalls in 1 row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:0;">
+      <div class="chart-card" style="margin-top:0;">
+        <div class="chart-title" id="buChartTitleNR" style="font-size:13px;">Movement — Revenue</div>
+        <div class="chart-sub" style="font-size:11px;">&nbsp;</div>
+        <div style="position:relative;height:360px;"><canvas id="chartBU_NR"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:0;">
+        <div class="chart-title" id="buChartTitleEB" style="font-size:13px;">Movement — Adj EBITDA</div>
+        <div class="chart-sub" style="font-size:11px;">&nbsp;</div>
+        <div style="position:relative;height:360px;"><canvas id="chartBU_EB"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:0;">
+        <div class="chart-title" id="buChartTitleEBIT" style="font-size:13px;">Movement — Adj EBIT (PB)</div>
+        <div class="chart-sub" style="font-size:11px;">&nbsp;</div>
+        <div style="position:relative;height:360px;"><canvas id="chartBU_EBIT"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Legend row -->
+    <div style="display:flex;gap:18px;align-items:center;margin:8px 0 4px 4px;font-size:11px;color:var(--text-light);">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:#E25A2C;border-radius:2px;display:inline-block;"></span>Base / End total</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:#5DAB3D;border-radius:2px;display:inline-block;"></span>Positive contribution</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:12px;height:12px;background:#94A3B8;border-radius:2px;display:inline-block;"></span>Negative contribution</span>
+    </div>
+
+    <!-- Detail table -->
+    <div class="chart-card">
+      <div class="chart-title">Detail Table</div>
+      <div style="overflow-x:auto;"><table id="buTable"></table></div>
+    </div>
+
+  <!-- BU Highlights (from deck narrative) -->
+  <div class="section-title" style="margin-top:24px;">
+    <h2>BU Performance Highlights</h2>
+    <p>Q1 YTD actual + FY FC3+9 commentary + So-what per BU</p>
+  </div>
+  <div class="grid-3" id="buInsightCards"></div>
+  </div><!-- /buViewWaterfall -->
+
+  <!-- === BY BU VIEW === -->
+  <div id="buViewByBU" style="display:none;">
+    <div class="controls-row">
+      <div class="tab-bar" id="buSelectTabs">
+        <button class="tab-btn active" onclick="switchBuSelect('VNGGames',this)">VNGGames</button>
+        <button class="tab-btn" onclick="switchBuSelect('ZPS',this)">ZPS</button>
+        <button class="tab-btn" onclick="switchBuSelect('ZA',this)">ZA</button>
+        <button class="tab-btn" onclick="switchBuSelect('Zalopay',this)">Zalopay</button>
+        <button class="tab-btn" onclick="switchBuSelect('GreenNode',this)">GreenNode</button>
+        <button class="tab-btn" onclick="switchBuSelect('Others',this)">Others</button>
+      </div>
+    </div>
+    <!-- BU KPI row -->
+    <div class="kpi-row" id="buKpiRow" style="margin-top:0;"></div>
+    <!-- BU mini charts -->
+    <div class="chart-card" style="margin-top:16px;">
+      <div class="chart-title" id="buDetailTitle">VNGGames — P&L Performance</div>
+      <div class="chart-sub">Dark = YTD Q1 actual (stacked inside bar) | AP26 <span style="color:#E25A2C">—</span> A25 <span style="color:#A0AEC0">- -</span></div>
+      <div id="buDetailGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;" id="buChartLabel0">Net Revenue</div>
+          <div style="position:relative;height:200px;"><canvas id="buMini0"></canvas></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Adj EBITDA</div>
+          <div style="position:relative;height:200px;"><canvas id="buMini1"></canvas></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Adj EBIT (PB)</div>
+          <div style="position:relative;height:200px;"><canvas id="buMini2"></canvas></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:18px;justify-content:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-light);flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:12px;background:var(--primary);display:inline-block;opacity:0.9;border-radius:2px;"></span>FC3+9 FY (bar)</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:12px;background:var(--primary);display:inline-block;opacity:0.33;border-radius:2px;"></span>YTD Q1 (stacked inside / lighter)</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:18px;height:3px;background:#E25A2C;display:inline-block;"></span>AP26</span>
+        <span style="display:flex;align-items:center;gap:6px;"><span style="width:18px;height:0;display:inline-block;border-top:2px dashed #A0AEC0;"></span>A25</span>
+      </div>
+    </div>
+    <!-- BU narrative card -->
+    <div class="chart-card" id="buNarrativeCard" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<!-- ============================= KEY TAKEAWAYS ============================= -->
+<div id="section-kt" class="section">
+  <div class="section-title">
+    <h2>Key Takeaways — FC3+9</h2>
+    <p>For SMT | April 2026</p>
+  </div>
+
+  <div class="kt-layout">
+    <!-- RECAP -->
+    <div class="kt-col kt-recap">
+      <div class="kt-col-header"><span class="kt-icon">↩</span> Recap from FC2+10</div>
+      <div class="kt-col-body">
+        <ul>
+          <li><span class="kt-bullet"></span><div>Group Adj EBIT PB <strong>1,266bn (+9% AP, +19% YoY)</strong> at FC2+10 — FC3+9 stable at 1,268bn. Broad-based delivery confirmed.</div></li>
+          <li><span class="kt-bullet"></span><div>Adj EBITDA inflated by <strong>ROUA +67bn</strong> (group-wide, ongoing from Feb 2026 — DC2 deconsolidation). EBITDA watch only; EBIT PB unaffected.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>GreenNode H2 pipeline escalated to ALERT:</strong> FC2+10 asked BU to confirm replacement contract (121bn Sep-Dec). No confirmation at FC3+9 — alert maintained.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>Instantia MTM risk:</strong> −86bn unrealized loss as of Q1. Business underperforming vs AP. Direction not yet decided.</div></li>
+          <li><span class="kt-bullet"></span><div>Corp pricing gap <strong>~11bn/year</strong> (DC-STT deconsolidation). Pricing decision still pending SMT resolution.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- THIS MONTH -->
+    <div class="kt-col kt-thismonth">
+      <div class="kt-col-header"><span class="kt-icon">📊</span> This Month (FC3+9 vs AP)</div>
+      <div class="kt-col-body">
+        <ul>
+          <li><span class="kt-bullet"></span><div><strong>YTD Adj EBIT Pre Bonus 566bn, +285% vs AP</strong> — broad-based outperformance: VNGGames (+127%), ZA (+93%), ZaloPay (+41%).</div></li>
+          <li><span class="kt-bullet"></span><div><strong>FY Group: 1,268bn (+9% AP / +19% YoY)</strong> — forecast stable vs FC2+10. Nearly all BUs at or above AP.</div></li>
+          <li><span class="kt-bullet"></span><div>ROUA <strong>+67bn inflates EBITDA only</strong>. Underlying EBITDA beat vs AP = +71bn. Zero impact on Adj EBIT Pre Bonus.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>VNGGames</strong> drives the outperformance: 1,702bn FY (+7% AP, +16% YoY). Costs overrun plan: royalty +1ppt, marketing +38bn, other costs +20bn.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>NPAT turns positive: 22bn</strong> (A25: −118bn, AP: −315bn) — includes one-off disposal gain +219bn from VNG DC decon. Underlying excl. disposal ≈ +112bn.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SO WHAT -->
+    <div class="kt-col kt-sowhat">
+      <div class="kt-col-header"><span class="kt-icon">💡</span> So What</div>
+      <div class="kt-col-body">
+        <ul>
+          <li><span class="kt-bullet"></span><div><strong>FY profit +8-9% vs AP looks comfortable — but H2 has very little room for downside.</strong></div></li>
+          <li><span class="kt-bullet"></span><div><strong>VNGGames H2:</strong> ~1,070bn GB from unproven new titles (zero Q1 actuals, 8 titles). Evergreen base (3,393bn) holds floor but doesn't grow. Any miss flows straight to bottom line.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>GreenNode:</strong> 121bn Sep-Dec replacement has no signed customer. If replacement fails: revenue gap ~140bn, EBIT PB trends toward −160bn. No upside scenario.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>ZA revenue mix shifting:</strong> High-margin OA shrinking permanently (−57bn); replaced by royalty-bearing VAS. Margin dilution structural, not cyclical.</div></li>
+          <li><span class="kt-bullet"></span><div><strong>H2 assumes everything goes right</strong> — no single-miss buffer. Current forecast has zero contingency margin.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CALL TO ACTION -->
+    <div class="kt-col kt-cta">
+      <div class="kt-col-header"><span class="kt-icon">⚡</span> Call to Action</div>
+      <div class="kt-col-body">
+        <div class="kt-cta-item alert-item">
+          <div class="kt-cta-tag alert-tag">🔔 ALERT — GreenNode</div>
+          <div class="kt-cta-body">Replacement pipeline (121bn, Sep-Dec) <strong>still unidentified</strong>. Potential −160bn swing to Group EBIT PB if unresolved by Q3. BU to provide confirmed contract or downside contingency plan by end of Q2.</div>
+        </div>
+        <div class="kt-cta-item action">
+          <div class="kt-cta-tag action">📋 ACTION — VNGGames H2</div>
+          <div class="kt-cta-body">~1,070bn forecast GB across 8 new titles, all zero Q1 actuals. BU to provide: (i) contingency plan with realistic downside scenario, (ii) buffer % per title by launch readiness, (iii) cost discipline commitment — royalty, marketing, channel costs must be controlled against revenue risk.</div>
+        </div>
+        <div class="kt-cta-item open">
+          <div class="kt-cta-tag open">⚠ OPEN ITEM — Instantia / A4B</div>
+          <div class="kt-cta-body">Business underperforms vs AP. A4B stopped HR project — <strong>not incorporated in FC3+9</strong>. SMT to confirm business direction and quantify total P&amp;L impact for FC4+8.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= APPENDIX ============================= -->
+<div id="section-app" class="section">
+  <div class="section-title">
+    <h2>Appendix</h2>
+    <p>Supplementary slides from the monthly deck not covered in other tabs</p>
+  </div>
+
+  <!-- A1: Games GB detail Slides 10-12 -->
+  <!-- Slide 10 -->
+  <div class="app-card">
+    <div class="app-card-title">Slide 10 — Games: Gross Bookings by Market &amp; Segment</div>
+    <div class="app-subtitle">3 groups × 3 bars (A25 / AP26 / FC3+9) · Each bar stacks Vietnam + Global</div>
+
+    <!-- Single legend row — colors match chart exactly -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--text-light);margin:0 0 16px;">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-flex;width:26px;height:10px;border-radius:2px;overflow:hidden;"><span style="flex:1;background:#B8BCC6;"></span><span style="flex:1;background:#D4D7DE;"></span></span>A25 (VN+GL)</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-flex;width:26px;height:10px;border-radius:2px;overflow:hidden;"><span style="flex:1;background:#E8855A;"></span><span style="flex:1;background:#F5C4AD;"></span></span>AP26 (VN+GL)</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-flex;width:26px;height:10px;border-radius:2px;overflow:hidden;"><span style="flex:1;background:#C84B0C;"></span><span style="flex:1;background:#F5A97F;"></span></span>FC3+9 (VN+GL)</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">YTD Q1 2026</div>
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Total Games: +48% YoY · +12% vs AP26</div>
+        <div style="position:relative;height:280px;"><canvas id="appSlide10YTD"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Full Year FC3+9</div>
+        <div style="font-size:11px;color:var(--text-light);margin-bottom:10px;">Total Games: +23% YoY · +5% vs AP26</div>
+        <div style="position:relative;height:280px;"><canvas id="appSlide10FY"></canvas></div>
+      </div>
+    </div>
+
+<div class="app-card">
+    <div class="app-card-title">Slide 11 — VNGGames: Top 10 Variances by Gross Bookings (YTD Q1)</div>
+    <div class="app-subtitle">YTD FC3+9 vs YTD A25 &amp; YTD AP26 — NEW (new launches) and OLD (existing titles) groups</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;">
+      <div>
+        <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">YTD FC26 vs YTD A25 : <span style="color:#276749;">+54%, c.762bn</span></div>
+        <div style="border:1px solid #E2E8F0;border-radius:4px;background:white;">
+          <div style="padding:8px 14px;color:#C84B0C;font-weight:700;font-size:12px;border-bottom:2px solid #C84B0C;">Top 10 Variances By Gross Bookings (B.VND)</div>
+          <div style="position:relative;height:380px;"><canvas id="appSlide11YoY"></canvas></div>
+        </div>
+      </div>
+      <div>
+        <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">YTD FC26 vs YTD AP26: <span style="color:#276749;">+25%, c.438bn</span></div>
+        <div style="border:1px solid #E2E8F0;border-radius:4px;background:white;">
+          <div style="padding:8px 14px;color:#C84B0C;font-weight:700;font-size:12px;border-bottom:2px solid #C84B0C;">Top 10 Variances By Gross Bookings (B.VND)</div>
+          <div style="position:relative;height:380px;"><canvas id="appSlide11AP"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: FY Top 10 Variances -->
+  <div class="app-card">
+    <div class="app-card-title">Slide 12 — VNGGames: Top 10 Variances by Gross Bookings (Full Year FC3+9)</div>
+    <div class="app-subtitle">FC26 vs A25 &amp; FC26 vs AP26 — NEW launches vs OLD titles</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px;">
+      <div>
+        <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">FC26 vs A25: <span style="color:#276749;">+21%, c.1,508bn</span></div>
+        <div style="border:1px solid #E2E8F0;border-radius:4px;background:white;">
+          <div style="padding:8px 14px;color:#C84B0C;font-weight:700;font-size:12px;border-bottom:2px solid #C84B0C;">Top 10 Variances By Gross Bookings (B.VND)</div>
+          <div style="position:relative;height:460px;"><canvas id="appSlide12YoY"></canvas></div>
+        </div>
+      </div>
+      <div>
+        <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">FC26 vs AP26: <span style="color:#276749;">+4%, c.309bn</span></div>
+        <div style="border:1px solid #E2E8F0;border-radius:4px;background:white;">
+          <div style="padding:8px 14px;color:#C84B0C;font-weight:700;font-size:12px;border-bottom:2px solid #C84B0C;">Top 10 Variances By Gross Bookings (B.VND)</div>
+          <div style="position:relative;height:460px;"><canvas id="appSlide12AP"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A2: YTD Revenue detail -->
+  <div class="app-card">
+    <div class="app-card-title">YTD Revenue Detail — All BUs (Slide 14)</div>
+    <div class="app-subtitle">YTD revenue grew 29% YoY, exceeded AP26 by 5% — VNGGames and ZA lead; Others swings negative on Instantia MTM</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">vs AP26 — YTD Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appYtdRevAP"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">vs A25 (YoY) — YTD Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appYtdRevYoY"></canvas></div>
+      </div>
+    </div>
+    <div class="narrative-section" style="margin-top:16px;">
+      <div class="narrative-label">YoY: Revenue +622bn (+29%)</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames:</strong> Bookings growth +762bn, offset by higher deferred revenue −219bn. Distribution cost ratio broadly unchanged.</li>
+          <li><strong>ZPS:</strong> In line with gross bookings growth.</li>
+          <li><strong>ZA:</strong> ZNS, Fiza, and VAS (Zcloud, zStyle, zBiz) drive growth.</li>
+          <li><strong>Zalopay:</strong> Growth across all streams — payment, VQR, Investment/Lending revenue.</li>
+          <li><strong>GreenNode:</strong> −25bn mainly from VRC deconsolidation (Nov 2025).</li>
+          <li><strong>Others:</strong> Instantia −84bn, DC-STT −12bn, A4B −2bn, Distribution/DC-Campus/others −15bn, cross-BU elim +5bn.</li>
+        </ul>
+      </div>
+      <div class="narrative-label">vs AP26: All BUs on track except VNGGames beats, Others misses</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames:</strong> Bookings +438bn, partly offset by higher DR −221bn (stronger Crossfire M + Play Together bookings); distribution ratio stable.</li>
+          <li><strong>Others miss:</strong> DC-STT decon −17bn + Instantia −103bn (Q1 market volatility + MTM revaluation losses on option/forward contracts) + A4B −3bn + Distribution −4bn.</li>
+        </ul>
+      </div>
+    </div><!-- /narrative-section -->
+  </div>
+
+  <!-- A3: YTD EBITDA detail -->
+  <div class="app-card">
+    <div class="app-card-title">YTD Profit Detail — Adj EBITDA &amp; EBIT Pre Bonus (Slides 15-16)</div>
+    <div class="app-subtitle">YTD performance showed significant improvement YoY and substantially exceeded AP. Adj EBIT Pre Bonus = cleanest metric, no ROUA distortion.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Adj EBIT PB vs AP26 — YTD Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appYtdEbitAP"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Adj EBIT PB vs A25 (YoY) — YTD Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appYtdEbitYoY"></canvas></div>
+      </div>
+    </div>
+    <div class="narrative-section" style="margin-top:16px;">
+      <div class="narrative-label">YoY: Adj EBITDA beat driven across all BUs except Others</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames +220bn:</strong> Higher net revenue +694bn (ex-DR); offset by royalty −258bn (Crossfire M +96bn@41%, Play Together +67bn@44%, Justice +56bn@33%, PUBG +42bn@51%), marketing −105bn, channel −55bn, staff −35bn.</li>
+          <li><strong>ZA +106bn:</strong> Strong revenue + cost leverage; lower server costs, sales commission optimizations.</li>
+          <li><strong>Zalopay +42bn:</strong> NR +67bn; offset by marketing −11bn, staff −13bn, bank charge −14bn, consulting −7bn, others +20bn.</li>
+          <li><strong>GreenNode −6bn:</strong> Staff cost optimization +18bn, partially offset by revenue decline −25bn.</li>
+          <li><strong>Others −122bn:</strong> Instantia −93bn (Q1 business slowdown + unrealized MTM revaluation losses).</li>
+        </ul>
+      </div>
+      <div class="narrative-label">vs AP26: +401bn (+145%); all BUs except Others</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames +315bn:</strong> Higher revenue +413bn (ex-DR); royalty −172bn, channel −41bn; offset by lower marketing +75bn, staff optimization +15bn, other expenses +19bn.</li>
+          <li><strong>ZA +63bn:</strong> Marginal revenue gain + server/commission/marketing/staff optimization.</li>
+          <li><strong>GreenNode +24bn:</strong> Cost discipline — server and Opex savings.</li>
+          <li><strong>HO Consol:</strong> Staff cost savings CP +9bn, corp events +5bn, unusual expenses +6bn, software/others +5bn.</li>
+          <li><strong>Others:</strong> Instantia −94bn loss; offset by DC deconsolidation turnaround +6bn.</li>
+        </ul>
+      </div>
+      <div class="narrative-label">Note</div>
+      <div class="narrative-text">ROUA +12bn inflates Group YTD EBITDA. <strong>Underlying beat vs AP excl. ROUA: +389bn.</strong> Adj EBIT Pre Bonus is unaffected by ROUA — use as the cleanest operational comparison.</div>
+    </div><!-- /narrative-section -->
+  </div>
+
+  <!-- A4: FY Revenue detail -->
+  <div class="app-card">
+    <div class="app-card-title">Full Year Revenue Detail — All BUs (Slide 18)</div>
+    <div class="app-subtitle">FY revenue +24% YoY; broadly on track vs AP except GreenNode (Hydra expiry) and Others (DC decon + Instantia)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">vs AP26 — FY Revenue Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appFyRevAP"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">vs A25 (YoY) — FY Revenue Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appFyRevYoY"></canvas></div>
+      </div>
+    </div>
+    <div class="narrative-section" style="margin-top:16px;">
+      <div class="narrative-label">YoY: Revenue +2,392bn (+24%)</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames:</strong> Net bookings +1,281bn (+21%), in line with gross bookings; distribution ratio stable. Grossed-up channel costs +125bn.</li>
+          <li><strong>ZA:</strong> ZNS, Fiza, VAS growth.</li>
+          <li><strong>Zalopay:</strong> All streams except ZaloPay Gateway Revenue.</li>
+          <li><strong>GreenNode:</strong> −133bn VRC decon (Nov 2025) + −177bn GPU Baremetal decline (Hydra nearing Jun 2026 expiry; replacement client onboards Sep 2026); partly offset by Cloud, IDP growth.</li>
+          <li><strong>Others:</strong> DC-STT −79bn, Instantia −82bn, Vsol −21bn, Distribution −35bn, A4B +9bn.</li>
+        </ul>
+      </div>
+      <div class="narrative-label">vs AP26: Broadly on track (+277bn / +2%)</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames:</strong> Bookings +309bn; grossed-up channel +41bn; higher DR −11bn.</li>
+          <li><strong>GreenNode −16bn:</strong> Tencent revenue removed (deal terminated) −21bn; partly offset by new CLS pipeline +5bn.</li>
+          <li><strong>Others −271bn:</strong> DC-STT decon −115bn (unplanned) + Instantia −140bn (Q1 slowdown −78bn + MTM −87bn) + A4B −3bn + MDS −10bn.</li>
+        </ul>
+      </div><!-- /narrative-section -->
+  </div>
+
+  <!-- A5: FY EBITDA / EBIT detail -->
+  <div class="app-card">
+    <div class="app-card-title">Full Year Profit Detail — Adj EBITDA &amp; EBIT Pre Bonus (Slides 19-20)</div>
+    <div class="app-subtitle">FY profit beats A25 and AP26; ROUA +67bn caveat in EBITDA only</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Adj EBIT PB vs AP26 — FY Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appFyEbitAP"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Adj EBIT PB vs A25 (YoY) — FY Waterfall</div>
+        <div style="position:relative;height:260px;"><canvas id="appFyEbitYoY"></canvas></div>
+      </div>
+    </div>
+    <div class="narrative-section" style="margin-top:16px;">
+      <div class="narrative-label">YoY: Key BU movements</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames +147bn:</strong> NR (ex-DR) +1,404bn; offset by royalty −480bn, marketing −308bn, staff −158bn, channel −122bn, others −84bn, office/admin −28bn.</li>
+          <li><strong>ZPS +35bn:</strong> NR +351bn; offset by marketing −226bn, channel −37bn, staff −38bn, office/admin −4bn.</li>
+          <li><strong>ZA +189bn:</strong> Revenue +511bn; offset by staff −230bn, channel −23bn, marketing −21bn, royalty −40bn, ad cost −6bn, others −2bn.</li>
+          <li><strong>Zalopay +218bn:</strong> NR +446bn; offset by staff −36bn, bank charge −78bn, consulting −69bn, marketing −10bn, tech −8bn, others −26bn; D&A addback benefit +7bn.</li>
+          <li><strong>GreenNode −233bn:</strong> VRC decon −64bn + Hydra GPU decline −175bn; partly offset by ROUA benefit +11bn (post-DC decon).</li>
+          <li><strong>HO −44bn:</strong> Revenue +123bn (AF3.0); offset by corp event/PR −66bn + other project expenses −105bn.</li>
+        </ul>
+      </div>
+      <div class="narrative-label">vs AP26: Key drivers</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>VNGGames +122bn:</strong> NR (ex-DR) +379bn, server savings +13bn; offset by royalty −176bn, marketing −40bn, channel −37bn.</li>
+          <li><strong>ZA +43bn:</strong> Revenue +47bn; sales commission optimization +110bn + D&A addback +35bn; offset by staff −105bn, royalty −22bn, lease −17bn, channel −5bn.</li>
+          <li><strong>GreenNode +32bn:</strong> Opex savings +22bn, staff optimization +9bn, ROUA benefit +11bn, other server savings +4bn; partly offset by lower revenue −16bn.</li>
+          <li><strong>Others:</strong> Mainly Instantia higher loss (−112bn) and lower DC-STT gain (−5bn from decon).</li>
+        </ul>
+      </div>
+      <div class="narrative-label">Note</div>
+      <div class="narrative-text"><strong>EBITDA includes ROUA +67bn</strong> reclassification (hosting opex → D&A post-VNG DC decon). Does NOT impact Adj EBIT Pre Bonus.</div>
+    </div><!-- /narrative-section -->
+  </div>
+
+  <!-- A6: Below-EBIT bridge -->
+  <div class="app-card">
+    <div class="app-card-title">EBIT Pre Bonus → NPAT Bridge (Slides 21-22)</div>
+    <div class="app-subtitle">FY Adj EBIT Pre Bonus 1,268bn → Operating Profit 257bn → NPAT 22bn</div>
+
+    <!-- FC3+9 NPAT bridge chart -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">FC3+9 — Adj EBIT PB → NPAT Bridge</div>
+        <div style="position:relative;height:230px;"><canvas id="appNpatBridgeFC"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">FC3+9 vs AP26 — NPAT Variance Bridge</div>
+        <div style="position:relative;height:230px;"><canvas id="appNpatBridgeVar"></canvas></div>
+      </div>
+    </div>
+
+    <div class="narrative-section" style="margin-top:16px;">
+      <div class="narrative-label">Below-EBIT items — FY FC3+9</div>
+      <div class="narrative-text">
+        <ul>
+          <li><strong>Finance costs −165bn:</strong> YTD actual −46bn. Forecast remaining −119bn (interest on loans −104bn + lease interest −15bn, down −13bn vs AP due to lower loan interest, partly offset by higher lease interest from DC decon).</li>
+          <li><strong>Share of loss of associates −41bn:</strong> Funding Society −40bn, DC-STT −29bn, Dayone −17bn, OCG −3bn; offset by NCV +39bn, VRC +9bn.</li>
+          <li><strong>Fair value gain +74bn:</strong> Mainly Instantia MTM derivatives +86bn (unplanned); offset by Haegin and Transcend equity valuation impact −12bn.</li>
+        </ul>
+      </div>
+      <div class="narrative-label">Key variance: FC3+9 vs AP26 NPAT bridge (+337bn total)</div>
+      <div class="narrative-text">
+        <ul>
+          <li>Business performance outperformance: <strong>+80bn</strong></li>
+          <li>Other operating income: Disposal of VNG DC +200bn (unplanned, one-off)</li>
+          <li>Fair value gain: Instantia MTM +86bn; offset by Haegin/Transcend −12bn → net +74bn (unplanned)</li>
+          <li>Share of loss of associates: higher loss vs AP −21bn (VNG DC decon, now 49% associate)</li>
+          <li><strong>NPAT 22bn vs AP −315bn = +337bn total variance</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- A7: Structural items reference -->
+  <div class="app-card">
+    <div class="app-card-title">Structural &amp; Accounting Items Reference</div>
+    <div class="app-subtitle">Items that distort headline metrics — required reading for any metric-to-metric comparison</div>
+    <table class="struc-table">
+      <thead><tr><th>Item</th><th>Amount</th><th>Metrics Affected</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>ROUA — Hosting DC reclassification</strong></td><td>+67bn favorable</td><td>EBITDA only (zero on EBIT PB)</td><td>Ongoing from Feb 2026. Hosting opex → D&A post VNG DC deconsolidation.</td></tr>
+        <tr><td><strong>DC-STT deconsolidation</strong></td><td>~11bn/year pricing gap</td><td>Revenue &amp; Corp cost</td><td>Effective Feb 2026. Pricing decision pending SMT.</td></tr>
+        <tr><td><strong>VRC deconsolidation (GreenNode)</strong></td><td>~25bn YTD revenue drag</td><td>Revenue (GreenNode)</td><td>Effective Nov 2025. Separate from DC decon.</td></tr>
+        <tr><td><strong>Instantia FV / MTM</strong></td><td>−86bn unrealized FY</td><td>Below EBIT (FV line)</td><td>Q2 ~60bn reversal expected but not in FC3+9.</td></tr>
+        <tr><td><strong>VNG DC disposal gain</strong></td><td>+219bn one-off</td><td>Other income → NPAT</td><td>One-off, unplanned. Not in AP26.</td></tr>
+        <tr><td><strong>SBP (Share-Based Payments)</strong></td><td>−405bn excluded</td><td>Adj metrics exclude SBP</td><td>Standard exclusion per Adj metric definition.</td></tr>
+        <tr><td><strong>VNGG Deferred Revenue / Dist Costs</strong></td><td>−593bn from FY Rev</td><td>Net Revenue (timing)</td><td>Normal mechanics. Adj metrics add back DR changes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div><!-- /section-app -->
+
+</div><!-- /content -->
+
+<div class="footer">
+  <span>VNG Group | Management Accounting | FC3+9 | April 2026 | CONFIDENTIAL | Prepared by FP&amp;A Corp</span>
+</div>
+
+<script>
+
+// ===== DATA =====
+const BU_CLR = {
+  VNGGames:'#E25A2C',    // VNGGame orange (from logo)
+  ZPS:     '#C84B0C',    // ZingPlay warm red-orange (fox icon)
+  ZA:      '#0068FF',    // Zalo blue (from logo)
+  Zalopay: '#27AE60',    // ZaloPay deep blue (from logo)
+  GreenNode:'#1A6B35',   // GreenNode dark green (darker than Zalopay blue)
+  'HO Consol':'#4A5568',
+  Others:  '#718096'
+};
+const BUS_MAIN = ['VNGGames','ZPS','ZA','Zalopay','GreenNode','Others'];
+const BUS_ALL  = ['VNGGames','ZPS','ZA','Zalopay','GreenNode','Others','HO Consol'];
+
+// FY data: [A25, AP26, FC2+10, FC3+9]
+// BU order: VNGGames, ZPS, ZA, Zalopay, GreenNode, Others, HO Consol
+const DATA = {
+  Revenue: {
+    fc39:[7402,1360,2233, 969, 842, 124, 133],
+    a25: [5990,1009,1722, 523,1108, 338,   9],
+    q1:  [2079, 300, 531, 229, 246,  42,  30],
+    ap26:[7034,1368,2186, 918, 858, 395, 133],
+    bf26:[7100,1370,2300,1000,1100, 395, 133],  // BF26 actual from file
+  },
+  'Adj EBITDA': {
+    fc39:[1819, 239, 313,-261, 474,-147,-624],
+    a25: [1671, 203, 124,-479, 707, -86,-581],
+    q1:  [ 462,  67, 140,  50,  10, -37,-200],
+    ap26:[1697, 238, 270,-268, 442, -37,-656],
+    bf26:[1870, 260, 460,-245, 520, -45,-675],  // BF26 actual from file
+  },
+  'Adj EBIT (PB)': {
+    fc39:[1702, 267, 321,-221, -22,-155,-691],
+    a25: [1473, 235, 244,-430, 194,-136,-659],
+    q1:  [ 612,  67, 167,  42, -10, -39,-200],
+    ap26:[1586, 268, 322,-221, -37,-102,-712],
+    bf26:[1800, 300, 500,-200,  50,-100,-705],  // BF26 actual from file
+  }
+};
+// Group totals [A25, AP26, FC2+10, FC3+9]
+const GROUP = {
+  GB:     [8162, 9707, 9994,10016],
+  NR:     [10129,12244,12488,12521],
+  EBITDA: [1703, 1742, 1890, 1880],
+  EBIT:   [1062, 1159, 1266, 1268]
+};
+// BF26 Group totals (from deck slide 3)
+const GROUP_BF = { GB:9850, NR:12750, EBITDA:2200, EBIT:1700 }; // BF26 confirmed from file
+// YTD Q1 group
+const YTD = { GB:2166, NR:2143, EBITDA:462, EBIT:566 };
+
+const charts = {};
+let curMetric = 'Revenue';
+let curComp   = 'ap26';
+
+// ===== HELPERS =====
+function fmtBn(n){return n!=null?n.toLocaleString('en-US',{maximumFractionDigits:0}):'';}
+function pct(a,b){return b===0?null:Math.round((a-b)/Math.abs(b)*100);}
+function varSpan(v){
+  if(v===null)return '<span style="color:var(--muted)">nm</span>';
+  const cls=v>=0?'positive':'negative';
+  return `<span class="${cls}">${v>0?'+':''}${v}%</span>`;
+}
+function heatBg(v){
+  if(v===null)return '#EDF2F7';
+  if(v>10)return '#22543D'; if(v>1)return '#48BB78';
+  if(v>=-1)return '#A0AEC0'; if(v>=-10)return '#F56565';
+  return '#9B2C2C';
+}
+
+// ===== MINI CHARTS (stacked: YTD dark + remainder light) =====
+function buildMiniChart(id, fcVal, ytdVal, apVal, a25Val, maxY){
+  const ctx = document.getElementById(id).getContext('2d');
+  const remainder = Math.max(0, fcVal - ytdVal);
+
+  const markerPlugin = {
+    id:'marker_'+id,
+    afterDatasetsDraw(chart){
+      const {ctx, scales} = chart;
+      const xScale = scales.x, yScale = scales.y;
+      const xC = xScale.getPixelForValue(0);
+      const bW = Math.min((xScale.right-xScale.left)*0.55, 70);
+      const xL = xC-bW/2, xR = xC+bW/2;
+      const apY  = yScale.getPixelForValue(apVal);
+      const a25Y = yScale.getPixelForValue(a25Val);
+      const fcY  = yScale.getPixelForValue(fcVal);
+      const ytdY = yScale.getPixelForValue(ytdVal);
+      const baseY= yScale.getPixelForValue(0);
+
+      // AP26 line (orange)
+      ctx.fillStyle='#E25A2C'; ctx.fillRect(xL-4,apY-1.5,bW+8,3);
+      // A25 dashed line (gray)
+      ctx.save(); ctx.strokeStyle='#A0AEC0'; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(xL-4,a25Y); ctx.lineTo(xR+4,a25Y); ctx.stroke(); ctx.restore();
+
+      // Labels right of bar
+      ctx.font='bold 9px Segoe UI,sans-serif'; ctx.textAlign='left';
+      const gap=Math.abs(apY-a25Y);
+      if(gap<12){
+        ctx.fillStyle='#E25A2C'; ctx.fillText(fmtBn(apVal), xR+6, apY-3);
+        ctx.fillStyle='#A0AEC0'; ctx.fillText(fmtBn(a25Val),xR+6, a25Y+10);
+      } else {
+        ctx.fillStyle='#E25A2C'; ctx.fillText(fmtBn(apVal), xR+6, apY+4);
+        ctx.fillStyle='#A0AEC0'; ctx.fillText(fmtBn(a25Val),xR+6, a25Y+4);
+      }
+      // FC value above bar
+      ctx.fillStyle='#1A202C'; ctx.font='bold 11px Segoe UI,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(fmtBn(fcVal), xC, fcY-6);
+      // YTD value inside dark portion
+      const dH = baseY-ytdY;
+      if(dH>20){
+        ctx.fillStyle='white'; ctx.font='bold 9px Segoe UI,sans-serif'; ctx.textAlign='center';
+        ctx.fillText(fmtBn(ytdVal),xC,ytdY+13);
+      }
+    }
+  };
+
+  charts[id] = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:[''],
+      datasets:[
+        {data:[ytdVal], backgroundColor:'#4A5568', stack:'s', barPercentage:0.52, categoryPercentage:0.85},
+        {data:[remainder], backgroundColor:'#E2E8F0', stack:'s', barPercentage:0.52, categoryPercentage:0.85}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:22,left:4,right:62,bottom:4}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:()=>id,
+          label:()=>[`FC3+9: ${fmtBn(fcVal)} bn`,`YTD Q1: ${fmtBn(ytdVal)} bn`,`AP26: ${fmtBn(apVal)} bn`,`A25: ${fmtBn(a25Val)} bn`]
+        }}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{display:false},border:{display:false}},
+        y:{stacked:true,max:maxY,min:0,display:false,grid:{display:false},border:{display:false}}
+      }
+    },
+    plugins:[markerPlugin]
+  });
+}
+
+function buildGroupCharts(){
+  buildMiniChart('cGB',   10016, 2166, 9707, 8162, 11500);
+  buildMiniChart('cNR',   12521, 2143,12244,10129, 14000);
+  buildMiniChart('cEBITDA',1880,  462, 1742, 1703,  2400);
+  buildMiniChart('cEBIT', 1268,  566, 1159, 1062,  1600);
+}
+
+// ===== GROUP TABLE =====
+function buildGroupTable(){
+  const rows=[
+    ['Gross Bookings', GROUP.GB[0], GROUP.GB[1], GROUP.GB[3], pct(GROUP.GB[3],GROUP.GB[1]), pct(GROUP.GB[3],GROUP.GB[0])],
+    ['Net Revenue',    GROUP.NR[0], GROUP.NR[1], GROUP.NR[3], pct(GROUP.NR[3],GROUP.NR[1]), pct(GROUP.NR[3],GROUP.NR[0])],
+    ['Adj EBITDA',     GROUP.EBITDA[0],GROUP.EBITDA[1],GROUP.EBITDA[3],pct(GROUP.EBITDA[3],GROUP.EBITDA[1]),pct(GROUP.EBITDA[3],GROUP.EBITDA[0])],
+    ['Adj EBIT (PB)',  GROUP.EBIT[0], GROUP.EBIT[1], GROUP.EBIT[3], pct(GROUP.EBIT[3],GROUP.EBIT[1]), pct(GROUP.EBIT[3],GROUP.EBIT[0])],
+  ];
+  const h=`<tr><th>Metric</th><th>A25</th><th>AP26</th><th>FC3+9 FY</th><th>vs AP26</th><th>vs A25 YoY</th></tr>`;
+  const r=rows.map(([m,a25,ap,fc,vap,va25])=>`<tr><td>${m}</td><td>${fmtBn(a25)}</td><td>${fmtBn(ap)}</td><td><strong>${fmtBn(fc)}</strong></td><td>${varSpan(vap)}</td><td>${varSpan(va25)}</td></tr>`).join('');
+  document.getElementById('grpTable').innerHTML=h+r;
+}
+
+// ===== HEATMAP =====
+function buildHeatmap(bench){
+  bench = bench || 'ap26';
+  const subMap = {
+    ap26: 'Variance vs AP26 (FY FC3+9) — green = beats plan, red = misses',
+    a25:  'Variance vs A25 YoY (FY FC3+9) — green = YoY improvement, red = decline',
+    bf26: 'Variance vs BF26 Best Forecast (FY FC3+9) — green = beats BF, red = misses'
+  };
+  const el = document.getElementById('heatmapSub');
+  if(el) el.textContent = subMap[bench];
+
+  const metrics=['Gross Bookings','Net Revenue','Adj EBITDA','Adj EBIT (PB)'];
+  // vs AP26 (hardcoded from deck — avoids noise from placeholder BF estimates)
+  const hmAP={
+    VNGGames:[4, 5, 7, 7],
+    ZPS:     [0,-1, 0, 0],
+    ZA:      [null, 2, 16, 0],
+    Zalopay: [null, 6, 2,  0],
+    GreenNode:[null,-2, 7, 41],
+    Others:  [null,-69,null,null]
+  };
+  // vs A25 YoY — computed from DATA
+  const hmA25={};
+  BUS_MAIN.forEach((bu,i)=>{
+    const gbBase = DATA['Revenue'].a25[i];
+    const nrBase = DATA['Revenue'].a25[i];
+    const ebBase = DATA['Adj EBITDA'].a25[i];
+    const epBase = DATA['Adj EBIT (PB)'].a25[i];
+    hmA25[bu] = [
+      (bu==='VNGGames'||bu==='ZPS') && gbBase ? Math.round((DATA['Revenue'].fc39[i]-gbBase)/Math.abs(gbBase)*100) : null,
+      nrBase ? Math.round((DATA['Revenue'].fc39[i]-nrBase)/Math.abs(nrBase)*100) : null,
+      ebBase ? Math.round((DATA['Adj EBITDA'].fc39[i]-ebBase)/Math.abs(ebBase)*100) : null,
+      epBase ? Math.round((DATA['Adj EBIT (PB)'].fc39[i]-epBase)/Math.abs(epBase)*100) : null,
+    ];
+  });
+  // vs BF26 — computed from DATA.bf26 (BU-level placeholders until upload)
+  const hmBF={};
+  BUS_MAIN.forEach((bu,i)=>{
+    const gbBase = DATA['Revenue'].bf26[i];
+    const nrBase = DATA['Revenue'].bf26[i];
+    const ebBase = DATA['Adj EBITDA'].bf26[i];
+    const epBase = DATA['Adj EBIT (PB)'].bf26[i];
+    hmBF[bu] = [
+      (bu==='VNGGames'||bu==='ZPS') && gbBase ? Math.round((DATA['Revenue'].fc39[i]-gbBase)/Math.abs(gbBase)*100) : null,
+      nrBase ? Math.round((DATA['Revenue'].fc39[i]-nrBase)/Math.abs(nrBase)*100) : null,
+      ebBase ? Math.round((DATA['Adj EBITDA'].fc39[i]-ebBase)/Math.abs(ebBase)*100) : null,
+      epBase ? Math.round((DATA['Adj EBIT (PB)'].fc39[i]-epBase)/Math.abs(epBase)*100) : null,
+    ];
+  });
+
+  const hmVals = bench==='ap26' ? hmAP : bench==='a25' ? hmA25 : hmBF;
+  let html=`<div class="heatmap-row"><div class="heatmap-label"></div>${metrics.map(m=>`<div class="heatmap-header">${m}</div>`).join('')}</div>`;
+  BUS_MAIN.forEach(bu=>{
+    html+=`<div class="heatmap-row"><div class="heatmap-label">${bu}</div>`;
+    hmVals[bu].forEach(v=>{
+      const bg=heatBg(v), txt=v===null?'n/a':(v>0?'+':'')+v+'%';
+      html+=`<div class="heatmap-cell${v===null?' empty':''}" style="background:${bg}">${txt}</div>`;
+    });
+    html+=`</div>`;
+  });
+  document.getElementById('heatmapGrid').innerHTML=html;
+}
+
+function switchHeatmap(bench, btn){
+  document.querySelectorAll('#heatmapTabs .tab-btn-sm').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildHeatmap(bench);
+}
+
+// ===== WATERFALL BU CHART (3 metrics at once) =====
+function buildSingleWaterfall(canvasId, metricKey, benchLabel, baseIdx, titleElemId) {
+  const key = metricKey;
+  const d = DATA[key];
+  const base = baseIdx===1 ? d.ap26 : baseIdx===4 ? d.bf26 : d.a25;
+  const grpKey = {Revenue:'NR','Adj EBITDA':'EBITDA','Adj EBIT (PB)':'EBIT'}[key];
+  const grpBase = baseIdx===4 ? GROUP_BF[grpKey] : GROUP[grpKey][baseIdx];
+  const grpFC   = GROUP[grpKey][3];
+  const netDelta = grpFC - grpBase;
+  const netPct = grpBase!==0 ? Math.round(netDelta/Math.abs(grpBase)*100) : 0;
+
+  // BUs + reconciliation — Elim merged into Others
+  const BUS_ALL7 = ['VNGGames','ZPS','ZA','Zalopay','GreenNode','Others','HO Consol'];
+  const buDeltas7 = BUS_ALL7.map((bu,i)=>(d.fc39[i]||0)-(base[i]||0));
+  const elimDelta = netDelta - buDeltas7.reduce((s,v)=>s+v,0);
+  buDeltas7[5] += elimDelta;
+  const bridgeLabels = [...BUS_ALL7];
+  const bridgeDeltas = [...buDeltas7];
+  const nBridge = bridgeDeltas.length;
+
+  const topIdx  = bridgeDeltas.indexOf(Math.max(...bridgeDeltas));
+  const dragIdx = bridgeDeltas.indexOf(Math.min(...bridgeDeltas));
+
+  // Y range
+  let _running = grpBase;
+  const _runPos = [grpBase];
+  bridgeDeltas.forEach(d=>{ _running+=d; _runPos.push(_running); });
+  _runPos.push(grpFC);
+  const _rMin = Math.min(..._runPos);
+  const _rMax = Math.max(..._runPos);
+  const _span = Math.max(_rMax - _rMin, Math.abs(grpFC-grpBase), 1);
+  const yMin = _rMin - _span * 0.08;
+  const yMax = _rMax + _span * 0.30;
+
+  const N = nBridge + 2; // base + bridges + end
+  const labels = [benchLabel, ...bridgeLabels, 'FC3+9'];
+
+  // Single stack — only bridge bars (null at total positions 0 and N-1)
+  const floatArr  = Array(N).fill(null);
+  const bridgeArr = Array(N).fill(null);
+  const bColorArr = Array(N).fill('transparent');
+
+  let running = grpBase;
+  for(let i=1; i<=nBridge; i++){
+    const delta = bridgeDeltas[i-1];
+    floatArr[i]  = delta>=0 ? running : running+delta;
+    bridgeArr[i] = Math.abs(delta);
+    bColorArr[i] = delta===0?'#CBD5E0': delta>0?'#5DAB3D':'#94A3B8';
+    running += delta;
+  }
+
+  const wfPlugin = {
+    id: 'wfP_'+canvasId,
+    afterDatasetsDraw(chart){
+      const {ctx, scales} = chart;
+      const yS = scales.y, xS = scales.x;
+      const meta0 = chart.getDatasetMeta(0); // float
+      const meta1 = chart.getDatasetMeta(1); // bridge
+
+      // Draw total bars manually (base and FC3+9)
+      const drawTotal = (pos, val, color) => {
+        // Get bar x and width from a bridge bar (same stack, same category width)
+        // Use a bridge bar as reference for width
+        let refBar = null;
+        for(let i=1; i<=nBridge; i++){
+          if(meta1.data[i] && Math.abs(bridgeDeltas[i-1])>0){ refBar = meta1.data[i]; break; }
+        }
+        if(!refBar) return;
+        const barW = refBar.width;
+        const barX = xS.getPixelForValue(pos) - barW/2;
+        const yTop = yS.getPixelForValue(val);
+        const yBottom = yS.getPixelForValue(yMin); // chart bottom
+
+        ctx.save();
+        ctx.fillStyle = color;
+        // Rounded top corners
+        const r = 2;
+        const h = yBottom - yTop;
+        if(h <= 0){ ctx.restore(); return; }
+        ctx.beginPath();
+        ctx.moveTo(barX + r, yTop);
+        ctx.lineTo(barX + barW - r, yTop);
+        ctx.quadraticCurveTo(barX + barW, yTop, barX + barW, yTop + r);
+        ctx.lineTo(barX + barW, yBottom);
+        ctx.lineTo(barX, yBottom);
+        ctx.lineTo(barX, yTop + r);
+        ctx.quadraticCurveTo(barX, yTop, barX + r, yTop);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Value label above bar
+        ctx.save();
+        ctx.textAlign='center';
+        ctx.font='bold 12px Segoe UI,sans-serif';
+        ctx.fillStyle='#7B341E';
+        ctx.fillText(fmtBn(val), barX + barW/2, yTop - 7);
+        // % inside bar
+        const barH = yBottom - yTop;
+        if(pos === N-1 && barH > 22){
+          ctx.font='bold 10px Segoe UI,sans-serif';
+          ctx.fillStyle='white';
+          ctx.fillText((netPct>=0?'+':'')+netPct+'%', barX + barW/2, yTop + barH*0.55);
+        }
+        ctx.restore();
+      };
+
+      drawTotal(0,   grpBase, '#E25A2C');
+      drawTotal(N-1, grpFC,   '#E25A2C');
+
+      // Value labels on bridge bars
+      ctx.save(); ctx.textAlign='center';
+      for(let i=1; i<=nBridge; i++){
+        const bar = meta1.data[i]; if(!bar) continue;
+        const delta = bridgeDeltas[i-1];
+        if(Math.abs(delta) < 1) continue;
+        const clr = delta>0 ? '#276749' : '#4A5568';
+        ctx.font='bold 10px Segoe UI,sans-serif';
+        ctx.fillStyle = clr;
+        ctx.fillText((delta>0?'+':'')+fmtBn(delta), bar.x, bar.y - 5);
+      }
+      ctx.restore();
+    }
+  };
+
+  // Update title
+  const metricName={Revenue:'Revenue','Adj EBITDA':'Adj EBITDA','Adj EBIT (PB)':'Adj EBIT (PB)'}[key];
+  if(titleElemId){
+    const bn = curComp==='ap26'?'AP26':curComp==='bf26'?'BF26':'A25';
+    const el = document.getElementById(titleElemId);
+    if(el){
+      const titleColor = curComp==='ap26'?'#E25A2C':curComp==='bf26'?'#C97328':'#A0AEC0';
+      el.innerHTML=`Movement of <strong style="color:#E25A2C;">FC3+9</strong> vs <strong style="color:${titleColor};">${bn}</strong> — ${metricName} (VND bn)`;
+      const card = el.closest('.chart-card');
+      if(card){
+        let sub = card.querySelector('.chart-sub');
+        if(!sub){ sub=document.createElement('div'); sub.className='chart-sub'; el.after(sub); }
+        const pStr=(netPct>=0?'+':'')+netPct+'%';
+        const dStr=(netDelta>=0?'+':'')+fmtBn(netDelta);
+        sub.innerHTML=`Net Δ <strong style="color:${netDelta>=0?'#276749':'#E25A2C'}">${dStr} (${pStr})</strong> &nbsp;·&nbsp; Top: ${bridgeLabels[topIdx]} ${bridgeDeltas[topIdx]>=0?'+':''}${fmtBn(bridgeDeltas[topIdx])} &nbsp;·&nbsp; Drag: ${bridgeLabels[dragIdx]} ${fmtBn(bridgeDeltas[dragIdx])}`;
+      }
+    }
+  }
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if(charts[canvasId]) charts[canvasId].destroy();
+
+  charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        // ds0: invisible float
+        { data: floatArr,  backgroundColor:'transparent', borderColor:'transparent',
+          stack:'wf', barPercentage:0.85, categoryPercentage:0.90 },
+        // ds1: bridge bars (single stack = full category width)
+        { data: bridgeArr, backgroundColor:bColorArr,
+          stack:'wf', barPercentage:0.85, categoryPercentage:0.90,
+          borderRadius:2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top:28, left:8, right:8, bottom:0 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (c2) => {
+          const i=c2.dataIndex, ds=c2.datasetIndex;
+          if(ds===0) return null;
+          if(i===0) return `${benchLabel}: ${fmtBn(grpBase)}`;
+          if(i===N-1) return `FC3+9: ${fmtBn(grpFC)}`;
+          if(i>=1 && i<=nBridge){
+            const delta=bridgeDeltas[i-1];
+            return `${bridgeLabels[i-1]}: ${delta>=0?'+':''}${fmtBn(delta)}`;
+          }
+          return null;
+        }}}
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{font:{size:10}} },
+        y: { display:false, min:yMin, max:yMax, stacked:true, grid:{display:false} }
+      }
+    },
+    plugins: [wfPlugin]
+  });
+}
+
+function buildAllWaterfalls(){
+  const bi = curComp==='ap26'?1:curComp==='bf26'?4:0;  // 0=a25, 1=ap26, 4=bf26 (DATA array index)
+  const bn = curComp==='ap26'?'AP26':curComp==='bf26'?'BF26':'A25';
+  buildSingleWaterfall('chartBU_NR',  'Revenue',       bn, bi, 'buChartTitleNR');
+  buildSingleWaterfall('chartBU_EB',  'Adj EBITDA',    bn, bi, 'buChartTitleEB');
+  buildSingleWaterfall('chartBU_EBIT','Adj EBIT (PB)', bn, bi, 'buChartTitleEBIT');
+}
+
+// ===== BU TABLE =====
+function buildBuTable(){
+  const key=curMetric, d=DATA[key];
+  const benchLabel=curComp==='ap26'?'AP26':curComp==='bf26'?'BF26':'A25';
+  const base=curComp==='ap26'?d.ap26:curComp==='bf26'?d.bf26:d.a25;
+  const h=`<tr><th>BU</th><th>A25</th><th>AP26</th><th>BF26</th><th>FC3+9</th><th>vs AP26</th><th>vs BF26</th><th>vs A25 YoY</th></tr>`;
+  let r=BUS_ALL.map((bu,i)=>{
+    const dot=`<span class="bu-dot" style="background:${BU_CLR[bu]||'#718096'}"></span>`;
+    const bf = d.bf26 ? fmtBn(d.bf26[i]) : '—';
+    const vBF = d.bf26 ? varSpan(pct(d.fc39[i],d.bf26[i])) : '—';
+    return `<tr><td>${dot}${bu}</td><td>${fmtBn(d.a25[i])}</td><td>${fmtBn(d.ap26[i])}</td><td>${bf}</td><td><strong>${fmtBn(d.fc39[i])}</strong></td><td>${varSpan(pct(d.fc39[i],d.ap26[i]))}</td><td>${vBF}</td><td>${varSpan(pct(d.fc39[i],d.a25[i]))}</td></tr>`;
+  }).join('');
+  const grpKey={Revenue:'NR','Adj EBITDA':'EBITDA','Adj EBIT (PB)':'EBIT'}[key];
+  const g=GROUP[grpKey];
+  r+=`<tr class="total-row"><td>GROUP TOTAL</td><td>${fmtBn(g[0])}</td><td>${fmtBn(g[1])}</td><td>${fmtBn(GROUP_BF[grpKey])}</td><td><strong>${fmtBn(g[3])}</strong></td><td>${varSpan(pct(g[3],g[1]))}</td><td>${varSpan(pct(g[3],GROUP_BF[grpKey]))}</td><td>${varSpan(pct(g[3],g[0]))}</td></tr>`;
+  document.getElementById('buTable').innerHTML=h+r;
+}
+
+
+function switchBuComp(c,btn){
+  curComp=c;
+  document.querySelectorAll('.tab-bar-sm .tab-btn-sm').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildAllWaterfalls(); buildBuTable();
+}
+
+// ===== BU INSIGHT CARDS =====
+const BU_NOTES = {
+  VNGGames:{
+    color:'#E25A2C', statusLabel:'FY +7% AP / +16% YoY', statusBg:'#FFF5F5', statusClr:'#9B2C2C',
+    q1:'Group best performer. YTD Adj EBIT PB <strong>612bn vs AP 269bn (+128%)</strong>. Bookings +438bn vs AP: Justice +242bn, Crossfire M +178bn, PUBGm +74bn; Circle Tribe −123bn, Samkok −56bn offset.',
+    fy:'FY 1,702bn (+7% AP). Cost overrun vs AP: royalty +1ppt, marketing +38bn, other costs +20bn. Variable costs locked while H2 revenue unconfirmed.',
+    yoy:'FY +16% YoY (+229bn). Margin on bookings −1pp YoY from higher royalty, marketing, channel and staff costs.',
+    sw:'H2 depends on ~1,070bn from 8 unproven titles (zero Q1 actuals). Any revenue miss flows straight to EBIT — no buffer.'
+  },
+  ZPS:{
+    color:'#C84B0C', statusLabel:'FY = AP / +14% YoY', statusBg:'#FFF5F5', statusClr:'#7B2009',
+    q1:'Adj EBIT PB +14bn (+26% vs AP) on flat bookings. Favorable mix (Board +17bn) and Q1 cash comp savings −7bn vs AP.',
+    fy:'FY Adj EBIT PB 267bn = AP exactly. HC increases H2, reversing Q1 save. FY profile AP-anchored.',
+    yoy:'FY +14% YoY (267bn vs 235bn). Revenue +346bn YoY; offset by marketing ramp-up for international expansion (+7pp marketing-to-bookings).',
+    sw:'On plan but tight. Two open variables: international trend (downside ~30bn) and HC discipline (upside ~15bn).'
+  },
+  ZA:{
+    color:'#0068FF', statusLabel:'FY ~flat AP / +31% YoY', statusBg:'#EBF4FF', statusClr:'#1A56DB',
+    q1:'NR +8% vs AP. Adj EBIT PB +36bn vs AP. All streams (Online Ads, Business Services, VAS) ahead. Strong start.',
+    fy:'NR +47bn vs AP, but costs absorb almost all: royalty +22bn, lease +15bn, others +10bn. Adj EBIT PB broadly flat vs AP despite revenue beat.',
+    yoy:'FY +31% YoY (321bn vs 244bn). ZNS, Fiza, new VAS drive growth. OA structurally declining (−57bn vs AP) — mix shift to royalty-bearing VAS dilutes margin.',
+    sw:'Revenue growing, margin not. OA decline is structural, not cyclical. Operating leverage assumed in AP is not materializing.'
+  },
+  Zalopay:{
+    color:'#27AE60', statusLabel:'FY = AP / +49% YoY', statusBg:'#F0FFF4', statusClr:'#1A7A46',
+    q1:'NR +24bn (lower incentive cost). Adj EBIT PB +37bn on bank charge optimization and deferred consulting.',
+    fy:'NR +51bn vs AP; marketing +51bn aligned — margin-neutral scaling. Adj EBIT PB flat vs AP.',
+    yoy:'FY +49% YoY improvement (−221bn vs −430bn — toward breakeven). Lending Tech 5x YoY reshaping mix positively.',
+    sw:'Most disciplined BU. On plan and consistent. Lending growth trajectory is positive.'
+  },
+  GreenNode:{
+    color:'#1A6B35', statusLabel:'FY +15% AP / −11% YoY', statusBg:'#F0FFF4', statusClr:'#1A6B35',
+    q1:'NR 246bn = AP. AI/GPU + Cloud internal miss offset by Cloud external beat. Cost −26bn vs AP from AP over-planning + operational savings.',
+    fy:'NR −2% vs AP; Adj EBIT PB −22bn (+15bn vs AP via cost only). Hydra expires Jun 2026. FY assumes 121bn replacement (Sep-Dec) with NO signed customer.',
+    yoy:'FY −11% YoY (EBIT −22bn vs +194bn). VRC decon + GPU pricing pressure. Cost saves partially offset.',
+    sw:'🔔 ALERT: 121bn Sep-Dec replacement has no contract. If replacement fails: ~140bn revenue gap, EBIT toward −160bn. Server depreciation fixed from July.'
+  },
+  Others:{
+    color:'#718096', statusLabel:'FY −53% AP / −14% YoY', statusBg:'#F7FAFC', statusClr:'#4A5568',
+    q1:'NR 42bn vs AP 99bn. Instantia MTM −86bn unrealized; DC-STT decon −12bn; A4B underperformance.',
+    fy:'NR 124bn vs AP 395bn (−271bn / −69%). Adj EBIT PB −155bn vs AP −102bn. DC-STT decon removes ~120bn structural revenue; INC core business −150bn vs AP.',
+    yoy:'FY −14% YoY (EBIT −155bn vs −136bn). Both DC decon and Instantia underperformance are structural.',
+    sw:'Gap is structural and not closeable operationally. Two stories: DC-STT decon (structural one-time) + INC business decline (needs SMT direction decision).'
+  }
+};
+
+function buildBuInsightCards(){
+  const html=BUS_MAIN.map(bu=>{
+    const n=BU_NOTES[bu];
+    return `<div class="bu-card" style="border-top-color:${n.color}">
+      <div class="bu-card-header">
+        <div class="bu-card-name" style="color:${n.color}">${bu}</div>
+        <div class="bu-card-status" style="background:${n.statusBg};color:${n.statusClr}">${n.statusLabel}</div>
+      </div>
+      <div class="bu-card-body">
+        <div class="bu-section-block"><div class="bu-section-label">Q1 YTD Actual</div><p>${n.q1}</p></div>
+        <div class="bu-section-block"><div class="bu-section-label">FY FC3+9 vs AP</div><p>${n.fy}</p></div>
+        <div class="bu-section-block"><div class="bu-section-label">YoY vs A25</div><p>${n.yoy}</p></div>
+        <div class="bu-section-block so-what"><div class="bu-section-label">So what</div><p>${n.sw}</p></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('buInsightCards').innerHTML=html;
+}
+
+// ===== BU VIEW TOGGLE =====
+let curBuView = 'waterfall';
+let curBuSelected = 'VNGGames';
+
+function switchBuView(view, btn) {
+  curBuView = view;
+  document.querySelectorAll('#buViewTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('buViewWaterfall').style.display = view==='waterfall' ? 'block' : 'none';
+  document.getElementById('buViewByBU').style.display = view==='bybu' ? 'block' : 'none';
+  if(view==='bybu') renderBuDetail(curBuSelected);
+  if(view==='waterfall'){ buildAllWaterfalls(); buildBuTable(); }
+}
+
+function switchBuSelect(bu, btn) {
+  curBuSelected = bu;
+  document.querySelectorAll('#buSelectTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBuDetail(bu);
+}
+
+// BU index map
+const BU_IDX = {VNGGames:0,ZPS:1,ZA:2,Zalopay:3,GreenNode:4,Others:5};
+const METRICS_LIST = ['Revenue','Adj EBITDA','Adj EBIT (PB)'];
+const METRIC_LABELS = ['Net Revenue','Adj EBITDA','Adj EBIT (PB)'];
+
+function renderBuDetail(bu) {
+  const idx = BU_IDX[bu];
+  const color = BU_CLR[bu] || '#718096';
+  const n = BU_NOTES[bu];
+
+  // KPI row — 4 FY metrics, uniform design
+  const kpiMetrics = [
+    {label:'Net Revenue (FY)',   fc:DATA.Revenue['fc39'][idx],           ap:DATA.Revenue['ap26'][idx],          a25:DATA.Revenue['a25'][idx]},
+    {label:'Adj EBITDA (FY)',    fc:DATA['Adj EBITDA']['fc39'][idx],     ap:DATA['Adj EBITDA']['ap26'][idx],    a25:DATA['Adj EBITDA']['a25'][idx]},
+    {label:'Adj EBIT PB (FY)',   fc:DATA['Adj EBIT (PB)']['fc39'][idx], ap:DATA['Adj EBIT (PB)']['ap26'][idx], a25:DATA['Adj EBIT (PB)']['a25'][idx]},
+    {label:'YTD Q1 — NR / EBITDA / EBIT PB', fc:null, ap:null, a25:null,
+     ytdNR:DATA.Revenue['q1'][idx], ytdEB:DATA['Adj EBITDA']['q1'][idx], ytdEBIT:DATA['Adj EBIT (PB)']['q1'][idx]}
+  ];
+  document.getElementById('buKpiRow').innerHTML = kpiMetrics.map((k,i)=>{
+    if(k.fc === null){
+      // YTD triple card — clean metric list with color indicators
+      return `<div class="kpi-card" style="border-left-color:${color}; padding:16px 18px;">
+        <div class="kpi-label" style="margin-bottom:12px;">YTD Q1 2026 — Actual</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#F7F8FC;border-radius:6px;border-left:3px solid ${color};">
+            <span style="font-size:11px;font-weight:600;color:var(--text-light);">Net Revenue</span>
+            <span style="font-size:17px;font-weight:800;color:var(--text);">${fmtBn(k.ytdNR)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#F7F8FC;border-radius:6px;border-left:3px solid ${color}cc;">
+            <span style="font-size:11px;font-weight:600;color:var(--text-light);">Adj EBITDA</span>
+            <span style="font-size:17px;font-weight:800;color:${k.ytdEB>=0?'var(--text)':'var(--negative)'};">${fmtBn(k.ytdEB)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#F7F8FC;border-radius:6px;border-left:3px solid ${color}88;">
+            <span style="font-size:11px;font-weight:600;color:var(--text-light);">Adj EBIT PB</span>
+            <span style="font-size:17px;font-weight:800;color:${k.ytdEBIT>=0?'var(--text)':'var(--negative)'};">${fmtBn(k.ytdEBIT)}</span>
+          </div>
+        </div>
+        
+      </div>`;
+    }
+    const vAP  = k.ap!=null && k.ap!==0  ? pct(k.fc,k.ap)  : null;
+    const vA25 = k.a25!=null && k.a25!==0 ? pct(k.fc,k.a25) : null;
+    return `<div class="kpi-card" style="border-left-color:${color}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="font-size:22px;">${fmtBn(k.fc)}</div>
+      <div class="kpi-vars">
+        ${vAP!=null?`<div><span class="kpi-var-label">vs AP26 </span><span class="kpi-var-value ${vAP>=0?'positive':'negative'}">${vAP>=0?'+':''}${vAP}%</span></div>`:''}
+        ${vA25!=null?`<div><span class="kpi-var-label">vs A25 </span><span class="kpi-var-value ${vA25>=0?'positive':'negative'}">${vA25>=0?'+':''}${vA25}%</span></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Title
+  document.getElementById('buDetailTitle').textContent = `${bu} — P&L Performance`;
+
+  // Destroy old mini charts
+  ['buMini0','buMini1','buMini2'].forEach(id=>{ if(charts[id]) { charts[id].destroy(); delete charts[id]; } });
+
+  // Build 3 mini charts: NR, EBITDA, EBIT PB
+  const mKeys = ['Revenue','Adj EBITDA','Adj EBIT (PB)'];
+  mKeys.forEach((mk,ci)=>{
+    const d = DATA[mk];
+    const fc=d.fc39[idx], ytd=d.q1[idx], ap=d.ap26[idx], a25=d.a25[idx];
+    buildBuMiniChart('buMini'+ci, fc, ytd, ap, a25, 0, false, color);
+  });
+
+  // Narrative card
+  document.getElementById('buNarrativeCard').innerHTML = `
+    <div class="chart-title" style="color:${color}">${bu} — Commentary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-top:14px;font-size:12.5px;">
+      <div><div class="bu-section-label">Q1 YTD Actual</div><p>${n.q1}</p></div>
+      <div><div class="bu-section-label">FY FC3+9 vs AP</div><p>${n.fy}</p></div>
+      <div><div class="bu-section-label">YoY vs A25</div><p>${n.yoy}</p></div>
+      <div class="so-what"><div class="bu-section-label">So what</div><p>${n.sw}</p></div>
+    </div>`;
+}
+
+function buildBuMiniChart(id, fcVal, ytdVal, apVal, a25Val, _unused, _unused2, accentColor) {
+  const ctx = document.getElementById(id).getContext('2d');
+
+  // Determine if values go negative (e.g. Zalopay EBIT = -221)
+  const allVals = [fcVal, ytdVal, apVal, a25Val];
+  const minV = Math.min(...allVals);
+  const maxV = Math.max(...allVals);
+  const hasNeg = minV < 0;
+
+  // Y-axis range — add headroom top and bottom for labels
+  const span = Math.max(Math.abs(maxV - minV), Math.abs(maxV), 50);
+  const yMin = hasNeg ? minV - span * 0.45 : 0;
+  const yMax = maxV + span * 0.42;
+
+  const remainder = hasNeg ? 0 : Math.max(0, fcVal - ytdVal);
+
+  const dark  = accentColor || '#4A5568';
+  const light = '#E2E8F0'; // same as Group chart remainder color
+
+  const markerPlugin = {
+    id: 'buMk_' + id,
+    afterDatasetsDraw(chart) {
+      const { ctx, scales } = chart;
+      const xScale = scales.x, yScale = scales.y;
+
+      // Mirror Group chart exactly: bar center + half-width for line endpoints
+      const xC = xScale.getPixelForValue(0);
+      const bW = Math.min((xScale.right - xScale.left) * 0.55, 70);
+      const xL = xC - bW / 2;
+      const xR = xC + bW / 2;
+
+      const apY  = yScale.getPixelForValue(apVal);
+      const a25Y = yScale.getPixelForValue(a25Val);
+      const fcY  = yScale.getPixelForValue(fcVal);
+      const ytdY = yScale.getPixelForValue(ytdVal);
+      const baseY = yScale.getPixelForValue(0);
+
+      // AP26 — solid orange line spanning bar ±4px
+      ctx.fillStyle = '#E25A2C';
+      ctx.fillRect(xL - 4, apY - 1.5, bW + 8, 3);
+
+      // A25 — dashed gray line
+      ctx.save();
+      ctx.strokeStyle = '#A0AEC0'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(xL - 4, a25Y); ctx.lineTo(xR + 4, a25Y); ctx.stroke();
+      ctx.restore();
+
+      // Labels right of bar — identical to Group chart
+      ctx.font = 'bold 9px Segoe UI,sans-serif'; ctx.textAlign = 'left';
+      const gap = Math.abs(apY - a25Y);
+      if (gap < 12) {
+        ctx.fillStyle = '#E25A2C'; ctx.fillText(fmtBn(apVal),  xR + 6, apY - 3);
+        ctx.fillStyle = '#A0AEC0'; ctx.fillText(fmtBn(a25Val), xR + 6, a25Y + 10);
+      } else {
+        ctx.fillStyle = '#E25A2C'; ctx.fillText(fmtBn(apVal),  xR + 6, apY + 4);
+        ctx.fillStyle = '#A0AEC0'; ctx.fillText(fmtBn(a25Val), xR + 6, a25Y + 4);
+      }
+
+      // FC3+9 value above bar + % vs AP
+      const vAP = apVal !== 0 ? Math.round((fcVal - apVal) / Math.abs(apVal) * 100) : null;
+      const pStr = vAP != null ? (vAP >= 0 ? '+' : '') + vAP + '%' : '';
+      const pColor = vAP != null ? (vAP >= 0 ? '#276749' : '#9B2C2C') : '#A0AEC0';
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#1A202C'; ctx.font = 'bold 11px Segoe UI,sans-serif';
+      ctx.fillText(fmtBn(fcVal), xC, fcY - 6);
+      if (pStr) {
+        ctx.font = '9px Segoe UI,sans-serif'; ctx.fillStyle = pColor;
+        ctx.fillText(pStr, xC, fcY - 17);
+      }
+
+      // YTD value inside dark portion (positive) or below bar (negative)
+      if (!hasNeg) {
+        const dH = baseY - ytdY;
+        if (dH > 20) {
+          ctx.fillStyle = 'white'; ctx.font = 'bold 9px Segoe UI,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(fmtBn(ytdVal), xC, ytdY + 13);
+        }
+      } else {
+        // For negative charts: show YTD as small label near its bar top
+        ctx.fillStyle = '#718096'; ctx.font = '8px Segoe UI,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Q1:' + fmtBn(ytdVal), xC, ytdY - 4);
+      }
+    }
+  };
+
+  console.log('Creating chart for:', id, 'rows:', rows.length, 'canvas size:', ctxEl.offsetWidth, ctxEl.offsetHeight);
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [''],
+      datasets: hasNeg
+        // Negative case: single bar showing FC3+9 (no stacking — stacking breaks for negatives)
+        ? [{ data: [fcVal], backgroundColor: dark + 'CC', barPercentage: 0.52, categoryPercentage: 0.85 }]
+        // Positive case: stacked exactly like Group chart
+        : [
+            { data: [ytdVal],    backgroundColor: dark + 'CC', stack: 's', barPercentage: 0.52, categoryPercentage: 0.85 },
+            { data: [remainder], backgroundColor: light,       stack: 's', barPercentage: 0.52, categoryPercentage: 0.85 }
+          ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 28, left: 4, right: 62, bottom: 4 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: () => [`FC3+9: ${fmtBn(fcVal)}`, `YTD Q1: ${fmtBn(ytdVal)}`, `AP26: ${fmtBn(apVal)}`, `A25: ${fmtBn(a25Val)}`]
+        }}
+      },
+      scales: {
+        x: { stacked: !hasNeg, grid: { display: false }, ticks: { display: false }, border: { display: false } },
+        y: { stacked: !hasNeg, display: false, min: yMin, max: yMax, grid: { display: false }, border: { display: false } }
+      }
+    },
+    plugins: [markerPlugin]
+  });
+}
+
+// ===== SHARED WATERFALL LABEL PLUGIN =====
+function makeWfLabelPlugin(sizes, base, fc39, labels){
+  return {
+    id:'wfLbls_'+Math.random().toString(36).slice(2),
+    afterDatasetsDraw(chart){
+      const {ctx, scales} = chart;
+      const yScale = scales.y;
+      const zeroY = yScale.getPixelForValue(0);
+      chart.getDatasetMeta(1).data.forEach((bar,i)=>{
+        const isTotal = (i===0||i===labels.length-1);
+        const sz = sizes[i];
+        const bv = i>0 && i<labels.length-1 ? (base[i-1]||0) : null;
+        const delta = bv!==null ? (fc39[i-1]||0)-bv : null;
+        const p = bv!==null && bv!==0 ? Math.round(delta/Math.abs(bv)*100) : null;
+        const clr = isTotal ? '#7B341E' : (delta>=0 ? '#276749':'#4A5568');
+
+        const numStr = isTotal ? fmtBn(sz)
+          : (delta>=0 ? '+'+fmtBn(delta) : '('+fmtBn(Math.abs(delta))+')');
+
+        ctx.save();
+        ctx.textAlign='center';
+        ctx.font=`bold ${isTotal?11:10}px Segoe UI,sans-serif`;
+        ctx.fillStyle=clr;
+        ctx.fillText(numStr, bar.x, bar.y - 5);
+        if(!isTotal && p!==null){
+          const barBottom = bar.base !== undefined ? bar.base : zeroY;
+          ctx.font='bold 11px Segoe UI,sans-serif'; ctx.fillStyle=clr;
+          ctx.fillText((p>=0?'+':'')+p+'%', bar.x, barBottom+15);
+        } else if(!isTotal && p===null){
+          const barBottom = bar.base !== undefined ? bar.base : zeroY;
+          ctx.font='9px Segoe UI,sans-serif'; ctx.fillStyle='#A0AEC0';
+          ctx.fillText('nm', bar.x, barBottom+15);
+        }
+        ctx.restore();
+      });
+    }
+  };
+}
+
+// ===== APPENDIX WATERFALL CHARTS =====
+// YTD data per BU [NR, EBIT-PB]  — from slide 14/15
+const APP_YTD = {
+  NR:   { a25:[1383,210,415,183,275, 29, 9], ap26:[1750,341,504,230,246, 99,30], fc39:[2079,300,531,229,246,42,30] },
+  EBIT: { a25:[ 265, 57, 61,-89, 16,-39,-200], ap26:[269,53,104,5,-34,-45,-200], fc39:[612,67,167,42,-10,-39,-200] }
+};
+
+function buildAppWaterfall(canvasId, dataKey, baseKey, periodLabel, benchLabel, busToShow) {
+  const d = dataKey==='NR' ? APP_YTD.NR : APP_YTD.EBIT;
+  const base  = d[baseKey];
+  const fc39  = d.fc39;
+  const bus   = busToShow || BUS_MAIN;
+
+  // Group total
+  const grpBase = base.reduce((s,v)=>s+v, 0);
+  const grpFC   = fc39.reduce((s,v)=>s+v, 0);
+
+  const buList = [...BUS_MAIN, 'HO Consol'];  // include HO Consol
+  const labels=[benchLabel];
+  const floats=[0], sizes=[Math.abs(grpBase)], colors=['#E25A2C'];
+  let running=grpBase;
+  buList.forEach((bu,i)=>{
+    const delta=(fc39[i]||0)-(base[i]||0);
+    if(delta===0 && bu==='HO Consol' && fc39[i]===0) return; // skip if no data
+    labels.push(bu);
+    floats.push(delta>=0?running:running+delta);
+    sizes.push(Math.abs(delta));
+    colors.push(bu==='HO Consol'?'#4A5568':(delta>=0?'#5DAB3D':'#94A3B8'));
+    running+=delta;
+  });
+  labels.push('FC3+9');
+  const grpFC2=fc39.reduce((s,v)=>s+v,0);
+  floats.push(grpFC2>=0?0:grpFC2);
+  sizes.push(Math.abs(grpFC2));
+  colors.push('#E25A2C');
+
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {data:floats,backgroundColor:'transparent',borderColor:'transparent',stack:'s',barPercentage:0.6},
+      {data:sizes, backgroundColor:colors,stack:'s',barPercentage:0.6
+      }
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:32,left:4,right:4,bottom:28}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx2)=>{ const i=ctx2.dataIndex; if(i===0) return `${benchLabel}: ${fmtBn(sizes[0])}`; if(i===labels.length-1) return `FC3+9: ${fmtBn(sizes[i])}`; const buIdx=i-1; const d=(fc39[buIdx]||0)-(base[buIdx]||0); return `${buList[buIdx]}: ${d>=0?'+':''}${fmtBn(d)}`; }}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{display:false,grid:{display:false}}
+      }
+    },
+    plugins:[makeWfLabelPlugin(sizes, base, fc39, labels)]
+  });
+}
+
+// FY waterfall data
+const APP_FY = {
+  NR:   { a25: DATA.Revenue.a25,   ap26: DATA.Revenue.ap26,   fc39: DATA.Revenue.fc39 },
+  EBIT: { a25: DATA['Adj EBIT (PB)'].a25, ap26: DATA['Adj EBIT (PB)'].ap26, fc39: DATA['Adj EBIT (PB)'].fc39 }
+};
+
+function buildAppFyWaterfall(canvasId, dataKey, baseKey) {
+  const d = dataKey==='NR' ? APP_FY.NR : APP_FY.EBIT;
+  const base=d[baseKey], fc39=d.fc39;
+  const grpKey=dataKey==='NR'?'NR':'EBIT';
+  const grpBase=GROUP[grpKey][baseKey==='ap26'?1:0];
+  const grpFC=GROUP[grpKey][3];
+  const benchLabel=baseKey==='ap26'?'AP26':'A25';
+
+  const buListFy = [...BUS_MAIN, 'HO Consol'];
+  const labels=[benchLabel];
+  const floats=[0],sizes=[Math.abs(grpBase)],colors=['#E25A2C'];
+  let running=grpBase;
+  buListFy.forEach((bu,i)=>{
+    const delta=(fc39[i]||0)-(base[i]||0);
+    labels.push(bu);
+    floats.push(delta>=0?running:running+delta);
+    sizes.push(Math.abs(delta));
+    colors.push(bu==='HO Consol'?'#4A5568':(delta>=0?'#5DAB3D':'#94A3B8'));
+    running+=delta;
+  });
+  labels.push('FC3+9');
+  floats.push(grpFC>=0?0:grpFC);
+  sizes.push(Math.abs(grpFC));
+  colors.push('#E25A2C');
+
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {data:floats,backgroundColor:'transparent',borderColor:'transparent',stack:'s',barPercentage:0.6},
+      {data:sizes, backgroundColor:colors,stack:'s',barPercentage:0.6,
+          borderRadius:2}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:32,left:4,right:4,bottom:28}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx2)=>{ const i=ctx2.dataIndex; if(i===0) return `${benchLabel}: ${fmtBn(sizes[0])}`; if(i===labels.length-1) return `FC3+9: ${fmtBn(sizes[i])}`; const d=(fc39[i-1]||0)-(base[i-1]||0); return `${(typeof buListFy!=='undefined'?buListFy:BUS_MAIN)[i-1]}: ${d>=0?'+':''}${fmtBn(d)}`; }}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{display:false,grid:{display:false}}
+      }
+    },
+    plugins:[makeWfLabelPlugin(sizes, base, fc39, labels)]
+  });
+}
+
+function buildAppCharts(){
+  // ── YTD revenue/EBIT waterfalls ──
+  buildAppWaterfall('appYtdRevAP',  'NR',   'ap26', 'YTD', 'AP26');
+  buildAppWaterfall('appYtdRevYoY', 'NR',   'a25',  'YTD', 'A25');
+  buildAppWaterfall('appYtdEbitAP', 'EBIT', 'ap26', 'YTD', 'AP26');
+  buildAppWaterfall('appYtdEbitYoY','EBIT', 'a25',  'YTD', 'A25');
+  // ── FY revenue/EBIT waterfalls ──
+  buildAppFyWaterfall('appFyRevAP',   'NR',   'ap26');
+  buildAppFyWaterfall('appFyRevYoY',  'NR',   'a25');
+  buildAppFyWaterfall('appFyEbitAP',  'EBIT', 'ap26');
+  buildAppFyWaterfall('appFyEbitYoY', 'EBIT', 'a25');
+  // ── Slide 10: Market split ──
+  buildGamesMarketChart('appSlide10YTD', 'ytd');
+  buildGamesMarketChart('appSlide10FY',  'fy');
+  // ── Slide 11: Title waterfall YTD ──
+  buildGamesTitleWaterfall('appSlide11YoY', 'ytd', 'yoy');
+  buildGamesTitleWaterfall('appSlide11AP',  'ytd', 'ap');
+  // ── Slide 12: Title waterfall FY ──
+  buildGamesTitleWaterfall('appSlide12YoY', 'fy', 'yoy');
+  buildGamesTitleWaterfall('appSlide12AP',  'fy', 'ap');
+  // Force resize all charts after build
+  setTimeout(()=>Object.values(charts).forEach(c=>{if(c&&c.resize)c.resize();}), 80);
+  // ── NPAT bridges ──
+  buildNpatBridge('appNpatBridgeFC', 'fc');
+  buildNpatBridge('appNpatBridgeVar','var');
+}
+
+// ── Slide 10: VNGGames market split — grouped bar ──
+function buildGamesMarketChart(id, period) {
+  // Data: [VN, GL] per group
+  const D = period==='ytd' ? {
+    total: { a25:[1407,217], ap26:[1861,287], fc39:[2132,280] },
+    vngg:  { a25:[1187,217], ap26:[1599,287], fc39:[1886,280] },
+    zps:   { a25:[220,0],    ap26:[262,0],    fc39:[246,0]    }
+  } : {
+    total: { a25:[6876,1286], ap26:[8072,1473], fc39:[8442,1574] },
+    vngg:  { a25:[5800,1286], ap26:[6650,1473], fc39:[7020,1574] },
+    zps:   { a25:[1076,0],    ap26:[1422,0],    fc39:[1422,0]    }
+  };
+
+  // Deck palette: A25=gray, AP26=salmon, FC3+9 VN=dark orange, FC3+9 GL=light orange
+  const C = { a25vn:'#B8BCC6', a25gl:'#D4D7DE', ap26vn:'#E8855A', ap26gl:'#F5C4AD', fc39vn:'#C84B0C', fc39gl:'#F5A97F' };
+
+  const GK = ['total','vngg','zps'];
+  const GL = ['Total Games','VNGGames','ZPS'];
+
+  // 6 datasets, each with 3 data points (one per group)
+  // Stacking: a25vn+a25gl same stack 'a25', ap26vn+ap26gl same stack 'ap26', fc39vn+fc39gl same stack 'fc39'
+  const mk = (arr, color, stack) => ({
+    data: arr, backgroundColor: color,
+    stack, barPercentage:0.7, categoryPercentage:0.75,
+    borderWidth:0
+  });
+
+  const dsA25vn  = GK.map(k=>D[k].a25[0]);
+  const dsA25gl  = GK.map(k=>D[k].a25[1]);
+  const dsAP26vn = GK.map(k=>D[k].ap26[0]);
+  const dsAP26gl = GK.map(k=>D[k].ap26[1]);
+  const dsFC39vn = GK.map(k=>D[k].fc39[0]);
+  const dsFC39gl = GK.map(k=>D[k].fc39[1]);
+
+  // Label plugin: draw total+YoY+vsAP above FC3+9 bar only
+  const labelPlugin = {
+    id:'s10lp_'+id,
+    afterDatasetsDraw(chart){
+      try {
+        const {ctx, scales:{y:yS}} = chart;
+        // FC3+9 stacked = datasets index 4 (vn) + 5 (gl)
+        const m4 = chart.getDatasetMeta(4);
+        const m5 = chart.getDatasetMeta(5);
+
+        GK.forEach((gk, gi) => {
+          const d = D[gk];
+          const total  = d.fc39[0] + d.fc39[1];
+          const a25tot = d.a25[0]  + d.a25[1];
+          const ap26t  = d.ap26[0] + d.ap26[1];
+          const yoy = Math.round((total - a25tot) / Math.abs(a25tot) * 100);
+          const vAP = Math.round((total - ap26t)  / Math.abs(ap26t)  * 100);
+
+          const bVN = m4.data[gi];
+          const bGL = m5.data[gi];
+          if(!bVN) return;
+          const barX = bVN.x;
+          const topY = (d.fc39[1]>0 && bGL) ? Math.min(bVN.y, bGL.y) : bVN.y;
+
+          ctx.save();
+          ctx.textAlign='center';
+          ctx.font='bold 11px Segoe UI,sans-serif';
+          ctx.fillStyle='#1A202C';
+          ctx.fillText(fmtBn(total), barX, topY-34);
+          ctx.font='9px Segoe UI,sans-serif';
+          ctx.fillStyle=yoy>=0?'#276749':'#C53030';
+          ctx.fillText('YoY:'+(yoy>=0?'+':'')+yoy+'%', barX, topY-22);
+          ctx.fillStyle=vAP>=0?'#276749':'#C53030';
+          ctx.fillText('AP:'+(vAP>=0?'+':'')+vAP+'%', barX, topY-11);
+          ctx.restore();
+        });
+      } catch(e){ console.warn('s10 label plugin',e); }
+    }
+  };
+
+  const ctxEl = document.getElementById(id);
+  if(!ctxEl) return;
+  if(charts[id]) charts[id].destroy();
+
+  charts[id] = new Chart(ctxEl.getContext('2d'), {
+    type:'bar',
+    data:{ labels:GL, datasets:[
+      mk(dsA25vn,  C.a25vn,  'a25'),
+      mk(dsA25gl,  C.a25gl,  'a25'),
+      mk(dsAP26vn, C.ap26vn, 'ap26'),
+      mk(dsAP26gl, C.ap26gl, 'ap26'),
+      mk(dsFC39vn, C.fc39vn, 'fc39'),
+      mk(dsFC39gl, C.fc39gl, 'fc39'),
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:56, right:12, bottom:4, left:12}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c2=>{
+          const gi=c2.dataIndex, d=D[GK[gi]];
+          return [`${GL[gi]}`,
+            `A25: ${fmtBn(d.a25[0])} VN + ${fmtBn(d.a25[1])} GL = ${fmtBn(d.a25[0]+d.a25[1])}`,
+            `AP26: ${fmtBn(d.ap26[0])} VN + ${fmtBn(d.ap26[1])} GL = ${fmtBn(d.ap26[0]+d.ap26[1])}`,
+            `FC3+9: ${fmtBn(d.fc39[0])} VN + ${fmtBn(d.fc39[1])} GL = ${fmtBn(d.fc39[0]+d.fc39[1])}`];
+        }}}
+      },
+      scales:{
+        x:{stacked:true, grid:{display:false}, ticks:{font:{size:11,weight:'600'}, color:'#2D3748'}},
+        y:{stacked:true, display:false, grid:{display:false}}
+      }
+    },
+    plugins:[labelPlugin]
+  });
+}
+
+
+// ── Slide 11/12: VNGGames by title — horizontal bar sorted by delta ──
+function buildGamesTitleWaterfall(id, period, bench) {
+  // ── Data from slides 11 & 12 ──
+  // Format: { rows, totalNew, totalOld, totalVNGG }
+  // Each row: { label, val, type: 'new'|'old'|'total'|'grand' }
+
+  const DATA_S11_YOY = {
+    title:'Top 10 Variances By Gross Bookings (B.VND)',
+    rows:[
+      // NEW group
+      {label:'Ballistic Hero',       val:84,   type:'new'},
+      {label:'Zombie Shooter 3D',    val:1,    type:'new'},
+      {label:'Total Football',       val:0,    type:'new'},
+      {label:'Chosun 2M',            val:0,    type:'new'},
+      {label:'Pure 3Q',              val:0,    type:'new'},
+      {label:'Roblox',               val:0,    type:'new'},
+      {label:'Others',               val:0,    type:'new'},
+      {label:'Total',                val:86,   type:'subtotal'},
+      // OLD group
+      {label:'Crossfire M',          val:233,  type:'old'},
+      {label:'Justice',              val:169,  type:'old'},
+      {label:'Play Together',        val:140,  type:'old'},
+      {label:'PUBG Mobile',          val:80,   type:'old'},
+      {label:'JX20 PC',              val:59,   type:'old'},
+      {label:'MU Angel War',         val:29,   type:'old'},
+      {label:'Metal Slug',           val:-22,  type:'old'},
+      {label:'Tân Thiên Long 2',     val:-25,  type:'old'},
+      {label:'Revelation',           val:-25,  type:'old'},
+      {label:'Kiếm Thế Origin',      val:-29,  type:'old'},
+      {label:'Others',               val:67,   type:'old'},
+      {label:'Total',                val:676,  type:'subtotal'},
+      {label:'Total VNGG',           val:762,  type:'grand'},
+    ]
+  };
+
+  const DATA_S11_AP = {
+    title:'Top 10 Variances By Gross Bookings (B.VND)',
+    rows:[
+      {label:'Ballistic Hero',       val:31,   type:'new'},
+      {label:'Total Football',       val:0,    type:'new'},
+      {label:'Zombie Shooter 3D',    val:0,    type:'new'},
+      {label:'Roblox',               val:0,    type:'new'},
+      {label:'Tanks War Unleash',    val:0,    type:'new'},
+      {label:'Pure 3Q',              val:0,    type:'new'},
+      {label:'Chosun 2M',            val:-16,  type:'new'},
+      {label:'Others',               val:0,    type:'new'},
+      {label:'Total',                val:15,   type:'subtotal'},
+      {label:'Crossfire M',          val:151,  type:'old'},
+      {label:'PUBG Mobile',          val:98,   type:'old'},
+      {label:'Play Together',        val:95,   type:'old'},
+      {label:'Justice',              val:87,   type:'old'},
+      {label:'JX20 PC',              val:26,   type:'old'},
+      {label:'Gunny Origin',         val:11,   type:'old'},
+      {label:'LOL:Wild Rift',        val:11,   type:'old'},
+      {label:'Revelation',           val:-14,  type:'old'},
+      {label:'Circle Tribe',         val:-17,  type:'old'},
+      {label:'Samkok Fantasy',       val:-28,  type:'old'},
+      {label:'Others',               val:2,    type:'old'},
+      {label:'Total',                val:423,  type:'subtotal'},
+      {label:'Total VNGG',           val:438,  type:'grand'},
+    ]
+  };
+
+  const DATA_S12_YOY = {
+    title:'Top 10 Variances By Gross Bookings (B.VND)',
+    rows:[
+      {label:'Total Football',       val:350,  type:'new'},
+      {label:'Ballistic Hero',       val:256,  type:'new'},
+      {label:'CookieRun OvenSmash',  val:186,  type:'new'},
+      {label:'Light and Night',      val:110,  type:'new'},
+      {label:'JX Zero',              val:108,  type:'new'},
+      {label:'X5',                   val:92,   type:'new'},
+      {label:'Chosun 2M',            val:73,   type:'new'},
+      {label:'Lineage W',            val:26,   type:'new'},
+      {label:'Tam Quoc Than Ma',     val:17,   type:'new'},
+      {label:'Roblox',               val:3,    type:'new'},
+      {label:'Others',               val:-4,   type:'new'},
+      {label:'Total',                val:1225, type:'subtotal'},
+      {label:'Crossfire M',          val:464,  type:'old'},
+      {label:'Justice',              val:405,  type:'old'},
+      {label:'JX20 PC',              val:83,   type:'old'},
+      {label:'Fire Apocalypse',      val:50,   type:'old'},
+      {label:'Play Together',        val:49,   type:'old'},
+      {label:'Moonlight Blade',      val:-46,  type:'old'},
+      {label:'Metal Slug',           val:-65,  type:'old'},
+      {label:'Revelation',           val:-71,  type:'old'},
+      {label:'Kiếm Thế Origin',      val:-77,  type:'old'},
+      {label:'MU Angel War',         val:-81,  type:'old'},
+      {label:'Others',               val:-429, type:'old'},
+      {label:'Total',                val:283,  type:'subtotal'},
+      {label:'Total VNGG',           val:1508, type:'grand'},
+    ]
+  };
+
+  const DATA_S12_AP = {
+    title:'Top 10 Variances By Gross Bookings (B.VND)',
+    rows:[
+      {label:'Ballistic Hero',       val:111,  type:'new'},
+      {label:'Light and Night',      val:26,   type:'new'},
+      {label:'Tam Quoc Than Ma',     val:17,   type:'new'},
+      {label:'Lineage W',            val:15,   type:'new'},
+      {label:'Roblox',               val:3,    type:'new'},
+      {label:'Pure 3Q',              val:-1,   type:'new'},
+      {label:'Zombie Shooter 3D',    val:-8,   type:'new'},
+      {label:'Chosun 2M',            val:-23,  type:'new'},
+      {label:'JX Zero',              val:-38,  type:'new'},
+      {label:'CookieRun OvenSmash',  val:-52,  type:'new'},
+      {label:'Others',               val:-7,   type:'new'},
+      {label:'Total',                val:43,   type:'subtotal'},
+      {label:'Justice',              val:242,  type:'old'},
+      {label:'Crossfire M',          val:178,  type:'old'},
+      {label:'PUBG Mobile',          val:74,   type:'old'},
+      {label:'JX20 PC',              val:69,   type:'old'},
+      {label:'Zombie Fire 3D',       val:40,   type:'old'},
+      {label:'Fire Apocalypse',      val:26,   type:'old'},
+      {label:'Naraka PC',            val:-51,  type:'old'},
+      {label:'Revelation',           val:-55,  type:'old'},
+      {label:'Samkok Fantasy',       val:-64,  type:'old'},
+      {label:'Circle Tribe',         val:-123, type:'old'},
+      {label:'Others',               val:-70,  type:'old'},
+      {label:'Total',                val:267,  type:'subtotal'},
+      {label:'Total VNGG',           val:309,  type:'grand'},
+    ]
+  };
+
+  const DATA_MAP = {
+    'appSlide11YoY': DATA_S11_YOY,
+    'appSlide11AP':  DATA_S11_AP,
+    'appSlide12YoY': DATA_S12_YOY,
+    'appSlide12AP':  DATA_S12_AP,
+  };
+
+  console.log('buildGamesTitleWaterfall called:', id, period, bench);
+  const dataset = DATA_MAP[id];
+  if(!dataset){ console.error('No dataset for id:', id); return; }
+
+  const rows = dataset.rows;
+  const maxVal = Math.max(...rows.map(r=>Math.abs(r.val)), 1);
+
+  // Track group boundaries for separator lines
+  let firstOldIdx = rows.findIndex(r=>r.type==='old');
+  let subtotalIdxs = rows.map((r,i)=>r.type==='subtotal'?i:-1).filter(i=>i>=0);
+
+  const barColors = rows.map(r=>{
+    if(r.type==='grand') return '#E25A2C';
+    if(r.type==='subtotal') return '#E25A2C';
+    return r.val>=0 ? '#E25A2C' : '#CBD5E0';
+  });
+  const bgColors = rows.map(r=>{
+    if(r.type==='grand'||r.type==='subtotal') return 'transparent';
+    return 'transparent';
+  });
+
+  const labelPlugin = {
+    id:'s11lp_'+id,
+    afterDraw(chart){
+      const {ctx, scales:{x:xS, y:yS}, chartArea} = chart;
+      const meta = chart.getDatasetMeta(0);
+      const zeroX = xS.getPixelForValue(0);
+
+      // Vertical zero line
+      ctx.save();
+      ctx.strokeStyle = '#A0AEC0'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(zeroX, yS.top); ctx.lineTo(zeroX, yS.bottom);
+      ctx.stroke();
+      ctx.restore();
+
+      // OVERRIDE row labels with custom colors for subtotal/grand
+      // (Default y-axis ticks render in default style; we draw on top with our colors)
+      meta.data.forEach((bar, i) => {
+        if(!bar) return;
+        const r = rows[i];
+        const isSpec = r.type==='subtotal' || r.type==='grand';
+        if(!isSpec) return; // only override special rows; let default ticks handle others
+
+        // Erase default tick by drawing white rect over it
+        ctx.save();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, bar.y - 7, xS.left - 2, 14);
+        ctx.restore();
+
+        // Draw special label
+        ctx.save();
+        ctx.font = 'bold 10px Segoe UI,sans-serif';
+        ctx.fillStyle = '#C84B0C';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(r.label, xS.left - 6, bar.y);
+        ctx.restore();
+      });
+
+      // Value labels at end of each bar
+      meta.data.forEach((bar, i) => {
+        if(!bar) return;
+        const r = rows[i];
+        const v = r.val;
+        const isSpec = r.type==='subtotal' || r.type==='grand';
+        const numStr = v < 0 ? `(${fmtBn(Math.abs(v))})` : fmtBn(v);
+        const labelX = v >= 0 ? bar.x + 4 : bar.x - 4;
+        ctx.save();
+        ctx.font = isSpec ? 'bold 10px Segoe UI,sans-serif' : '9.5px Segoe UI,sans-serif';
+        ctx.fillStyle = isSpec ? '#C84B0C' : (v >= 0 ? '#2D3748' : '#718096');
+        ctx.textAlign = v >= 0 ? 'left' : 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(numStr, labelX, bar.y);
+        ctx.restore();
+      });
+
+      // NEW / OLD vertical labels on far left of label column
+      const newRange = [0, firstOldIdx-2];
+      const oldRange = [firstOldIdx, rows.length-3];
+      [[newRange,'NEW'],[oldRange,'OLD']].forEach(([rg, lbl])=>{
+        const bS = meta.data[rg[0]], bE = meta.data[rg[1]];
+        if(!bS || !bE) return;
+        ctx.save();
+        ctx.translate(16, (bS.y + bE.y) / 2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = 'bold 9px Segoe UI,sans-serif';
+        ctx.fillStyle = '#718096';
+        ctx.fillText(lbl, 0, 0);
+        ctx.restore();
+      });
+
+      // Horizontal separator lines under each subtotal — span label area + plot area
+      ctx.save();
+      ctx.strokeStyle = '#CBD5E0'; ctx.lineWidth = 1;
+      subtotalIdxs.forEach(idx => {
+        const bar = meta.data[idx];
+        if(!bar) return;
+        const y = bar.y + 9;
+        ctx.beginPath();
+        ctx.moveTo(28, y); ctx.lineTo(xS.right, y);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+  };
+
+  const ctxEl = document.getElementById(id);
+  if(!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
+  if(charts[id]) charts[id].destroy();
+
+  // Symmetric x-axis: pad both sides equally so zero line sits proportionally
+  const minVal = Math.min(...rows.map(r=>r.val), 0);
+  const maxV   = Math.max(...rows.map(r=>r.val), 0);
+  const xMin = minVal < 0 ? minVal * 1.25 : -maxV * 0.15;
+  const xMax = maxV * 1.18;
+
+  charts[id] = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: rows.map(r=>r.label),
+      datasets:[{
+        data: rows.map(r=>r.val),
+        backgroundColor: rows.map(r=>{
+          if(r.type==='grand'||r.type==='subtotal') return '#C84B0C';
+          return r.val >= 0 ? '#E25A2C' : '#CBD5E0';
+        }),
+        borderRadius: 0,
+        barPercentage: 0.85,
+        categoryPercentage: 0.95
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:2, right:40, bottom:2, left:125}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c2=>{
+          const r=rows[c2.dataIndex];
+          return r ? `${r.label}: ${r.val>=0?'':'-'}${fmtBn(Math.abs(r.val))}` : '';
+        }}}
+      },
+      scales:{
+        x:{display:false, min:xMin, max:xMax, grid:{display:false}},
+        y:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{
+            autoSkip:false,
+            crossAlign:'near',
+            padding:6,
+            font:{size:10}
+          },
+          afterFit:(scale)=>{ scale.width = 105; }
+        }
+      }
+    },
+    plugins:[labelPlugin]
+  });
+}
+
+
+// ── NPAT Bridge charts ──
+function buildNpatBridge(id, type) {
+  let labels, values, colors;
+  if(type==='fc'){
+    labels=['Adj EBIT PB','Revenue Deferred','SBP','Bonus','D&A & Other','Finance Costs','Assoc. Loss','FV Gain','Other Income','Tax & Minority','NPAT'];
+    values=[1268, -593, -405, 0, -13, -165, -41, 74, 204, -307, 22];
+    colors=['#E25A2C','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#94A3B8','#5DAB3D','#5DAB3D','#94A3B8','#E25A2C'];
+  } else {
+    labels=['AP26 NPAT','Business Perf.','Disposal Gain','FV Gain','Assoc. Loss','Other','FC3+9 NPAT'];
+    values=[-315, 80, 200, 74, -21, 4, 22];
+    colors=['#E25A2C','#5DAB3D','#5DAB3D','#5DAB3D','#94A3B8','#94A3B8','#E25A2C'];
+  }
+
+  const isTotal = i => i===0 || i===labels.length-1;
+  const floats=[], sizes=[];
+  let run = isTotal(0) ? values[0] : 0;
+  // First bar always starts from 0
+  floats.push(Math.min(values[0], 0));
+  sizes.push(Math.abs(values[0]));
+
+  values.forEach((v,i)=>{
+    if(i===0) return;
+    if(isTotal(i)){
+      floats.push(Math.min(v, 0));
+      sizes.push(Math.abs(v));
+    } else {
+      floats.push(v>=0 ? run : run+v);
+      sizes.push(Math.abs(v));
+      run += v;
+    }
+  });
+
+  // Compute shared y-axis range so first bar (start) and last bar (end) have visible heights
+  const allTops = [];
+  const allBots = [];
+  let r = 0;
+  values.forEach((v,i)=>{
+    if(isTotal(i)){
+      allTops.push(Math.max(v,0));
+      allBots.push(Math.min(v,0));
+      r = v;
+    } else {
+      const t = r + Math.max(v,0);
+      const b = r + Math.min(v,0);
+      allTops.push(t);
+      allBots.push(b);
+      r += v;
+    }
+  });
+  const dataMin = Math.min(...allBots);
+  const dataMax = Math.max(...allTops);
+  const span = Math.max(dataMax - dataMin, 1);
+  const yMin = dataMin - span * 0.05;
+  const yMax = dataMax + span * 0.18;
+
+  const lp = {
+    id:'npatLp_'+id,
+    afterDatasetsDraw(chart){
+      const {ctx, scales:{x:xS, y:yS}, chartArea} = chart;
+
+      // Draw zero baseline across chart
+      const zeroY = yS.getPixelForValue(0);
+      if(zeroY >= chartArea.top && zeroY <= chartArea.bottom){
+        ctx.save();
+        ctx.strokeStyle = '#CBD5E0'; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, zeroY);
+        ctx.lineTo(chartArea.right, zeroY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Value labels above each bar
+      chart.getDatasetMeta(1).data.forEach((bar,i)=>{
+        const v = values[i];
+        const isTot = isTotal(i);
+        if(!isTot && v===0) return;
+        const clr = isTot ? '#7B341E' : (v>=0 ? '#276749' : '#4A5568');
+        ctx.save();
+        ctx.textAlign='center';
+        ctx.font = `bold ${isTot?11:10}px Segoe UI,sans-serif`;
+        ctx.fillStyle = clr;
+        const labelTxt = isTot ? fmtBn(Math.abs(v)) : (v>=0?'+':'') + fmtBn(v);
+        ctx.fillText(labelTxt, bar.x, bar.y - 5);
+        ctx.restore();
+      });
+    }
+  };
+
+  const ctx = document.getElementById(id).getContext('2d');
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[
+      {data:floats, backgroundColor:'transparent', borderColor:'transparent', stack:'s', barPercentage:0.7, categoryPercentage:0.85},
+      {data:sizes,  backgroundColor:colors,        stack:'s', barPercentage:0.7, categoryPercentage:0.85, borderRadius:2}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:22, left:4, right:4, bottom:2}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c2 => `${labels[c2.dataIndex]}: ${fmtBn(values[c2.dataIndex])}`}}
+      },
+      scales:{
+        x:{stacked:true, grid:{display:false}, ticks:{font:{size:9}}},
+        y:{stacked:true, display:false, min:yMin, max:yMax, grid:{display:false}}
+      }
+    },
+    plugins:[lp]
+  });
+}
+// ===== SECTION NAV =====
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='bu'){ buildAllWaterfalls(); buildBuTable(); }
+  if(id==='app'){ setTimeout(buildAppCharts, 150); }
+  setTimeout(()=>Object.values(charts).forEach(c=>{if(c&&c.resize)c.resize();}),50);
+}
+
+function switchLang(l){
+  document.getElementById('langEN').classList.toggle('active',l==='en');
+  document.getElementById('langVI').classList.toggle('active',l==='vi');
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded',()=>{
+  buildGroupCharts();
+  buildGroupTable();
+  buildHeatmap();
+  buildBuInsightCards();
+});
+
+</script>
+</body>
+</html>
