@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FA Reports | SMT Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f7f6;
+    --surface: #ffffff;
+    --sidebar-bg: #f0efed;
+    --border: rgba(0,0,0,0.09);
+    --border-md: rgba(0,0,0,0.15);
+    --text-primary: #1a1a1a;
+    --text-secondary: #666;
+    --text-tertiary: #999;
+    --accent: #1a1a1a;
+    --accent-fg: #fff;
+    --green-bg: #eaf3de;
+    --green-fg: #3b6d11;
+    --gray-bg: #f0efed;
+    --gray-fg: #5f5e5a;
+    --danger: #c0392b;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --panel-w: 300px;
+    --sidebar-w: 200px;
+  }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text-primary); height: 100vh; overflow: hidden; font-size: 14px; }
+  .app { display: flex; height: 100vh; position: relative; }
+
+  /* SIDEBAR */
+  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; z-index: 1; }
+  .sidebar-logo { padding: 14px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .logo-box { width: 32px; height: 32px; background: #1a1a1a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 600; }
+  .logo-name { font-size: 13px; font-weight: 500; }
+  .logo-ver { font-size: 11px; color: var(--text-tertiary); }
+  .sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
+  .nav-label { font-size: 10.5px; color: var(--text-tertiary); padding: 8px 8px 3px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text-secondary); }
+  .nav-item:hover { background: rgba(0,0,0,0.04); }
+  .nav-item.active { background: var(--surface); color: var(--text-primary); font-weight: 500; }
+  .nav-item i { font-size: 16px; }
+  .nav-item .chevron { margin-left: auto; font-size: 13px; }
+  .sidebar-user { padding: 10px 14px; border-top: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #1e40af; }
+  .user-name { font-size: 12px; color: var(--text-secondary); }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  .topbar { padding: 15px 24px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+  .page-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; }
+  .btn-primary { background: var(--accent); color: var(--accent-fg); border: none; padding: 7px 14px; border-radius: var(--radius); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .search-box { flex: 1; display: flex; align-items: center; gap: 8px; border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 7px 12px; background: var(--surface); }
+  .search-box input { border: none; background: none; outline: none; font-size: 13px; color: var(--text-primary); width: 100%; }
+  .search-box i { font-size: 15px; color: var(--text-tertiary); }
+  .filter-select { border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text-secondary); background: var(--surface); cursor: pointer; outline: none; }
+
+  .year-group { margin-bottom: 22px; }
+  .year-label-group { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+  .report-table { width: 100%; border-collapse: collapse; }
+  .report-table th { font-size: 11.5px; color: var(--text-tertiary); font-weight: 400; text-align: left; padding: 6px 10px; border-bottom: 0.5px solid var(--border); }
+  .report-table td { font-size: 13px; padding: 9px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  .report-table tr:last-child td { border-bottom: none; }
+  .report-table tbody tr:hover td { background: var(--sidebar-bg); }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-active { background: var(--green-bg); color: var(--green-fg); }
+  .badge-inactive { background: var(--gray-bg); color: var(--gray-fg); }
+
+  .actions { display: flex; align-items: center; gap: 4px; }
+  .action-btn { padding: 4px 9px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: none; cursor: pointer; color: var(--text-secondary); font-size: 12px; display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
+  .action-btn:hover { background: var(--sidebar-bg); }
+  .action-btn.danger { color: var(--text-secondary); }
+  .action-btn.danger:hover { color: var(--danger); border-color: var(--danger); background: #fef2f2; }
+
+  /* DIM OVERLAY — covers sidebar + main when panel open */
+  .dim-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.55); z-index: 10; display: none; }
+  .dim-overlay.open { display: block; }
+
+  /* PANEL — sits inside .app, on top of dim */
+  .panel { position: absolute; top: 0; right: 0; bottom: 0; width: var(--panel-w); background: var(--surface); border-left: 0.5px solid var(--border-md); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); z-index: 20; }
+  .panel.open { transform: translateX(0); }
+
+  .panel-header { padding: 15px 18px; border-bottom: 0.5px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; }
+  .panel-title { font-size: 14px; font-weight: 500; }
+  .panel-sub { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; }
+  .close-btn { width: 26px; height: 26px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); border-radius: var(--radius); flex-shrink: 0; }
+  .close-btn:hover { background: var(--sidebar-bg); }
+  .panel-body { flex: 1; padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+  .form-label .req { color: #c0392b; margin-left: 2px; }
+  .form-hint { font-size: 11px; color: var(--text-tertiary); }
+  .form-input { border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text-primary); background: var(--surface); outline: none; width: 100%; font-family: inherit; }
+  .form-input:focus { border-color: #888; }
+
+  /* Year picker */
+  .year-picker-wrap { position: relative; }
+  .year-picker-display { border: 0.5px solid var(--border-md); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text-primary); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .year-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius); z-index: 50; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .year-dropdown.hidden { display: none; }
+  .year-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 6px; }
+  .year-opt { padding: 7px; text-align: center; font-size: 13px; cursor: pointer; border-radius: 6px; }
+  .year-opt:hover { background: var(--sidebar-bg); }
+  .year-opt.selected { background: var(--accent); color: #fff; }
+
+  /* Order */
+  .order-row { display: flex; align-items: center; gap: 8px; }
+  .order-btn { width: 30px; height: 30px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-family: inherit; font-size: 16px; line-height: 1; }
+  .order-btn:hover { background: var(--sidebar-bg); }
+  .order-val { font-size: 14px; font-weight: 500; min-width: 24px; text-align: center; }
+
+  /* Toggle */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 11px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--sidebar-bg); }
+  .toggle-label { font-size: 13px; font-weight: 500; }
+  .toggle-desc { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+  .toggle-switch { width: 36px; height: 20px; background: #ccc; border-radius: 20px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch.on { background: #1a1a1a; }
+  .toggle-knob { width: 14px; height: 14px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle-switch.on .toggle-knob { left: 19px; }
+
+  /* Upload */
+  .upload-zone { border: 1px dashed var(--border-md); border-radius: var(--radius); padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; background: var(--sidebar-bg); text-align: center; }
+  .upload-zone:hover { border-color: #888; }
+  .file-row { display: flex; align-items: center; gap: 8px; }
+  .file-name-display { font-size: 12px; color: var(--green-fg); background: var(--green-bg); border-radius: var(--radius); padding: 5px 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .panel-footer { padding: 12px 18px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; }
+  .btn-secondary { flex: 1; padding: 7px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: none; font-size: 13px; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
+  .btn-secondary:hover { background: var(--sidebar-bg); }
+  .btn-save { flex: 2; background: var(--accent); color: #fff; border: none; padding: 7px; border-radius: var(--radius); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; }
+  .btn-save:hover { opacity: 0.85; }
+
+  /* Delete modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .delete-confirm { background: var(--surface); border: 0.5px solid var(--border-md); border-radius: var(--radius-lg); padding: 22px; max-width: 280px; width: 90%; }
+  .delete-confirm h3 { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .delete-confirm p { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.5; }
+  .delete-actions { display: flex; gap: 8px; }
+  .btn-cancel-del { flex: 1; padding: 7px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: none; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-cancel-del:hover { background: var(--sidebar-bg); }
+  .btn-delete { flex: 1; padding: 7px; border: none; border-radius: var(--radius); background: var(--danger); color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-delete:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-box">S</div>
+      <div>
+        <div class="logo-name">SMT Dashboard</div>
+        <div class="logo-ver">v1.0.0</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+      <div class="nav-label" style="margin-top:6px;">Signage</div>
+      <div class="nav-item"><i class="ti ti-device-tv"></i> Devices & screens</div>
+      <div class="nav-item"><i class="ti ti-playlist"></i> Playlists</div>
+      <div class="nav-item"><i class="ti ti-calendar"></i> Schedules</div>
+      <div class="nav-label" style="margin-top:6px;">Reports</div>
+      <div class="nav-item active"><i class="ti ti-file-analytics"></i> FA reports</div>
+      <div class="nav-label" style="margin-top:6px;">Management</div>
+      <div class="nav-item"><i class="ti ti-building"></i> Organization <i class="ti ti-chevron-right chevron"></i></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">HĐ</div>
+      <div class="user-name">Hải. Đào Gia</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title"><i class="ti ti-file-analytics"></i> FA reports</div>
+      <button class="btn-primary" onclick="openPanel('add')"><i class="ti ti-plus"></i> Add report</button>
+    </div>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-box">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search reports by cycle name..." id="searchInput" oninput="renderTable()" />
+        </div>
+        <select class="filter-select" id="yearFilter" onchange="renderTable()">
+          <option value="">All years</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+        </select>
+        <select class="filter-select" id="statusFilter" onchange="renderTable()">
+          <option value="">All status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div id="tableContainer"></div>
+    </div>
+
+    <!-- DIM overlay inside main only -->
+    <div class="dim-overlay" id="dimOverlay" onclick="closePanel()"></div>
+
+    <!-- PANEL -->
+    <div class="panel" id="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title" id="panelTitle">Add report</div>
+          <div class="panel-sub" id="panelSub">Upload and configure HTML file</div>
+        </div>
+        <button class="close-btn" onclick="closePanel()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="panel-body">
+        <div class="form-group">
+          <div class="form-label">Cycle name <span class="req">*</span></div>
+          <input class="form-input" type="text" placeholder="e.g. FC4 + 8" id="fieldName" />
+          <div class="form-hint">Tên hiển thị trên menu viewer</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Year <span class="req">*</span></div>
+          <div class="year-picker-wrap">
+            <div class="year-picker-display" onclick="toggleYearDropdown(event)">
+              <span id="yearDisplayText">Select year</span>
+              <i class="ti ti-chevron-down" style="font-size:13px;color:var(--text-tertiary);"></i>
+            </div>
+            <div class="year-dropdown hidden" id="yearDropdown">
+              <div class="year-grid" id="yearGrid"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Display order</div>
+          <div class="order-row">
+            <button class="order-btn" onclick="changeOrder(-1)">−</button>
+            <div class="order-val" id="orderVal">1</div>
+            <button class="order-btn" onclick="changeOrder(1)">+</button>
+          </div>
+          <div class="form-hint" style="margin-top:4px;">Thứ tự trong cùng một năm (1 = đầu tiên)</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">Visibility</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label" id="toggleLabel">Active</div>
+              <div class="toggle-desc">Hiện report này cho lãnh đạo xem</div>
+            </div>
+            <div class="toggle-switch on" id="toggleSwitch" onclick="toggleVisibility()">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">HTML file <span class="req">*</span></div>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <i class="ti ti-upload" style="font-size:22px;color:var(--text-tertiary);"></i>
+            <div style="font-size:13px;font-weight:500;">Kéo thả hoặc chọn file</div>
+            <div style="font-size:11px;color:var(--text-tertiary);">Chỉ nhận .html — tối đa 20MB</div>
+          </div>
+          <input type="file" id="fileInput" accept=".html" style="display:none" onchange="handleFileSelect(this)" />
+          <div id="fileNameRow" style="display:none;" class="file-row">
+            <i class="ti ti-file-type-html" style="font-size:16px;color:var(--green-fg);flex-shrink:0;"></i>
+            <div class="file-name-display" id="fileNameDisplay"></div>
+            <button class="action-btn" onclick="clearFile()" style="flex-shrink:0;padding:4px 6px;"><i class="ti ti-x"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button class="btn-secondary" onclick="closePanel()">Cancel</button>
+        <button class="btn-save"><i class="ti ti-check"></i> Save report</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="delete-confirm">
+    <h3>Delete report?</h3>
+    <p>Report "<span id="deleteTargetName"></span>" sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
+    <div class="delete-actions">
+      <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-delete" onclick="confirmDelete()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let reports = [
+  { id: 1, name: 'FC4 + 8', year: 2026, order: 1, status: 'active',   date: '20 May 2026' },
+  { id: 2, name: 'FC3',     year: 2026, order: 2, status: 'active',   date: '05 Apr 2026' },
+  { id: 3, name: 'FC2 + 4', year: 2026, order: 3, status: 'inactive', date: '10 Feb 2026' },
+  { id: 4, name: 'FC4 + 5', year: 2025, order: 1, status: 'active',   date: '18 Nov 2025' },
+  { id: 5, name: 'FC3',     year: 2025, order: 2, status: 'inactive', date: '02 Sep 2025' },
+  { id: 6, name: 'FC2 + 4', year: 2025, order: 3, status: 'active',   date: '10 Mar 2025' },
+];
+
+let panelMode = 'add';
+let editingId = null;
+let deleteTargetId = null;
+let currentOrder = 1;
+let visibilityOn = true;
+let selectedYear = null;
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({length: 8}, (_, i) => currentYear - i);
+
+function buildYearGrid() {
+  const grid = document.getElementById('yearGrid');
+  grid.innerHTML = '';
+  years.forEach(y => {
+    const d = document.createElement('div');
+    d.className = 'year-opt' + (selectedYear === y ? ' selected' : '');
+    d.textContent = y;
+    d.onclick = (e) => { e.stopPropagation(); selectYear(y); };
+    grid.appendChild(d);
+  });
+}
+
+function toggleYearDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('yearDropdown');
+  const isHidden = dd.classList.contains('hidden');
+  dd.classList.toggle('hidden', !isHidden);
+  if (isHidden) buildYearGrid();
+}
+
+function selectYear(y) {
+  selectedYear = y;
+  document.getElementById('yearDisplayText').textContent = y;
+  document.getElementById('yearDropdown').classList.add('hidden');
+  buildYearGrid();
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('yearDropdown').classList.add('hidden');
+});
+
+function changeOrder(delta) {
+  currentOrder = Math.max(1, currentOrder + delta);
+  document.getElementById('orderVal').textContent = currentOrder;
+}
+
+function toggleVisibility() {
+  visibilityOn = !visibilityOn;
+  document.getElementById('toggleSwitch').classList.toggle('on', visibilityOn);
+  document.getElementById('toggleLabel').textContent = visibilityOn ? 'Active' : 'Inactive';
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('fileNameRow').style.display = 'flex';
+  document.getElementById('fileNameDisplay').textContent = file.name;
+}
+
+function clearFile() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('uploadZone').style.display = 'flex';
+  document.getElementById('fileNameRow').style.display = 'none';
+}
+
+function openPanel(mode, id) {
+  panelMode = mode; editingId = id || null;
+  if (mode === 'edit' && id) {
+    const r = reports.find(x => x.id === id);
+    document.getElementById('panelTitle').textContent = 'Edit report';
+    document.getElementById('panelSub').textContent = 'Update cycle information';
+    document.getElementById('fieldName').value = r.name;
+    selectedYear = r.year;
+    document.getElementById('yearDisplayText').textContent = r.year;
+    currentOrder = r.order;
+    document.getElementById('orderVal').textContent = r.order;
+    visibilityOn = r.status === 'active';
+    document.getElementById('toggleSwitch').classList.toggle('on', visibilityOn);
+    document.getElementById('toggleLabel').textContent = visibilityOn ? 'Active' : 'Inactive';
+    clearFile();
+  } else {
+    document.getElementById('panelTitle').textContent = 'Add report';
+    document.getElementById('panelSub').textContent = 'Upload and configure HTML file';
+    document.getElementById('fieldName').value = '';
+    selectedYear = null;
+    document.getElementById('yearDisplayText').textContent = 'Select year';
+    currentOrder = 1;
+    document.getElementById('orderVal').textContent = 1;
+    visibilityOn = true;
+    document.getElementById('toggleSwitch').classList.add('on');
+    document.getElementById('toggleLabel').textContent = 'Active';
+    clearFile();
+  }
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('dimOverlay').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('dimOverlay').classList.remove('open');
+}
+
+function openDeleteModal(id) {
+  deleteTargetId = id;
+  const r = reports.find(x => x.id === id);
+  document.getElementById('deleteTargetName').textContent = r.name;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteTargetId = null;
+}
+
+function confirmDelete() {
+  reports = reports.filter(x => x.id !== deleteTargetId);
+  closeDeleteModal();
+  renderTable();
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const yr = document.getElementById('yearFilter').value;
+  const st = document.getElementById('statusFilter').value;
+  return reports.filter(r =>
+    r.name.toLowerCase().includes(q) &&
+    (yr ? String(r.year) === yr : true) &&
+    (st ? r.status === st : true)
+  );
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const yearGroups = [...new Set(filtered.map(r => r.year))].sort((a,b) => b - a);
+  const container = document.getElementById('tableContainer');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-tertiary);font-size:13px;">No reports found</div>';
+    return;
+  }
+
+  container.innerHTML = yearGroups.map(yr => {
+    const rows = filtered.filter(r => r.year === yr).sort((a,b) => a.order - b.order);
+    return `
+      <div class="year-group">
+        <div class="year-label-group">${yr}</div>
+        <table class="report-table">
+          <thead><tr>
+            <th style="width:35%">Cycle name</th>
+            <th style="width:25%">Uploaded at</th>
+            <th style="width:16%">Status</th>
+            <th style="width:24%"></th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td><i class="ti ti-file-type-html" style="font-size:14px;vertical-align:-2px;margin-right:6px;color:var(--text-tertiary);"></i>${r.name}</td>
+                <td style="color:var(--text-secondary);">${r.date}</td>
+                <td><span class="badge ${r.status === 'active' ? 'badge-active' : 'badge-inactive'}">
+                  <i class="ti ${r.status === 'active' ? 'ti-check' : 'ti-eye-off'}" style="font-size:10px;"></i>
+                  ${r.status === 'active' ? 'Active' : 'Inactive'}
+                </span></td>
+                <td>
+                  <div class="actions">
+                    <button class="action-btn" onclick="openPanel('edit', ${r.id})"><i class="ti ti-edit"></i> Edit</button>
+                    <button class="action-btn danger" onclick="openDeleteModal(${r.id})" title="Delete">🗑</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }).join('');
+}
+
+renderTable();
+</script>
+</body>
+</html>
