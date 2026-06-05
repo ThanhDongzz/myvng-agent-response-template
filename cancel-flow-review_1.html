@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hủy yêu cầu IT hỗ trợ — Flow Review</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --vng: #E8590C; --vng-light: #FEF0E8; --vng-dark: #B8420A;
+    --bg: #F5F4F2; --surface: #FFFFFF; --surface2: #F0EEE9;
+    --border: #E2DED7; --text: #1A1917; --text2: #6B6760; --text3: #9E9B96;
+    --green: #16A34A; --green-bg: #ECFDF5;
+    --blue: #1D4ED8; --blue-bg: #EFF6FF;
+    --amber: #B45309; --amber-bg: #FFFBEB;
+    --red: #DC2626; --red-bg: #FEF2F2;
+    --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    --r: 12px; --r-sm: 6px;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sidebar-logo .prod-name { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: .05em; margin-bottom: 4px; }
+  .sidebar-logo h1 { font-size: 14px; font-weight: 500; color: var(--text); }
+  .sidebar-section { padding: 0 10px; margin-bottom: 6px; }
+  .sidebar-section-label { font-size: 10px; font-family: var(--mono); letter-spacing: .08em; color: var(--text3); padding: 0 8px; margin-bottom: 3px; text-transform: uppercase; }
+  .flow-btn { display: flex; align-items: flex-start; gap: 9px; width: 100%; padding: 7px 10px; border: none; background: none; border-radius: var(--r-sm); cursor: pointer; font-family: var(--font); font-size: 12.5px; color: var(--text2); text-align: left; transition: background .12s, color .12s; line-height: 1.4; }
+  .flow-btn:hover { background: var(--surface2); color: var(--text); }
+  .flow-btn.active { background: var(--vng-light); color: var(--vng-dark); font-weight: 500; }
+  .flow-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-happy { background: var(--green); }
+  .dot-ex { background: var(--red); }
+  .dot-edge { background: var(--amber); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 18px; }
+  .sidebar-note { padding: 0 18px; font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+  .main { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; }
+  .flow-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+  .badge-happy { background: var(--green-bg); color: var(--green); }
+  .badge-ex { background: var(--red-bg); color: var(--red); }
+  .badge-edge { background: var(--amber-bg); color: var(--amber); }
+  .topbar-title { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .topbar-desc { font-size: 12px; color: var(--text2); margin-left: auto; max-width: 320px; text-align: right; }
+
+  .chat-wrapper { flex: 1; padding: 28px 44px; max-width: 680px; width: 100%; margin: 0 auto; }
+  .flow-panel { display: none; }
+  .flow-panel.active { display: block; }
+  .chat-bubble { display: flex; gap: 10px; margin-bottom: 20px; }
+  .chat-bubble.user { flex-direction: row-reverse; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; font-family: var(--mono); margin-top: 18px; }
+  .avatar-agent { background: var(--vng); color: #fff; }
+  .avatar-user { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .bubble-content { max-width: 82%; }
+  .bubble-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-family: var(--mono); }
+  .chat-bubble.user .bubble-name { text-align: right; }
+  .bubble-text { background: var(--surface2); border-radius: 4px 12px 12px 12px; padding: 10px 14px; font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .chat-bubble.user .bubble-text { background: var(--vng); color: #fff; border-radius: 12px 4px 12px 12px; }
+  .bubble-text p { margin-bottom: 6px; }
+  .bubble-text p:last-child { margin-bottom: 0; }
+  .bubble-text ul { padding-left: 18px; margin: 4px 0; }
+  .bubble-text li { margin-bottom: 3px; }
+  .bubble-text b { font-weight: 500; }
+  .bubble-text a { color: var(--blue); text-decoration: underline; word-break: break-all; }
+  .bubble-text i { color: var(--text2); font-style: italic; }
+
+  .suggestions { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .suggestion-chip { padding: 7px 13px; border-radius: var(--r-sm); font-size: 12.5px; border: 1px solid var(--border); color: var(--text2); background: var(--surface); cursor: default; display: flex; align-items: center; gap: 6px; }
+
+  .step-label { display: flex; align-items: center; gap: 10px; margin: 28px 0 12px; font-size: 10.5px; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; }
+  .step-label::before, .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .step-tag { padding: 2px 9px; border-radius: 999px; background: var(--surface2); color: var(--text3); white-space: nowrap; }
+
+  .annotation { background: var(--amber-bg); border: 1px dashed #FCD34D; border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; color: var(--amber); margin: 6px 0 4px 40px; display: flex; gap: 6px; align-items: flex-start; }
+
+  .action-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; padding: 2px 4px; }
+  .action-icon { font-size: 16px; color: var(--text3); cursor: default; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="prod-name">MVW-3760</div>
+      <h1>Hủy yêu cầu IT<br>hỗ trợ — Flow Review</h1>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Happy Flow</div>
+      <button class="flow-btn active" onclick="showFlow('happy-btn')" id="btn-happy-btn">
+        <span class="dot dot-happy"></span>Từ btn xem chi tiết request
+      </button>
+      <button class="flow-btn" onclick="showFlow('happy-intent')" id="btn-happy-intent">
+        <span class="dot dot-happy"></span>User nhắn intent trực tiếp
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Exceptional Flows</div>
+      <button class="flow-btn" onclick="showFlow('ex-decline')" id="btn-ex-decline">
+        <span class="dot dot-ex"></span>User không xác nhận hủy
+      </button>
+      <button class="flow-btn" onclick="showFlow('ex-closed')" id="btn-ex-closed">
+        <span class="dot dot-ex"></span>Ticket đã đóng
+      </button>
+      <button class="flow-btn" onclick="showFlow('ex-notfound')" id="btn-ex-notfound">
+        <span class="dot dot-ex"></span>ID không tồn tại / không phải của user
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Edge Cases</div>
+      <button class="flow-btn" onclick="showFlow('edge-nocode')" id="btn-edge-nocode">
+        <span class="dot dot-edge"></span>User không nhớ mã yêu cầu
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-note">💡 Click vào từng flow để xem conversation mẫu.</div>
+  </nav>
+
+  <main class="main">
+    <div class="topbar">
+      <div id="topbar-badge" class="flow-badge badge-happy">Happy Flow</div>
+      <div class="topbar-title" id="topbar-title">Từ btn xem chi tiết request</div>
+      <div class="topbar-desc" id="topbar-desc">User đang xem chi tiết request → chọn btn Hủy yêu cầu</div>
+    </div>
+
+    <div class="chat-wrapper">
+
+      <!-- ===== HAPPY: TỪ BTN ===== -->
+      <div class="flow-panel active" id="flow-happy-btn">
+
+        <div class="step-label"><span class="step-tag">User đang xem chi tiết request — đủ điều kiện hủy</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p><b>Chi tiết yêu cầu WO-1187</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi</li>
+                <li><b>Mô tả:</b> Laptop bị rơi hôm nay, màn hình bị nứt và hiển thị toàn sọc.</li>
+                <li><b>Trạng thái:</b> In Progress</li>
+                <li><b>Kỹ thuật viên:</b> Thanh. Đặng Đình Minh</li>
+                <li><b>Link:</b> <a href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187</a></li>
+              </ul>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Bổ sung thông tin</div>
+              <div class="suggestion-chip">Hủy yêu cầu</div>
+              <div class="suggestion-chip">Quay lại danh sách</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Btn [Hủy yêu cầu] chỉ hiện khi: category = Support VÀ status là Open/Assigned/On Hold/In Progress.</div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Hủy yêu cầu</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Agent hỏi xác nhận — destructive action</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Bạn có chắc muốn hủy yêu cầu WO-1187 không? Thao tác này không thể hoàn tác.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Xác nhận hủy</div>
+              <div class="suggestion-chip">Không, giữ nguyên</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Xác nhận hủy</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Hủy thành công — sync lên SDP</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Yêu cầu WO-1187 đã được hủy.</p>
+              <ul>
+                <li><b>Mã yêu cầu:</b> WO-1187</li>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi</li>
+                <li><b>Trạng thái:</b> Cancelled</li>
+                <li><b>Link:</b> <a href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187</a></li>
+              </ul>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Tạo yêu cầu hỗ trợ mới</div>
+              <div class="suggestion-chip">Xem các yêu cầu khác của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== HAPPY: INTENT TRỰC TIẾP ===== -->
+      <div class="flow-panel" id="flow-happy-intent">
+
+        <div class="step-label"><span class="step-tag">User nhắn intent ngay khi vào chat</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Hủy yêu cầu WO-1187 giúp mình</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Agent load chi tiết trước — rồi mới hỏi xác nhận</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Để mình load thông tin yêu cầu trước nhé.</p>
+              <p><b>Chi tiết yêu cầu WO-1187</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi</li>
+                <li><b>Mô tả:</b> Laptop bị rơi hôm nay, màn hình bị nứt và hiển thị toàn sọc.</li>
+                <li><b>Trạng thái:</b> In Progress</li>
+                <li><b>Kỹ thuật viên:</b> Thanh. Đặng Đình Minh</li>
+                <li><b>Link:</b> <a href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187</a></li>
+              </ul>
+              <p>Bạn có chắc muốn hủy yêu cầu này không? Thao tác này không thể hoàn tác.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Xác nhận hủy</div>
+              <div class="suggestion-chip">Không, giữ nguyên</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Xác nhận hủy</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Yêu cầu WO-1187 đã được hủy.</p>
+              <ul>
+                <li><b>Mã yêu cầu:</b> WO-1187</li>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi</li>
+                <li><b>Trạng thái:</b> Cancelled</li>
+                <li><b>Link:</b> <a href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187</a></li>
+              </ul>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Tạo yêu cầu hỗ trợ mới</div>
+              <div class="suggestion-chip">Xem các yêu cầu khác của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Agent luôn load và show chi tiết ticket trước khi hỏi xác nhận — giống flow bổ sung thông tin (MVW-3759), nhất quán.</div>
+
+      </div>
+
+      <!-- ===== EX: KHÔNG XÁC NHẬN ===== -->
+      <div class="flow-panel" id="flow-ex-decline">
+
+        <div class="step-label"><span class="step-tag">User đổi ý — không muốn hủy nữa</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Bạn có chắc muốn hủy yêu cầu WO-1187 không? Thao tác này không thể hoàn tác.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Xác nhận hủy</div>
+              <div class="suggestion-chip">Không, giữ nguyên</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Không, giữ nguyên</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Đã giữ nguyên yêu cầu WO-1187. Bạn muốn mình hỗ trợ gì tiếp?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Bổ sung thông tin cho yêu cầu này</div>
+              <div class="suggestion-chip">Xem các yêu cầu khác của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== EX: TICKET ĐÃ ĐÓNG ===== -->
+      <div class="flow-panel" id="flow-ex-closed">
+
+        <div class="step-label"><span class="step-tag">Ticket đã Resolved / Closed / Cancelled</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Hủy yêu cầu WO-1150 giúp mình</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p><b>Chi tiết yêu cầu WO-1150</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Lỗi VPN Authentication failed</li>
+                <li><b>Trạng thái:</b> Resolved</li>
+                <li><b>Link:</b> <a href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1150</a></li>
+              </ul>
+              <p>Yêu cầu này đã được đóng, không thể hủy. Bạn muốn mình hỗ trợ gì tiếp?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Tạo yêu cầu hỗ trợ mới</div>
+              <div class="suggestion-chip">Xem các yêu cầu khác của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Áp dụng cho cả 3 status: Resolved, Closed, Cancelled. Agent vẫn load chi tiết trước để user thấy rõ trạng thái hiện tại.</div>
+
+      </div>
+
+      <!-- ===== EX: KHÔNG TÌM THẤY ===== -->
+      <div class="flow-panel" id="flow-ex-notfound">
+
+        <div class="step-label"><span class="step-tag">ID không tồn tại hoặc không phải của user</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Hủy yêu cầu WO-9999</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Không tìm thấy yêu cầu WO-9999. Vui lòng kiểm tra lại mã yêu cầu.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Xem danh sách yêu cầu của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Không phân biệt "không tồn tại" với "tồn tại nhưng không phải của user" — cùng thông báo để tránh lộ thông tin.</div>
+
+      </div>
+
+      <!-- ===== EDGE: KHÔNG NHỚ MÃ ===== -->
+      <div class="flow-panel" id="flow-edge-nocode">
+
+        <div class="step-label"><span class="step-tag">User không nhớ mã yêu cầu muốn hủy</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Mình muốn hủy cái ticket màn hình laptop</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Bạn có thể cho mình biết mã yêu cầu (WO-XXXX) không? Nếu không nhớ, mình có thể liệt kê các yêu cầu đang mở của bạn.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Xem danh sách yêu cầu của tôi</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">💬 User chọn xem danh sách → flow tiếp theo xử lý bởi MVW-3782 (View My Requests), không cover ở đây.</div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const flows = {
+    'happy-btn':    { badge: 'badge-happy', badgeText: 'Happy Flow',  title: 'Từ btn xem chi tiết request',             desc: 'User đang xem chi tiết → chọn btn Hủy yêu cầu → xác nhận → Cancelled' },
+    'happy-intent': { badge: 'badge-happy', badgeText: 'Happy Flow',  title: 'User nhắn intent trực tiếp',              desc: 'Agent load chi tiết trước, hỏi xác nhận, rồi mới hủy' },
+    'ex-decline':   { badge: 'badge-ex',    badgeText: 'Exceptional', title: 'User không xác nhận hủy',                 desc: 'User đổi ý — Agent giữ nguyên ticket, hỏi muốn làm gì tiếp' },
+    'ex-closed':    { badge: 'badge-ex',    badgeText: 'Exceptional', title: 'Ticket đã đóng',                          desc: 'Status Resolved / Closed / Cancelled — không thể hủy' },
+    'ex-notfound':  { badge: 'badge-ex',    badgeText: 'Exceptional', title: 'ID không tồn tại / không phải của user',  desc: 'Không tìm thấy WO trong hệ thống hoặc không thuộc user' },
+    'edge-nocode':  { badge: 'badge-edge',  badgeText: 'Edge Case',   title: 'User không nhớ mã yêu cầu',               desc: 'Agent hỏi mã, offer xem danh sách nếu user không nhớ' },
+  };
+
+  function showFlow(id) {
+    document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('flow-' + id).classList.add('active');
+    document.getElementById('btn-' + id).classList.add('active');
+    const f = flows[id];
+    const badge = document.getElementById('topbar-badge');
+    badge.className = 'flow-badge ' + f.badge;
+    badge.textContent = f.badgeText;
+    document.getElementById('topbar-title').textContent = f.title;
+    document.getElementById('topbar-desc').textContent = f.desc;
+  }
+</script>
+</body>
+</html>
