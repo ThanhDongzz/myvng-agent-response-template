@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Helpdesk Agent — Flow Review</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --vng: #E8590C;
+    --vng-light: #FEF0E8;
+    --vng-dark: #B8420A;
+    --bg: #F5F4F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE9;
+    --border: #E2DED7;
+    --text: #1A1917;
+    --text2: #6B6760;
+    --text3: #9E9B96;
+    --green: #16A34A;
+    --green-bg: #ECFDF5;
+    --blue: #1D4ED8;
+    --blue-bg: #EFF6FF;
+    --amber: #B45309;
+    --amber-bg: #FFFBEB;
+    --red: #DC2626;
+    --red-bg: #FEF2F2;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+    --r: 12px;
+    --r-sm: 6px;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    min-height: 100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-logo .prod-name {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .sidebar-logo h1 { font-size: 14px; font-weight: 500; color: var(--text); }
+
+  .sidebar-section { padding: 0 10px; margin-bottom: 6px; }
+
+  .sidebar-section-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    padding: 0 8px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  .flow-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    background: none;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: var(--text2);
+    text-align: left;
+    transition: background 0.12s, color 0.12s;
+    line-height: 1.4;
+  }
+
+  .flow-btn:hover { background: var(--surface2); color: var(--text); }
+  .flow-btn.active { background: var(--vng-light); color: var(--vng-dark); font-weight: 500; }
+
+  .flow-btn .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .dot-a { background: var(--vng); }
+  .dot-b2 { background: var(--green); }
+  .dot-b3 { background: var(--amber); }
+  .dot-b { background: var(--blue); }
+  .dot-info { background: var(--text3); }
+
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 18px; }
+
+  .sidebar-note { padding: 0 18px; font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+  /* MAIN */
+  .main { display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 13px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .flow-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-a { background: var(--vng-light); color: var(--vng-dark); }
+  .badge-b { background: var(--blue-bg); color: var(--blue); }
+  .badge-success { background: var(--green-bg); color: var(--green); }
+  .badge-retry { background: var(--amber-bg); color: var(--amber); }
+  .badge-info { background: var(--surface2); color: var(--text2); }
+
+  .topbar-title { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .topbar-desc { font-size: 12px; color: var(--text2); margin-left: auto; max-width: 300px; text-align: right; }
+
+  /* CHAT */
+  .chat-wrapper {
+    flex: 1;
+    padding: 28px 44px;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .flow-panel { display: none; }
+  .flow-panel.active { display: block; }
+
+  .chat-bubble { display: flex; gap: 10px; margin-bottom: 20px; }
+  .chat-bubble.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--mono);
+    margin-top: 18px;
+  }
+
+  .avatar-agent { background: var(--vng); color: #fff; }
+  .avatar-user { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+  .bubble-content { max-width: 82%; }
+
+  .bubble-name {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 4px;
+    font-family: var(--mono);
+  }
+
+  .chat-bubble.user .bubble-name { text-align: right; }
+
+  .bubble-text {
+    background: var(--surface2);
+    border-radius: 4px 12px 12px 12px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .chat-bubble.user .bubble-text {
+    background: var(--vng);
+    color: #fff;
+    border-radius: 12px 4px 12px 12px;
+  }
+
+  .bubble-text p { margin-bottom: 6px; }
+  .bubble-text p:last-child { margin-bottom: 0; }
+  .bubble-text ul { padding-left: 18px; margin: 4px 0; }
+  .bubble-text li { margin-bottom: 3px; }
+  .bubble-text b { font-weight: 500; }
+
+  /* SUGGESTIONS — vertical stack */
+  .suggestions {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .suggestion-chip {
+    padding: 7px 13px;
+    border-radius: var(--r-sm);
+    font-size: 12.5px;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    background: var(--surface);
+    cursor: default;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bubble-text a { color: var(--blue); text-decoration: underline; word-break: break-all; }
+
+  /* STEP LABEL */
+  .step-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 12px;
+    font-size: 10.5px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.04em;
+  }
+
+  .step-label::before, .step-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .step-tag {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  /* ANNOTATION */
+  .annotation {
+    background: var(--amber-bg);
+    border: 1px dashed #FCD34D;
+    border-radius: var(--r-sm);
+    padding: 7px 11px;
+    font-size: 12px;
+    color: var(--amber);
+    margin: 6px 0 4px 40px;
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .action-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    padding: 2px 4px;
+  }
+
+  .action-icon {
+    font-size: 16px;
+    color: var(--text3);
+    cursor: default;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="prod-name">MVW-3756</div>
+      <h1>IT Helpdesk Agent<br>Flow Review</h1>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Nhánh A — Cần IT Helpdesk xử lý trực tiếp</div>
+      <button class="flow-btn active" onclick="showFlow('a-main')" id="btn-a-main">
+        <span class="dot dot-a"></span>Tạo ticket ngay (happy path)
+      </button>
+      <button class="flow-btn" onclick="showFlow('a-cancel')" id="btn-a-cancel">
+        <span class="dot dot-a"></span>User hủy ticket
+      </button>
+      <button class="flow-btn" onclick="showFlow('a-topic')" id="btn-a-topic">
+        <span class="dot dot-a"></span>User đổi topic giữa chừng
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Nhánh B — Vấn đề cần tư vấn, hỗ trợ</div>
+      <button class="flow-btn" onclick="showFlow('b-success')" id="btn-b-success">
+        <span class="dot dot-b2"></span>Đã xử lý thành công
+      </button>
+      <button class="flow-btn" onclick="showFlow('b-retry-full')" id="btn-b-retry-full">
+        <span class="dot dot-b3"></span>Đã thử, chưa đủ info
+      </button>
+      <button class="flow-btn" onclick="showFlow('b-retry-auto')" id="btn-b-retry-auto">
+        <span class="dot dot-b3"></span>Đã thử, đủ info → auto draft
+      </button>
+      <button class="flow-btn" onclick="showFlow('b-escalate')" id="btn-b-escalate">
+        <span class="dot dot-b"></span>User chủ động escalate
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Nhánh C — Hỏi đáp thông tin thông thường</div>
+      <button class="flow-btn" onclick="showFlow('info')" id="btn-info">
+        <span class="dot dot-info"></span>Câu hỏi tra cứu
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-note">💡 Click vào từng flow để xem nội dung phản hồi mẫu.</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div id="topbar-badge" class="flow-badge badge-a">Nhánh A</div>
+      <div class="topbar-title" id="topbar-title">Tạo ticket ngay — happy path</div>
+      <div class="topbar-desc" id="topbar-desc">Agent nhận diện cần IT trực tiếp → hỏi 3 info → draft → confirm</div>
+    </div>
+
+    <div class="chat-wrapper">
+
+      <!-- ==================== NHÁNH A MAIN ==================== -->
+      <div class="flow-panel active" id="flow-a-main">
+
+        <div class="step-label"><span class="step-tag">Agent nhận diện → cần ticket ngay</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Laptop mình bị vỡ màn hình rồi, không dùng được nữa</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Vấn đề này cần IT Helpdesk hỗ trợ trực tiếp để xử lý. Mình sẽ giúp bạn tạo yêu cầu hỗ trợ ngay.</p>
+              <p>Bạn cho mình biết thêm một chút — màn hình bị vỡ từ khi nào, và máy có còn lên nguồn được không?</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Thu thập thông tin bắt buộc (linh động theo ngữ cảnh)</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Hôm nay lỡ làm rơi, máy vẫn lên được nhưng màn hình nứt và hiện toàn sọc</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Rõ rồi. Trước khi mình tạo ticket, bạn đã thử làm gì chưa — như cắm thêm màn hình ngoài để dùng tạm chẳng hạn?</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">💬 Đã có: triệu chứng (màn hình nứt, sọc) + thời điểm (hôm nay). Chỉ còn hỏi "đã thử gì" — hỏi theo ngữ cảnh.</div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Chưa thử gì, mình không có màn hình ngoài</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Đủ 3 thông tin bắt buộc → hiển thị draft dạng text</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Được rồi, mình tạo ticket ngay nhé!</p>
+              <p>Đây là ticket mình đã chuẩn bị cho bạn:</p>
+              <p><b>🎫 TICKET HỖ TRỢ IT</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi, hiển thị toàn sọc</li>
+                <li><b>Mô tả:</b>
+                  <ul>
+                    <li>Laptop bị rơi hôm nay, màn hình bị nứt và hiển thị toàn sọc.</li>
+                    <li>Máy vẫn lên nguồn được nhưng không dùng màn hình chính được.</li>
+                    <li>Chưa thử cắm màn hình ngoài do không có sẵn.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p>Bạn xác nhận gửi ticket này không? Nếu cần chỉnh sửa thêm thông tin nào, bạn cứ nhắn mình nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Xác nhận gửi</div>
+              <div class="suggestion-chip">✕ Hủy</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">User xác nhận → ticket thành công</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Xác nhận gửi</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Ticket hỗ trợ IT đã được gửi thành công!</p>
+              <ul>
+                <li><b>Mã yêu cầu:</b> WO-1187</li>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi, hiển thị toàn sọc</li>
+                <li><b>Trạng thái:</b> Open</li>
+                <li><b>Kỹ thuật viên:</b> auto-assign bởi SDP</li>
+                <li><b>Link yêu cầu:</b> <a href="https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1187</a></li>
+              </ul>
+              <p>Đội ngũ IT sẽ liên hệ với bạn sớm nhất có thể để sắp xếp kiểm tra và xử lý.</p>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== A CANCEL ==================== -->
+      <div class="flow-panel" id="flow-a-cancel">
+
+        <div class="step-label"><span class="step-tag">User hủy sau khi xem draft</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Được rồi, mình tạo ticket ngay nhé!</p>
+              <p>Đây là ticket mình đã chuẩn bị cho bạn:</p>
+              <p><b>🎫 TICKET HỖ TRỢ IT</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi, hiển thị toàn sọc</li>
+                <li><b>Mô tả:</b>
+                  <ul>
+                    <li>Laptop bị rơi hôm nay, màn hình bị nứt và hiển thị toàn sọc.</li>
+                    <li>Máy vẫn lên nguồn được nhưng không dùng màn hình chính được.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p>Bạn xác nhận gửi ticket này không? Nếu cần chỉnh sửa thêm thông tin nào, bạn cứ nhắn mình nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Xác nhận gửi</div>
+              <div class="suggestion-chip">✕ Hủy</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Thôi hủy đi</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Đã hủy yêu cầu. Khi nào bạn cần tạo lại hoặc cần hỗ trợ gì khác, mình sẵn sàng giúp nhé.</p>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== A TOPIC CHANGE ==================== -->
+      <div class="flow-panel" id="flow-a-topic">
+
+        <div class="step-label"><span class="step-tag">Draft chưa confirm — user đổi topic sang vấn đề khác</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Đây là ticket mình đã chuẩn bị cho bạn:</p>
+              <p><b>🎫 TICKET HỖ TRỢ IT</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Màn hình laptop bị vỡ do rơi, hiển thị toàn sọc</li>
+                <li><b>Mô tả:</b>
+                  <ul>
+                    <li>Laptop bị rơi hôm nay, màn hình bị nứt và hiển thị toàn sọc.</li>
+                    <li>Chưa thử cắm màn hình ngoài do không có sẵn.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p>Bạn xác nhận gửi ticket này không? Nếu cần chỉnh sửa thêm thông tin nào, bạn cứ nhắn mình nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Xác nhận gửi</div>
+              <div class="suggestion-chip">✕ Hủy</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">À à, còn VPN mình kết nối không được, cách xử lý thế nào?</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Mình thấy bạn vẫn còn ticket về màn hình laptop chưa xác nhận hoặc hủy. Bạn muốn làm gì với ticket đó trước không?</p>
+              <p>Sau khi xử lý xong mình sẽ hỗ trợ vấn đề VPN cho bạn ngay nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Gửi ticket màn hình</div>
+              <div class="suggestion-chip">✕ Hủy ticket màn hình</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Agent không tự hủy hay tự gửi. Phải chờ user quyết định rõ ràng để tránh gửi nhầm.</div>
+
+      </div>
+
+      <!-- ==================== B SUCCESS ==================== -->
+      <div class="flow-panel" id="flow-b-success">
+
+        <div class="step-label"><span class="step-tag">Agent tư vấn → cuối response kèm quick reply</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Mình kết nối VPN không được, báo lỗi Authentication failed</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Lỗi "Authentication failed" thường do mật khẩu VPN hết hạn hoặc nhập sai. Bạn thử:</p>
+              <ul>
+                <li>Đăng xuất và đăng nhập lại VPN client</li>
+                <li>Dùng đúng định dạng <b>username@vng.com.vn</b></li>
+                <li>Reset mật khẩu tại <b>account.vng.com.vn</b> nếu quên</li>
+              </ul>
+              <p>Bạn đã xử lý được chưa? Hay bạn đang gặp vấn đề gì khác?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Đã xử lý thành công</div>
+              <div class="suggestion-chip">↩ Đã thử nhưng không được</div>
+              <div class="suggestion-chip">Cách cài lại VPN client?</div>
+              <div class="suggestion-chip">Liên hệ IT để reset mật khẩu?</div>
+              <div class="suggestion-chip">VPN hỗ trợ hệ điều hành nào?</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Đã xử lý thành công</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Agent tự tạo ticket Resolved — không cần user confirm</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Tuyệt, vui vì bạn đã xử lý được! Mình đã ghi nhận lại để IT theo dõi chất lượng dịch vụ và lưu giải pháp cho những người gặp vấn đề tương tự.</p>
+              <ul>
+                <li><b>Mã yêu cầu:</b> WO-1192</li>
+                <li><b>Tiêu đề:</b> Lỗi VPN Authentication failed</li>
+                <li><b>Trạng thái:</b> Resolved</li>
+                <li><b>Giải pháp:</b> Đăng xuất và đăng nhập lại với đúng định dạng username</li>
+                <li><b>Link yêu cầu:</b> <a href="https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1192">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=1192</a></li>
+              </ul>
+              <p>Cảm ơn bạn đã sử dụng dịch vụ IT!</p>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Ticket tạo tự động, Status = Resolved. Agent kèm note giải thích lý do ghi nhận.</div>
+
+      </div>
+
+      <!-- ==================== B RETRY FULL ==================== -->
+      <div class="flow-panel" id="flow-b-retry-full">
+
+        <div class="step-label"><span class="step-tag">Tư vấn → user báo đã thử nhưng không được</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Mình bị lỗi không in được</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Máy in báo lỗi gì không bạn — hay chỉ là gửi lệnh nhưng không thấy in ra? Bạn đang dùng Windows hay Mac?</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Windows, gửi lệnh in thì không thấy in, không báo lỗi gì</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Bạn thử kiểm tra Print Queue xem có lệnh in bị kẹt không:</p>
+              <ul>
+                <li>Vào <b>Settings → Printers & Scanners</b></li>
+                <li>Click vào máy in → <b>Open print queue</b></li>
+                <li>Nếu có lệnh kẹt → chuột phải → Cancel all documents</li>
+                <li>Thử in lại</li>
+              </ul>
+              <p>Bạn đã xử lý được chưa? Hay bạn đang gặp vấn đề gì khác?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Đã xử lý thành công</div>
+              <div class="suggestion-chip">↩ Đã thử nhưng không được</div>
+              <div class="suggestion-chip">Cài lại driver máy in?</div>
+              <div class="suggestion-chip">Kiểm tra Print Spooler?</div>
+              <div class="suggestion-chip">Kết nối đúng mạng VNG chưa?</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Đã thử nhưng không được</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Chưa đủ thông tin → hỏi thêm trước khi draft</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Mình sẽ giúp bạn tạo yêu cầu để IT Helpdesk liên hệ hỗ trợ trực tiếp nhé.</p>
+              <p>Bạn cho mình biết thêm — vấn đề này xảy ra từ bao giờ, và trước đó bạn có làm gì như cập nhật Windows, đổi mạng... không?</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">💬 Đã có: triệu chứng. Còn thiếu: thời điểm + đã thử gì ngoài Print Queue. Agent hỏi tự nhiên theo ngữ cảnh.</div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Từ hôm qua, hôm trước in bình thường. Không cập nhật gì cả</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Đủ thông tin → draft dạng text</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Được rồi, mình tạo ticket ngay nhé!</p>
+              <p>Đây là ticket mình đã chuẩn bị cho bạn:</p>
+              <p><b>🎫 TICKET HỖ TRỢ IT</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Không in được trên Windows dù đã clear Print Queue</li>
+                <li><b>Mô tả:</b>
+                  <ul>
+                    <li>Từ hôm qua không gửi lệnh in được dù Print Queue không có lệnh kẹt.</li>
+                    <li>Hôm trước vẫn in bình thường, không cập nhật phần mềm gì trước đó.</li>
+                    <li>Đã thử: kiểm tra và clear Print Queue — không cải thiện.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p>Bạn xác nhận gửi ticket này không? Nếu cần chỉnh sửa thêm thông tin nào, bạn cứ nhắn mình nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Xác nhận gửi</div>
+              <div class="suggestion-chip">✕ Hủy</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== B RETRY AUTO ==================== -->
+      <div class="flow-panel" id="flow-b-retry-auto">
+
+        <div class="step-label"><span class="step-tag">User mô tả đầy đủ ngay từ đầu</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Máy mình chậm kể từ khi nhận máy, khởi động mất 5 phút, mở Figma hay Chrome là treo máy. Mình đã thử tắt bớt startup app rồi nhưng không cải thiện</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Bạn thử thêm một số bước sau xem có cải thiện không:</p>
+              <ul>
+                <li>Chạy <b>Disk Cleanup</b> để xóa file tạm</li>
+                <li>Kiểm tra <b>Task Manager</b> xem process nào đang chiếm nhiều CPU/RAM</li>
+                <li>Đảm bảo ổ C còn ít nhất 10GB trống</li>
+              </ul>
+              <p>Bạn đã xử lý được chưa? Hay bạn đang gặp vấn đề gì khác?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Đã xử lý thành công</div>
+              <div class="suggestion-chip">↩ Đã thử nhưng không được</div>
+              <div class="suggestion-chip">Cách kiểm tra ổ cứng bị lỗi?</div>
+              <div class="suggestion-chip">RAM tối thiểu để chạy Figma?</div>
+              <div class="suggestion-chip">Yêu cầu nâng cấp RAM?</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Đã thử nhưng không được</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Đã đủ 3 thông tin → auto draft ngay, không hỏi thêm</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Mình sẽ giúp bạn tạo yêu cầu để IT Helpdesk kiểm tra trực tiếp. Đây là ticket mình chuẩn bị từ thông tin bạn đã cung cấp:</p>
+              <p><b>🎫 TICKET HỖ TRỢ IT</b></p>
+              <ul>
+                <li><b>Tiêu đề:</b> Máy chậm nghiêm trọng từ khi nhận máy, treo khi mở Figma/Chrome</li>
+                <li><b>Mô tả:</b>
+                  <ul>
+                    <li>Máy chậm từ khi nhận, khởi động mất ~5 phút.</li>
+                    <li>Mở Figma hoặc Chrome là bị treo máy.</li>
+                    <li>Đã thử: tắt startup app, chạy Disk Cleanup, kiểm tra Task Manager — không cải thiện.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p>Bạn xác nhận gửi ticket này không? Nếu cần chỉnh sửa thêm thông tin nào, bạn cứ nhắn mình nhé.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Xác nhận gửi</div>
+              <div class="suggestion-chip">✕ Hủy</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">✅ Tin nhắn đầu đã có đủ: triệu chứng + thời điểm (từ khi nhận máy) + đã thử gì. Agent không hỏi lại → tạo draft luôn.</div>
+
+      </div>
+
+      <!-- ==================== B ESCALATE ==================== -->
+      <div class="flow-panel" id="flow-b-escalate">
+
+        <div class="step-label"><span class="step-tag">Đang tư vấn — user chủ động muốn tạo ticket</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Màn hình mình bị nhấp nháy, không biết cách tắt</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Màn hình nhấp nháy thường do driver display hoặc refresh rate. Bạn thử:</p>
+              <ul>
+                <li>Chuột phải Desktop → <b>Display settings → Advanced display</b> → đổi refresh rate về 60Hz</li>
+                <li>Nếu dùng màn ngoài → kiểm tra lại cáp HDMI/DisplayPort</li>
+              </ul>
+              <p>Bạn đã xử lý được chưa? Hay bạn đang gặp vấn đề gì khác?</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">✓ Đã xử lý thành công</div>
+              <div class="suggestion-chip">↩ Đã thử nhưng không được</div>
+              <div class="suggestion-chip">Cách cập nhật driver display?</div>
+              <div class="suggestion-chip">Kiểm tra màn hình bị lỗi phần cứng?</div>
+              <div class="suggestion-chip">Tạo yêu cầu hỗ trợ IT</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Thôi mình muốn tạo ticket luôn cho nhanh</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Agent chuyển sang Nhánh A — hỏi thông tin còn thiếu</span></div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Được, mình sẽ giúp bạn tạo yêu cầu hỗ trợ ngay. Để mình điền ticket chính xác nhất, bạn cho biết thêm:</p>
+              <ul>
+                <li>Màn hình nhấp nháy từ khi nào?</li>
+                <li>Bạn đã thử tắt bật lại hoặc thay cáp chưa?</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">💬 Agent đã có triệu chứng. Hỏi thêm thời điểm và đã thử gì — hỏi tự nhiên, không hỏi form cứng.</div>
+
+      </div>
+
+      <!-- ==================== INFO ==================== -->
+      <div class="flow-panel" id="flow-info">
+
+        <div class="step-label"><span class="step-tag">Câu hỏi tra cứu — không phải vấn đề đang gặp</span></div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">IT hiện có những model laptop nào cho nhân viên mới?</div>
+          </div>
+        </div>
+
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Helpdesk Agent</div>
+            <div class="bubble-text">
+              <p>Hiện tại IT đang cung cấp các model tiêu chuẩn theo vị trí:</p>
+              <ul>
+                <li><b>Developer / Designer</b> — MacBook Pro M3 14" (16GB/512GB)</li>
+                <li><b>Business / Admin</b> — Dell Latitude 5540 (8GB/256GB)</li>
+                <li><b>Manager trở lên</b> — MacBook Pro M3 16" (32GB/1TB)</li>
+              </ul>
+              <p>Model cụ thể tùy thuộc vào vị trí và phê duyệt từ Line Manager.</p>
+            </div>
+            <div class="suggestions">
+              <div class="suggestion-chip">Quy trình yêu cầu cấp laptop mới?</div>
+              <div class="suggestion-chip">Ai phê duyệt yêu cầu thiết bị?</div>
+              <div class="suggestion-chip">Chính sách thay laptop sau mấy năm?</div>
+            </div>
+            <div class="action-bar">
+              <span class="action-icon">📋</span>
+              <span class="action-icon">👍</span>
+              <span class="action-icon">👎</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotation">ℹ️ Không kèm quick reply [Đã xử lý / Đã thử]. Cuối response chỉ có 3 suggestion gợi ý tiếp theo.</div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const flows = {
+    'a-main':      { badge: 'badge-a',       badgeText: 'Nhánh A',    title: 'Tạo ticket ngay — happy path',          desc: 'Agent nhận diện cần IT trực tiếp → hỏi 3 info → draft → confirm' },
+    'a-cancel':    { badge: 'badge-a',       badgeText: 'Nhánh A',    title: 'User hủy ticket',                       desc: 'Sau khi xem draft, user quyết định hủy' },
+    'a-topic':     { badge: 'badge-a',       badgeText: 'Nhánh A',    title: 'User đổi topic giữa chừng',             desc: 'Agent nhắc confirm/hủy ticket cũ trước khi xử lý topic mới' },
+    'b-success':   { badge: 'badge-success', badgeText: 'Nhánh B',    title: 'Đã tư vấn → User báo thành công',       desc: 'Agent tự tạo ticket Resolved, kèm note lý do' },
+    'b-retry-full':{ badge: 'badge-retry',   badgeText: 'Nhánh B',    title: 'Đã thử, chưa đủ info → hỏi thêm',      desc: 'Context chưa đủ 3 thông tin → Agent hỏi bổ sung trước khi draft' },
+    'b-retry-auto':{ badge: 'badge-retry',   badgeText: 'Nhánh B',    title: 'Đã thử, đủ info → auto draft',          desc: 'Đã đủ cả 3 thông tin từ đầu → Agent tạo draft luôn, không hỏi thêm' },
+    'b-escalate':  { badge: 'badge-b',       badgeText: 'Nhánh B',    title: 'User chủ động escalate',                desc: 'User muốn tạo ticket giữa chừng → Agent chuyển sang Nhánh A' },
+    'info':        { badge: 'badge-info',    badgeText: 'Thông tin',   title: 'Câu hỏi tra cứu thuần túy',            desc: 'Không có vấn đề đang gặp → trả lời + suggestion, không có quick reply' }
+  };
+
+  function showFlow(id) {
+    document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('flow-' + id).classList.add('active');
+    document.getElementById('btn-' + id).classList.add('active');
+    const f = flows[id];
+    const badge = document.getElementById('topbar-badge');
+    badge.className = 'flow-badge ' + f.badge;
+    badge.textContent = f.badgeText;
+    document.getElementById('topbar-title').textContent = f.title;
+    document.getElementById('topbar-desc').textContent = f.desc;
+  }
+</script>
+</body>
+</html>
