@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Agent — Full Advisory Flow Review</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --vng: #E8590C; --vng-light: #FEF0E8; --vng-dark: #B8420A;
+    --bg: #F5F4F2; --surface: #FFFFFF; --surface2: #F0EEE9;
+    --border: #E2DED7; --text: #1A1917; --text2: #6B6760; --text3: #9E9B96;
+    --green: #16A34A; --green-bg: #ECFDF5;
+    --blue: #1D4ED8;
+    --amber: #B45309; --amber-bg: #FFFBEB;
+    --red: #DC2626; --red-bg: #FEF2F2;
+    --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    --r: 12px; --r-sm: 6px;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sidebar-logo .prod-name { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: .05em; margin-bottom: 4px; }
+  .sidebar-logo h1 { font-size: 14px; font-weight: 500; color: var(--text); }
+  .sidebar-section { padding: 0 10px; margin-bottom: 6px; }
+  .sidebar-section-label { font-size: 10px; font-family: var(--mono); letter-spacing: .08em; color: var(--text3); padding: 0 8px; margin-bottom: 3px; text-transform: uppercase; }
+  .flow-btn { display: flex; align-items: flex-start; gap: 9px; width: 100%; padding: 7px 10px; border: none; background: none; border-radius: var(--r-sm); cursor: pointer; font-family: var(--font); font-size: 12.5px; color: var(--text2); text-align: left; transition: background .12s, color .12s; line-height: 1.4; }
+  .flow-btn:hover { background: var(--surface2); color: var(--text); }
+  .flow-btn.active { background: var(--vng-light); color: var(--vng-dark); font-weight: 500; }
+  .flow-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-happy { background: var(--green); }
+  .dot-ex { background: var(--red); }
+  .dot-edge { background: var(--amber); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 18px; }
+  .sidebar-note { padding: 0 18px; font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+  .main { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; }
+  .flow-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+  .badge-happy { background: var(--green-bg); color: var(--green); }
+  .badge-ex { background: var(--red-bg); color: var(--red); }
+  .badge-edge { background: var(--amber-bg); color: var(--amber); }
+  .topbar-title { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .topbar-desc { font-size: 12px; color: var(--text2); margin-left: auto; max-width: 360px; text-align: right; }
+
+  .chat-wrapper { flex: 1; padding: 28px 44px; max-width: 700px; width: 100%; margin: 0 auto; }
+  .flow-panel { display: none; }
+  .flow-panel.active { display: block; }
+
+  .chat-bubble { display: flex; gap: 10px; margin-bottom: 20px; }
+  .chat-bubble.user { flex-direction: row-reverse; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; font-family: var(--mono); margin-top: 18px; }
+  .avatar-agent { background: var(--vng); color: #fff; }
+  .avatar-user { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .bubble-content { max-width: 84%; }
+  .bubble-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-family: var(--mono); }
+  .chat-bubble.user .bubble-name { text-align: right; }
+  .bubble-text { background: var(--surface2); border-radius: 4px 12px 12px 12px; padding: 10px 14px; font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .chat-bubble.user .bubble-text { background: var(--vng); color: #fff; border-radius: 12px 4px 12px 12px; }
+  .bubble-text p { margin-bottom: 6px; }
+  .bubble-text p:last-child { margin-bottom: 0; }
+  .bubble-text ul { padding-left: 18px; margin: 4px 0; }
+  .bubble-text li { margin-bottom: 3px; }
+  .bubble-text b { font-weight: 500; }
+  .bubble-text a { color: var(--blue); text-decoration: underline; word-break: break-all; }
+  .bubble-text i { color: var(--text2); font-style: italic; }
+
+  .suggestions { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .suggestion-chip { padding: 7px 13px; border-radius: var(--r-sm); font-size: 12.5px; border: 1px solid var(--border); color: var(--text2); background: var(--surface); cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; font-family: var(--font); text-align: left; transition: background .12s, border-color .12s, color .12s; }
+  .suggestion-chip:hover { background: var(--vng-light); border-color: var(--vng); color: var(--vng-dark); }
+  .suggestion-chip.used { background: var(--vng-light); border-color: var(--vng); color: var(--vng-dark); opacity: 0.55; cursor: default; pointer-events: none; }
+  .suggestion-chip.passive { cursor: default; pointer-events: none; }
+
+  /* Draft ticket card */
+  .draft-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; margin-top: 10px; }
+  .draft-card-header { background: var(--surface2); padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 500; color: var(--text2); font-family: var(--mono); }
+  .draft-card-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .draft-field-label { font-size: 10.5px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1px; }
+  .draft-field-value { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .draft-divider { height: 1px; background: var(--border); }
+  .draft-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-confirm { padding: 7px 16px; background: var(--vng); color: #fff; border: none; border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; font-family: var(--font); transition: opacity .12s; }
+  .btn-confirm:hover { opacity: 0.88; }
+  .btn-confirm.used { opacity: 0.4; cursor: default; pointer-events: none; }
+  .btn-secondary { padding: 7px 16px; background: var(--surface); color: var(--text2); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; font-family: var(--font); }
+  .btn-secondary:hover { background: var(--surface2); }
+  .btn-secondary.used { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  /* Ticket success card */
+  .success-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; margin-top: 10px; }
+  .success-header { background: var(--green-bg); padding: 8px 12px; border-bottom: 1px solid #d1fae5; font-size: 12px; font-weight: 500; color: var(--green); font-family: var(--mono); }
+  .success-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .success-row { display: flex; gap: 8px; align-items: baseline; }
+  .success-label { font-size: 11px; font-family: var(--mono); color: var(--text3); min-width: 110px; flex-shrink: 0; }
+  .success-val { font-size: 13px; color: var(--text); }
+  .success-link { font-size: 13px; color: var(--blue); text-decoration: underline; word-break: break-all; }
+  .success-status-open { font-size: 13px; color: var(--blue); font-weight: 500; }
+  .success-status-resolved { font-size: 13px; color: var(--green); font-weight: 500; }
+
+  .step-label { display: flex; align-items: center; gap: 10px; margin: 28px 0 12px; font-size: 10.5px; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; }
+  .step-label::before, .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .step-tag { padding: 2px 9px; border-radius: 999px; background: var(--surface2); color: var(--text3); white-space: nowrap; }
+  .annotation { background: var(--amber-bg); border: 1px dashed #FCD34D; border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; color: var(--amber); margin: 6px 0 4px 40px; display: flex; gap: 6px; align-items: flex-start; }
+  .action-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; padding: 2px 4px; }
+  .action-icon { font-size: 16px; color: var(--text3); cursor: default; }
+
+  .injected { animation: fadeSlide .2s ease; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="prod-name">MVW-3756 × MVW-3789</div>
+    <h1>IT Agent Advisory<br>Full Flow Review</h1>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Đã xử lý thành công</div>
+    <button class="flow-btn active" onclick="showFlow('resolved-btn')" id="btn-resolved-btn">
+      <span class="dot dot-happy"></span>Nhấn chip / btn resolved
+    </button>
+    <button class="flow-btn" onclick="showFlow('resolved-intent')" id="btn-resolved-intent">
+      <span class="dot dot-happy"></span>Nhắn resolved intent qua text
+    </button>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Đã thử nhưng không được</div>
+    <button class="flow-btn" onclick="showFlow('escalate-btn')" id="btn-escalate-btn">
+      <span class="dot dot-ex"></span>Nhấn chip / btn escalate
+    </button>
+    <button class="flow-btn" onclick="showFlow('escalate-intent')" id="btn-escalate-intent">
+      <span class="dot dot-ex"></span>Nhắn escalate intent qua text
+    </button>
+    <button class="flow-btn" onclick="showFlow('escalate-cancel')" id="btn-escalate-cancel">
+      <span class="dot dot-ex"></span>User hủy ticket
+    </button>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Edge Cases</div>
+    <button class="flow-btn" onclick="showFlow('edge-no-context')" id="btn-edge-no-context">
+      <span class="dot dot-edge"></span>Resolved intent đầu conversation
+    </button>
+  </div>
+
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-note">💡 Click chip để xem conversation tiếp theo.</div>
+</nav>
+
+<main class="main">
+  <div class="topbar">
+    <div id="topbar-badge" class="flow-badge badge-happy">Happy Flow</div>
+    <div class="topbar-title" id="topbar-title">Nhấn chip / btn resolved</div>
+    <div class="topbar-desc" id="topbar-desc">User nhấn chip → Agent tạo ticket Resolved trong nền → Hiện message cảm ơn</div>
+  </div>
+
+  <div class="chat-wrapper">
+
+    <!-- ===== RESOLVED: TỪ BTN ===== -->
+    <div class="flow-panel active" id="flow-resolved-btn">
+      <div class="step-label"><span class="step-tag">Agent vừa tư vấn xong — cuối response hiện 2 chip</span></div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Mình không kết nối được máy in trên Windows, báo lỗi hoài</div>
+        </div>
+      </div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Bạn không kết nối được máy in, mình sẽ hướng dẫn bạn kiểm tra từng bước nhé:</p>
+            <p><b>1. Kiểm tra kết nối mạng</b><br>Đảm bảo máy tính đang kết nối đúng mạng <b>VNG Corp</b> (không phải VNG Guest hoặc mạng cá nhân). Máy in nội bộ chỉ hoạt động trên mạng nội bộ VNG.</p>
+            <p><b>2. Tắt VPN nếu đang bật</b><br>VPN có thể chặn kết nối đến máy in nội bộ. Thử tắt VPN rồi kết nối lại.</p>
+            <p><b>3. Cài đặt Papercut</b><br>VNG dùng phần mềm <b>Papercut</b> để quản lý máy in. Nếu chưa cài hoặc Papercut báo lỗi, bạn tải lại tại <a href="#">\\fileserver\Software\Papercut</a> hoặc liên hệ IT để được hỗ trợ cài đặt.</p>
+            <p><b>4. Kiểm tra Print Spooler</b><br>Mở <b>Services</b> (Win + R → <i>services.msc</i>) → tìm <b>Print Spooler</b> → đảm bảo đang ở trạng thái <b>Running</b>. Nếu đang Stopped thì click chuột phải → Start.</p>
+            <p><b>5. Thêm máy in thủ công</b><br>Vào <b>Settings → Bluetooth & devices → Printers & scanners → Add a printer or scanner</b> và nhập địa chỉ IP máy in (hỏi IT để lấy IP đúng theo tầng/văn phòng của bạn).</p>
+            <p>Bạn đã thử các bước trên chưa? Mình đang bị dừng ở bước nào?</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip" onclick="injectAndReveal(this, 'rb-resolved', 'Đã xử lý thành công rồi, cảm ơn!')">Đã xử lý thành công</button>
+            <button class="suggestion-chip passive">Đã thử nhưng không được</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div id="rb-resolved" style="display:none">
+        <div class="step-label"><span class="step-tag">Ticket Resolved tạo trong nền — Agent hiện message cảm ơn</span></div>
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text">
+              <p>Cảm ơn bạn! Mình đã ghi nhận vấn đề và giải pháp xử lý từ cuộc trò chuyện này. Thông tin sẽ được lưu lại để IT theo dõi chất lượng dịch vụ và hỗ trợ những người gặp vấn đề tương tự trong tương lai.</p>
+            </div>
+            <div class="suggestions">
+              <button class="suggestion-chip passive">Tôi cần hỗ trợ thêm vấn đề khác</button>
+              <button class="suggestion-chip passive">Cảm ơn, không cần gì thêm</button>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESOLVED: INTENT QUA TEXT ===== -->
+    <div class="flow-panel" id="flow-resolved-intent">
+      <div class="step-label"><span class="step-tag">Agent vừa tư vấn xong — user nhắn text thay vì nhấn chip</span></div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Mình không kết nối được máy in trên Windows, báo lỗi hoài</div>
+        </div>
+      </div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Bạn không kết nối được máy in, mình sẽ hướng dẫn bạn kiểm tra từng bước nhé:</p>
+            <p><b>1. Kiểm tra kết nối mạng</b> — Đảm bảo đang kết nối đúng mạng <b>VNG Corp</b>.</p>
+            <p><b>2. Tắt VPN nếu đang bật</b> — VPN có thể chặn kết nối đến máy in nội bộ.</p>
+            <p><b>3. Kiểm tra Print Spooler</b> — Win + R → <i>services.msc</i> → Print Spooler → Start nếu đang Stopped.</p>
+            <p><b>4. Cài lại Papercut</b> — Tải tại <a href="#">\\fileserver\Software\Papercut</a> nếu chưa cài.</p>
+            <p>Bạn đã thử các bước trên chưa? Mình đang bị dừng ở bước nào?</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip passive">Đã xử lý thành công</button>
+            <button class="suggestion-chip passive">Đã thử nhưng không được</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Restart Print Spooler xong là in được rồi, cảm ơn bạn!</div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ Resolved intent qua text: "Ok rồi", "Fix được rồi", "Làm theo cách đó là được", "Cảm ơn tự xử lý được rồi", "Thôi không cần nữa"...</div>
+
+      <div class="step-label"><span class="step-tag">Agent nhận diện intent → tạo ticket Resolved trong nền</span></div>
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Cảm ơn bạn! Mình đã ghi nhận vấn đề và giải pháp xử lý từ cuộc trò chuyện này. Thông tin sẽ được lưu lại để IT theo dõi chất lượng dịch vụ và hỗ trợ những người gặp vấn đề tương tự trong tương lai.</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip passive">Tôi cần hỗ trợ thêm vấn đề khác</button>
+            <button class="suggestion-chip passive">Cảm ơn, không cần gì thêm</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ESCALATE: TỪ BTN ===== -->
+    <div class="flow-panel" id="flow-escalate-btn">
+      <div class="step-label"><span class="step-tag">Agent vừa tư vấn xong — user nhấn chip escalate</span></div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Mình không kết nối được máy in trên Windows, báo lỗi hoài</div>
+        </div>
+      </div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Bạn không kết nối được máy in, mình sẽ hướng dẫn bạn kiểm tra từng bước nhé:</p>
+            <p><b>1. Kiểm tra kết nối mạng</b> — Đảm bảo đang kết nối đúng mạng <b>VNG Corp</b>.</p>
+            <p><b>2. Tắt VPN nếu đang bật</b> — VPN có thể chặn kết nối đến máy in nội bộ.</p>
+            <p><b>3. Kiểm tra Print Spooler</b> — Win + R → <i>services.msc</i> → Print Spooler → Start nếu đang Stopped.</p>
+            <p><b>4. Cài lại Papercut</b> — Tải tại <a href="#">\\fileserver\Software\Papercut</a> nếu chưa cài.</p>
+            <p>Bạn đã thử các bước trên chưa? Mình đang bị dừng ở bước nào?</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip passive">Đã xử lý thành công</button>
+            <button class="suggestion-chip" onclick="injectAndReveal(this, 'eb-ask', 'Đã thử nhưng không được')">Đã thử nhưng không được</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div id="eb-ask" style="display:none">
+        <div class="step-label"><span class="step-tag">Agent hỏi thêm thông tin còn thiếu — linh động theo ngữ cảnh</span></div>
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text">
+              <p>Vấn đề này cần IT Helpdesk hỗ trợ trực tiếp để xử lý. Mình sẽ giúp bạn tạo yêu cầu hỗ trợ ngay.</p>
+              <p>Bạn có thể cho mình biết thêm: lỗi xảy ra từ khi nào, và bạn đã thử bước nào trong các bước mình hướng dẫn rồi?</p>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+
+        <div class="chat-bubble user">
+          <div class="avatar avatar-user">U</div>
+          <div class="bubble-content">
+            <div class="bubble-name">User</div>
+            <div class="bubble-text">Lỗi từ sáng nay, mình đã thử tắt VPN, restart Print Spooler, cài lại Papercut rồi nhưng vẫn không in được.</div>
+          </div>
+        </div>
+
+        <div class="step-label"><span class="step-tag">Đủ thông tin → Agent hiện Draft Ticket Card</span></div>
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text">
+              <p>Mình đã tổng hợp thông tin để tạo yêu cầu hỗ trợ. Bạn xem lại trước khi gửi nhé:</p>
+              <div class="draft-card">
+                <div class="draft-card-header">🎫 Thông tin yêu cầu hỗ trợ</div>
+                <div class="draft-card-body">
+                  <div><div class="draft-field-label">Tiêu đề</div><div class="draft-field-value">Không kết nối được máy in trên Windows</div></div>
+                  <div class="draft-divider"></div>
+                  <div><div class="draft-field-label">Mô tả</div><div class="draft-field-value">Người dùng không kết nối được máy in từ sáng nay. Đã thử: tắt VPN, restart Print Spooler, cài lại Papercut — vẫn không in được.</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="draft-actions">
+              <button class="btn-confirm" onclick="injectAndRevealBtn(this, 'eb-success', 'Xác nhận gửi')">✅ Xác nhận gửi</button>
+              <button class="btn-secondary" onclick="injectAndRevealBtn(this, 'eb-cancel', 'Hủy')">❌ Hủy</button>
+            </div>
+            <div class="action-bar" style="margin-top:8px"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+
+        <div id="eb-success" style="display:none">
+          <div class="step-label"><span class="step-tag">Ticket Open tạo thành công — Agent trả Ticket Info Card</span></div>
+          <div class="chat-bubble">
+            <div class="avatar avatar-agent">IT</div>
+            <div class="bubble-content">
+              <div class="bubble-name">IT Agent</div>
+              <div class="bubble-text">
+                <div class="success-card">
+                  <div class="success-header">✅ Yêu cầu hỗ trợ đã được gửi!</div>
+                  <div class="success-body">
+                    <div class="success-row"><span class="success-label">Mã yêu cầu</span><a class="success-link" href="#">WO-2857</a></div>
+                    <div class="success-row"><span class="success-label">Tiêu đề</span><span class="success-val">Không kết nối được máy in trên Windows</span></div>
+                    <div class="success-row"><span class="success-label">Mô tả</span><span class="success-val">Người dùng không kết nối được máy in từ sáng nay. Đã thử: tắt VPN, restart Print Spooler, cài lại Papercut — vẫn không in được.</span></div>
+                    <div class="success-row"><span class="success-label">Trạng thái</span><span class="success-status-open">● Open</span></div>
+                    <div class="success-row"><span class="success-label">Link yêu cầu</span><a class="success-link" href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=2857</a></div>
+                  </div>
+                </div>
+                <p style="margin-top:10px">Đội ngũ IT sẽ xem xét và liên hệ với bạn trong thời gian sớm nhất. Nếu cần hỗ trợ thêm, đừng ngại cho mình biết nhé!</p>
+              </div>
+              <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="eb-cancel" style="display:none">
+          <div class="step-label"><span class="step-tag">User hủy — Agent xác nhận</span></div>
+          <div class="chat-bubble">
+            <div class="avatar avatar-agent">IT</div>
+            <div class="bubble-content">
+              <div class="bubble-name">IT Agent</div>
+              <div class="bubble-text">
+                <p>Đã hủy yêu cầu. Nếu bạn cần tạo lại hoặc cần hỗ trợ thêm, mình luôn ở đây nhé!</p>
+              </div>
+              <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ESCALATE: INTENT QUA TEXT ===== -->
+    <div class="flow-panel" id="flow-escalate-intent">
+      <div class="step-label"><span class="step-tag">User nhắn escalate intent thay vì nhấn chip</span></div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>...Bạn đã thử các bước trên chưa? Mình đang bị dừng ở bước nào?</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip passive">Đã xử lý thành công</button>
+            <button class="suggestion-chip passive">Đã thử nhưng không được</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Mình bí rồi, làm hết mà vẫn không được, nhờ IT xuống xem trực tiếp đi</div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ Escalate intent qua text: "Mình bí rồi", "Vẫn lỗi như cũ", "Không work", "Nhờ IT hỗ trợ luôn đi", "Tạo ticket đi", "Mình không tự xử lý được"...</div>
+
+      <div class="step-label"><span class="step-tag">Agent nhận diện intent → hỏi thêm thông tin → Draft Ticket Card</span></div>
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Mình hiểu rồi, để mình tạo yêu cầu hỗ trợ để IT Helpdesk liên hệ với bạn trực tiếp nhé. Lỗi này xảy ra từ khi nào vậy bạn?</p>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Từ sáng nay, sau khi update Windows</div>
+        </div>
+      </div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Mình đã tổng hợp thông tin để tạo yêu cầu hỗ trợ. Bạn xem lại trước khi gửi nhé:</p>
+            <div class="draft-card">
+              <div class="draft-card-header">🎫 Thông tin yêu cầu hỗ trợ</div>
+              <div class="draft-card-body">
+                <div><div class="draft-field-label">Tiêu đề</div><div class="draft-field-value">Không kết nối được máy in trên Windows sau khi update</div></div>
+                <div class="draft-divider"></div>
+                <div><div class="draft-field-label">Mô tả</div><div class="draft-field-value">Người dùng không kết nối được máy in từ sáng nay, lỗi xảy ra sau khi update Windows. Đã thử tắt VPN, restart Print Spooler, cài lại Papercut — vẫn không in được.</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="draft-actions">
+            <button class="btn-confirm" onclick="injectAndRevealBtn(this, 'ei-success', 'Xác nhận gửi')">✅ Xác nhận gửi</button>
+            <button class="btn-secondary" onclick="injectAndRevealBtn(this, 'ei-cancel', 'Hủy')">❌ Hủy</button>
+          </div>
+          <div class="action-bar" style="margin-top:8px"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div id="ei-success" style="display:none">
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text">
+              <div class="success-card">
+                <div class="success-header">✅ Yêu cầu hỗ trợ đã được gửi!</div>
+                <div class="success-body">
+                  <div class="success-row"><span class="success-label">Mã yêu cầu</span><a class="success-link" href="#">WO-2857</a></div>
+                  <div class="success-row"><span class="success-label">Tiêu đề</span><span class="success-val">Không kết nối được máy in trên Windows sau khi update</span></div>
+                  <div class="success-row"><span class="success-label">Trạng thái</span><span class="success-status-open">● Open</span></div>
+                  <div class="success-row"><span class="success-label">Link yêu cầu</span><a class="success-link" href="#">https://request.vng.vn/WorkOrder.do?woMode=viewWO&woID=2857</a></div>
+                </div>
+              </div>
+              <p style="margin-top:10px">Đội ngũ IT sẽ xem xét và liên hệ với bạn trong thời gian sớm nhất. Nếu cần hỗ trợ thêm, đừng ngại cho mình biết nhé!</p>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="ei-cancel" style="display:none">
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text"><p>Đã hủy yêu cầu. Nếu bạn cần tạo lại hoặc cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ESCALATE: USER HỦY ===== -->
+    <div class="flow-panel" id="flow-escalate-cancel">
+      <div class="step-label"><span class="step-tag">Agent đã hiện Draft Ticket Card — user chọn hủy</span></div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Mình đã tổng hợp thông tin để tạo yêu cầu hỗ trợ. Bạn xem lại trước khi gửi nhé:</p>
+            <div class="draft-card">
+              <div class="draft-card-header">🎫 Thông tin yêu cầu hỗ trợ</div>
+              <div class="draft-card-body">
+                <div><div class="draft-field-label">Tiêu đề</div><div class="draft-field-value">Không kết nối được máy in trên Windows</div></div>
+                <div class="draft-divider"></div>
+                <div><div class="draft-field-label">Mô tả</div><div class="draft-field-value">Người dùng không kết nối được máy in từ sáng nay. Đã thử: tắt VPN, restart Print Spooler, cài lại Papercut — vẫn không in được.</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="draft-actions">
+            <button class="btn-confirm used">✅ Xác nhận gửi</button>
+            <button class="btn-secondary used">❌ Hủy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Hủy</div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ User chọn Hủy hoặc nhắn "hủy", "thôi không cần", "cancel" → Agent xác nhận đã hủy, không tạo ticket.</div>
+
+      <div class="step-label"><span class="step-tag">Không tạo ticket — Agent xác nhận đã hủy</span></div>
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Đã hủy yêu cầu. Nếu bạn cần tạo lại hoặc cần hỗ trợ thêm, mình luôn ở đây nhé!</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip passive">Tạo lại yêu cầu hỗ trợ</button>
+            <button class="suggestion-chip passive">Tôi muốn thử thêm cách khác</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EDGE: ĐẦU CONVERSATION ===== -->
+    <div class="flow-panel" id="flow-edge-no-context">
+      <div class="step-label"><span class="step-tag">User nhắn resolved intent ngay đầu — chưa có tư vấn nào</span></div>
+
+      <div class="chat-bubble user">
+        <div class="avatar avatar-user">U</div>
+        <div class="bubble-content">
+          <div class="bubble-name">User</div>
+          <div class="bubble-text">Ok xong rồi cảm ơn</div>
+        </div>
+      </div>
+
+      <div class="chat-bubble">
+        <div class="avatar avatar-agent">IT</div>
+        <div class="bubble-content">
+          <div class="bubble-name">IT Agent</div>
+          <div class="bubble-text">
+            <p>Mình rất vui khi nghe bạn đã xử lý được! Bạn vừa gặp vấn đề gì vậy? Nếu muốn chia sẻ, mình có thể giúp ghi nhận lại để IT cải thiện dịch vụ.</p>
+          </div>
+          <div class="suggestions">
+            <button class="suggestion-chip" onclick="injectAndReveal(this, 'ec-share', 'Tôi muốn ghi nhận lại vấn đề vừa tự xử lý')">Tôi muốn ghi nhận lại vấn đề vừa tự xử lý</button>
+            <button class="suggestion-chip" onclick="injectAndReveal(this, 'ec-skip', 'Không cần, cảm ơn')">Không cần, cảm ơn</button>
+          </div>
+          <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ Chưa có context tư vấn → Agent không trigger tạo ticket. Hỏi lại ngữ cảnh tự nhiên.</div>
+
+      <div id="ec-share" style="display:none">
+        <div class="step-label"><span class="step-tag">User muốn ghi nhận → Agent hỏi mô tả vấn đề</span></div>
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text">
+              <p>Bạn có thể mô tả ngắn gọn vấn đề đã gặp và cách bạn xử lý được không? Mình sẽ giúp ghi nhận lại.</p>
+            </div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ec-skip" style="display:none">
+        <div class="chat-bubble">
+          <div class="avatar avatar-agent">IT</div>
+          <div class="bubble-content">
+            <div class="bubble-name">IT Agent</div>
+            <div class="bubble-text"><p>Không sao! Nếu cần hỗ trợ gì thêm, mình luôn ở đây nhé.</p></div>
+            <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script>
+  const flows = {
+    'resolved-btn':     { badge: 'badge-happy', badgeText: 'Resolved',   title: 'Nhấn chip / btn resolved',          desc: 'User nhấn chip → Agent tạo ticket Resolved trong nền → Message cảm ơn (MVW-3789)' },
+    'resolved-intent':  { badge: 'badge-happy', badgeText: 'Resolved',   title: 'Nhắn resolved intent qua text',     desc: 'Agent nhận diện text intent → trigger cùng flow, tạo ticket Resolved trong nền' },
+    'escalate-btn':     { badge: 'badge-ex',    badgeText: 'Escalate',   title: 'Nhấn chip / btn escalate',          desc: 'User nhấn chip → Agent hỏi thêm → Draft Ticket Card → Xác nhận → Ticket Open (MVW-3756)' },
+    'escalate-intent':  { badge: 'badge-ex',    badgeText: 'Escalate',   title: 'Nhắn escalate intent qua text',     desc: 'Agent nhận diện intent leo thang → hỏi thêm → Draft Ticket Card → Ticket Open' },
+    'escalate-cancel':  { badge: 'badge-ex',    badgeText: 'Escalate',   title: 'User hủy ticket',                   desc: 'User chọn Hủy trên Draft Card → Agent xác nhận đã hủy, không tạo ticket' },
+    'edge-no-context':  { badge: 'badge-edge',  badgeText: 'Edge Case',  title: 'Resolved intent đầu conversation',  desc: 'Chưa có context tư vấn → Agent hỏi lại ngữ cảnh, không trigger tạo ticket' },
+  };
+
+  function showFlow(id) {
+    document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('flow-' + id).classList.add('active');
+    document.getElementById('btn-' + id).classList.add('active');
+    const f = flows[id];
+    const badge = document.getElementById('topbar-badge');
+    badge.className = 'flow-badge ' + f.badge;
+    badge.textContent = f.badgeText;
+    document.getElementById('topbar-title').textContent = f.title;
+    document.getElementById('topbar-desc').textContent = f.desc;
+  }
+
+  function injectUserBubble(text, beforeEl) {
+    const b = document.createElement('div');
+    b.className = 'chat-bubble user injected';
+    b.innerHTML = `<div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">${text}</div></div>`;
+    beforeEl.parentNode.insertBefore(b, beforeEl);
+  }
+
+  function injectAndReveal(chip, nextId, userText) {
+    chip.closest('.suggestions').querySelectorAll('.suggestion-chip').forEach(c => { c.classList.add('used'); c.disabled = true; });
+    const nextEl = document.getElementById(nextId);
+    if (!nextEl) return;
+    injectUserBubble(userText, nextEl);
+    nextEl.style.display = 'block';
+    nextEl.classList.add('injected');
+    setTimeout(() => nextEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  }
+
+  function injectAndRevealBtn(btn, nextId, userText) {
+    btn.closest('.draft-actions').querySelectorAll('button').forEach(b => { b.classList.add('used'); b.disabled = true; });
+    const nextEl = document.getElementById(nextId);
+    if (!nextEl) return;
+    injectUserBubble(userText, nextEl);
+    nextEl.style.display = 'block';
+    nextEl.classList.add('injected');
+    setTimeout(() => nextEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  }
+</script>
+</body>
+</html>
