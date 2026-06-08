@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MVW-3771 — Agent Order Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --vng: #E8590C; --vng-light: #FEF0E8; --vng-dark: #B8420A;
+    --bg: #F5F4F2; --surface: #FFFFFF; --surface2: #F0EEE9;
+    --border: #E2DED7; --text: #1A1917; --text2: #6B6760; --text3: #9E9B96;
+    --green: #16A34A; --green-bg: #ECFDF5;
+    --blue: #1D4ED8; --blue-bg: #EFF6FF;
+    --amber: #B45309; --amber-bg: #FFFBEB;
+    --red: #DC2626; --red-bg: #FEF2F2;
+    --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    --r: 12px; --r-sm: 6px;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sidebar-logo .prod-name { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: .05em; margin-bottom: 4px; }
+  .sidebar-logo h1 { font-size: 14px; font-weight: 500; color: var(--text); }
+  .sidebar-section { padding: 0 10px; margin-bottom: 6px; }
+  .sidebar-section-label { font-size: 10px; font-family: var(--mono); letter-spacing: .08em; color: var(--text3); padding: 0 8px; margin-bottom: 3px; text-transform: uppercase; }
+  .flow-btn { display: flex; align-items: flex-start; gap: 9px; width: 100%; padding: 7px 10px; border: none; background: none; border-radius: var(--r-sm); cursor: pointer; font-family: var(--font); font-size: 12.5px; color: var(--text2); text-align: left; transition: background .12s, color .12s; line-height: 1.4; }
+  .flow-btn:hover { background: var(--surface2); color: var(--text); }
+  .flow-btn.active { background: var(--vng-light); color: var(--vng-dark); font-weight: 500; }
+  .flow-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-happy { background: var(--green); }
+  .dot-ex { background: var(--red); }
+  .dot-edge { background: var(--amber); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 18px; }
+  .sidebar-note { padding: 0 18px; font-size: 11px; color: var(--text3); line-height: 1.5; }
+
+  /* Main */
+  .main { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; }
+  .flow-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+  .badge-happy { background: var(--green-bg); color: var(--green); }
+  .badge-ex { background: var(--red-bg); color: var(--red); }
+  .badge-edge { background: var(--amber-bg); color: var(--amber); }
+  .topbar-title { font-size: 13.5px; color: var(--text); font-weight: 500; }
+  .topbar-desc { font-size: 12px; color: var(--text2); margin-left: auto; max-width: 340px; text-align: right; }
+
+  .content { flex: 1; padding: 32px 40px; }
+  .flow-panel { display: none; }
+  .flow-panel.active { display: block; }
+
+  .step-label { display: flex; align-items: center; gap: 10px; margin: 32px 0 16px; font-size: 10.5px; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; }
+  .step-label::before, .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .step-label:first-child { margin-top: 0; }
+  .step-tag { padding: 2px 9px; border-radius: 999px; background: var(--surface2); color: var(--text3); white-space: nowrap; }
+  .annotation { background: var(--amber-bg); border: 1px dashed #FCD34D; border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; color: var(--amber); margin: 12px 0; display: flex; gap: 6px; align-items: flex-start; }
+
+  /* Dashboard chrome */
+  .dashboard-chrome { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .dash-topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 8px; }
+  .dash-logo { width: 28px; height: 16px; background: var(--vng); border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+  .dash-logo span { color: white; font-size: 8px; font-weight: 500; font-family: var(--mono); }
+  .dash-breadcrumb { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .dash-breadcrumb b { color: var(--text); }
+  .dash-user { margin-left: auto; font-size: 12px; color: var(--text2); }
+
+  .dash-body { display: grid; grid-template-columns: 160px 1fr; min-height: 340px; }
+  .dash-nav { border-right: 1px solid var(--border); padding: 12px 0; background: var(--surface); }
+  .dash-nav-item { padding: 6px 16px; font-size: 12px; color: var(--text2); cursor: default; display: flex; align-items: center; gap: 6px; }
+  .dash-nav-item.active { color: var(--vng); background: var(--vng-light); font-weight: 500; }
+  .dash-nav-item.sub { padding-left: 28px; font-size: 11.5px; }
+  .dash-nav-item.sub.active { color: var(--vng); }
+
+  .dash-content { padding: 20px 24px; }
+  .dash-page-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 16px; }
+
+  /* Table */
+  .agent-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .agent-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--text3); border-bottom: 1px solid var(--border); font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+  .agent-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+  .agent-table tr:last-child td { border-bottom: none; }
+  .agent-table tr.dragging { opacity: 0.4; }
+  .agent-table tr.drag-over td { background: var(--vng-light); }
+  .agent-table tr.reordered td { background: #FFFBEB; }
+
+  .drag-handle { display: flex; align-items: center; gap: 6px; }
+  .handle-icon { color: var(--text3); font-size: 14px; cursor: grab; user-select: none; }
+  .handle-icon.disabled { opacity: 0.25; cursor: not-allowed; }
+  .order-num { font-size: 12px; color: var(--text3); font-family: var(--mono); min-width: 16px; }
+  .agent-name { color: var(--vng); font-weight: 500; cursor: default; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .badge-default { background: var(--surface2); color: var(--text3); opacity: 0.6; border: 1px solid var(--border); }
+  .badge-active { background: var(--green-bg); color: var(--green); }
+  .badge-yes { color: var(--green); font-weight: 500; }
+  .badge-no { color: var(--text3); }
+
+  /* Unsaved bar */
+  .unsaved-bar { display: none; align-items: center; gap: 10px; background: var(--amber-bg); border: 1px solid #FCD34D; border-radius: var(--r-sm); padding: 8px 14px; margin-bottom: 14px; font-size: 12.5px; color: var(--amber); }
+  .unsaved-bar.visible { display: flex; }
+  .unsaved-bar .bar-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn-save { padding: 5px 14px; background: var(--vng); color: white; border: none; border-radius: var(--r-sm); font-size: 12px; cursor: pointer; font-family: var(--font); font-weight: 500; }
+  .btn-cancel-order { padding: 5px 14px; background: var(--surface); color: var(--text2); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 12px; cursor: pointer; font-family: var(--font); }
+
+  /* Table footer note */
+  .table-footer { padding: 8px 12px; font-size: 11px; color: var(--text3); border-top: 1px solid var(--border); font-style: italic; }
+
+  /* Confirm dialog overlay */
+  .dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .dialog-overlay.visible { display: flex; }
+  .dialog-box { background: var(--surface); border-radius: var(--r); padding: 24px; max-width: 360px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+  .dialog-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .dialog-desc { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-dialog-confirm { padding: 7px 16px; background: var(--vng); color: white; border: none; border-radius: var(--r-sm); font-size: 13px; cursor: pointer; font-family: var(--font); }
+  .btn-dialog-cancel { padding: 7px 16px; background: var(--surface); color: var(--text2); border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 13px; cursor: pointer; font-family: var(--font); }
+
+  /* Saved toast */
+  .toast { display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white; padding: 10px 18px; border-radius: var(--r-sm); font-size: 13px; z-index: 200; }
+  .toast.visible { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="prod-name">MVW-3771</div>
+    <h1>Agent Order<br>Behavior Mockup</h1>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Happy Flow</div>
+    <button class="flow-btn active" onclick="showFlow('happy')" id="btn-happy">
+      <span class="dot dot-happy"></span>Kéo thả → Lưu thứ tự
+    </button>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Exceptional Flows</div>
+    <button class="flow-btn" onclick="showFlow('cancel')" id="btn-cancel">
+      <span class="dot dot-ex"></span>Hủy thay đổi
+    </button>
+    <button class="flow-btn" onclick="showFlow('navigate')" id="btn-navigate">
+      <span class="dot dot-ex"></span>Navigate ra ngoài khi chưa lưu
+    </button>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-note">💡 Kéo thả các row để thử interaction.</div>
+</nav>
+
+<main class="main">
+  <div class="topbar">
+    <div id="topbar-badge" class="flow-badge badge-happy">Happy Flow</div>
+    <div class="topbar-title" id="topbar-title">Kéo thả → Lưu thứ tự</div>
+    <div class="topbar-desc" id="topbar-desc">Kéo thả thay đổi local state — nhấn Lưu thứ tự mới save và phản ánh ra user page</div>
+  </div>
+
+  <div class="content">
+
+    <!-- HAPPY FLOW -->
+    <div class="flow-panel active" id="flow-happy">
+      <div class="step-label"><span class="step-tag">Trạng thái ban đầu — chưa có thay đổi</span></div>
+
+      <div class="dashboard-chrome">
+        <div class="dash-topbar">
+          <div class="dash-logo"><span>VNG</span></div>
+          <div class="dash-breadcrumb">Agents / <b>Agents Management</b></div>
+          <div class="dash-user">Đồng. Đỗ Thanh ▾</div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-nav">
+            <div class="dash-nav-item">Work</div>
+            <div class="dash-nav-item active">Agents
+              <span style="margin-left:auto;font-size:10px">▴</span>
+            </div>
+            <div class="dash-nav-item sub active">Agents Management</div>
+            <div class="dash-nav-item sub">Chat</div>
+          </div>
+          <div class="dash-content">
+            <div class="dash-page-title">Agents Management</div>
+            <div class="unsaved-bar" id="happy-unsaved-bar">
+              ⚠️ Bạn có thay đổi thứ tự chưa lưu.
+              <div class="bar-actions">
+                <button class="btn-cancel-order" onclick="cancelOrder('happy')">Hủy thay đổi</button>
+                <button class="btn-save" onclick="saveOrder('happy')">Lưu thứ tự</button>
+              </div>
+            </div>
+            <table class="agent-table" id="happy-table">
+              <thead>
+                <tr>
+                  <th style="width:80px">Order</th>
+                  <th>Agent name</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Is published</th>
+                  <th>Last update</th>
+                </tr>
+              </thead>
+              <tbody id="happy-tbody">
+                <tr data-id="default" data-fixed="true">
+                  <td><div class="drag-handle"><span class="handle-icon disabled">⠿</span><span class="order-num">—</span></div></td>
+                  <td><span class="agent-name">VNG Agent</span> <span class="badge badge-default">Default</span></td>
+                  <td>BO.BO1.CBC</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                  <td>28/05/2026</td>
+                </tr>
+                <tr data-id="1" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">1</span></div></td>
+                  <td><span class="agent-name">Test - Data Analysis Agent</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                  <td>22/05/2026</td>
+                </tr>
+                <tr data-id="2" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">2</span></div></td>
+                  <td><span class="agent-name">VNG InfoSec Q&A</span></td>
+                  <td>BO.TSE.ISO</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                  <td>27/05/2026</td>
+                </tr>
+                <tr data-id="3" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">3</span></div></td>
+                  <td><span class="agent-name">IT Agent</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                  <td>28/05/2026</td>
+                </tr>
+                <tr data-id="4" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">4</span></div></td>
+                  <td><span class="agent-name">[Inactive] IT Agent v1</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-no">No</span></td>
+                  <td>13/05/2026</td>
+                </tr>
+                <tr data-id="5" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">5</span></div></td>
+                  <td><span class="agent-name">[Inactive] ISMS Agent v1</span></td>
+                  <td>BO.TSE.ISO</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-no">No</span></td>
+                  <td>13/05/2026</td>
+                </tr>
+                <tr data-id="6" draggable="true">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">6</span></div></td>
+                  <td><span class="agent-name">[Inactive] VNG Agent v1</span></td>
+                  <td>BO.BO1.CBC</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-no">No</span></td>
+                  <td>14/05/2026</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-footer">Default agent được ghim cố định, không thể thay đổi thứ tự. Kéo thả các agent còn lại để sắp xếp.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ Kéo thả row để thay đổi thứ tự. Unsaved bar xuất hiện ngay khi có thay đổi. Nhấn "Lưu thứ tự" mới thực sự save và phản ánh ra user page.</div>
+    </div>
+
+    <!-- CANCEL FLOW -->
+    <div class="flow-panel" id="flow-cancel">
+      <div class="step-label"><span class="step-tag">Admin đã kéo thả — nhấn Hủy thay đổi</span></div>
+
+      <div class="dashboard-chrome">
+        <div class="dash-topbar">
+          <div class="dash-logo"><span>VNG</span></div>
+          <div class="dash-breadcrumb">Agents / <b>Agents Management</b></div>
+          <div class="dash-user">Đồng. Đỗ Thanh ▾</div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-nav">
+            <div class="dash-nav-item active">Agents <span style="margin-left:auto;font-size:10px">▴</span></div>
+            <div class="dash-nav-item sub active">Agents Management</div>
+            <div class="dash-nav-item sub">Chat</div>
+          </div>
+          <div class="dash-content">
+            <div class="dash-page-title">Agents Management</div>
+            <div class="unsaved-bar visible" id="cancel-unsaved-bar">
+              ⚠️ Bạn có thay đổi thứ tự chưa lưu.
+              <div class="bar-actions">
+                <button class="btn-cancel-order" onclick="cancelOrder('cancel')">Hủy thay đổi</button>
+                <button class="btn-save" onclick="saveOrder('cancel')">Lưu thứ tự</button>
+              </div>
+            </div>
+            <table class="agent-table">
+              <thead>
+                <tr>
+                  <th style="width:80px">Order</th>
+                  <th>Agent name</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Is published</th>
+                </tr>
+              </thead>
+              <tbody id="cancel-tbody">
+                <tr data-fixed="true">
+                  <td><div class="drag-handle"><span class="handle-icon disabled">⠿</span><span class="order-num">—</span></div></td>
+                  <td><span class="agent-name">VNG Agent</span> <span class="badge badge-default">Default</span></td>
+                  <td>BO.BO1.CBC</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr class="reordered">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">1</span></div></td>
+                  <td><span class="agent-name">IT Agent</span> <span style="font-size:11px;color:var(--amber);font-family:var(--mono)">(moved)</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr class="reordered">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">2</span></div></td>
+                  <td><span class="agent-name">Test - Data Analysis Agent</span> <span style="font-size:11px;color:var(--amber);font-family:var(--mono)">(moved)</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr>
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">3</span></div></td>
+                  <td><span class="agent-name">VNG InfoSec Q&A</span></td>
+                  <td>BO.TSE.ISO</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-footer">Default agent được ghim cố định, không thể thay đổi thứ tự. Kéo thả các agent còn lại để sắp xếp.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">⚠️ Unsaved bar hiển thị. Nhấn "Hủy thay đổi" → revert về thứ tự ban đầu, bar ẩn đi.</div>
+
+      <div class="step-label"><span class="step-tag">Sau khi nhấn Hủy — revert về thứ tự cũ</span></div>
+
+      <div class="dashboard-chrome">
+        <div class="dash-topbar">
+          <div class="dash-logo"><span>VNG</span></div>
+          <div class="dash-breadcrumb">Agents / <b>Agents Management</b></div>
+          <div class="dash-user">Đồng. Đỗ Thanh ▾</div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-nav">
+            <div class="dash-nav-item active">Agents <span style="margin-left:auto;font-size:10px">▴</span></div>
+            <div class="dash-nav-item sub active">Agents Management</div>
+            <div class="dash-nav-item sub">Chat</div>
+          </div>
+          <div class="dash-content">
+            <div class="dash-page-title">Agents Management</div>
+            <table class="agent-table">
+              <thead>
+                <tr>
+                  <th style="width:80px">Order</th>
+                  <th>Agent name</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Is published</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-fixed="true">
+                  <td><div class="drag-handle"><span class="handle-icon disabled">⠿</span><span class="order-num">—</span></div></td>
+                  <td><span class="agent-name">VNG Agent</span> <span class="badge badge-default">Default</span></td>
+                  <td>BO.BO1.CBC</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr>
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">1</span></div></td>
+                  <td><span class="agent-name">Test - Data Analysis Agent</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr>
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">2</span></div></td>
+                  <td><span class="agent-name">VNG InfoSec Q&A</span></td>
+                  <td>BO.TSE.ISO</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr>
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">3</span></div></td>
+                  <td><span class="agent-name">IT Agent</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-footer">Default agent được ghim cố định, không thể thay đổi thứ tự. Kéo thả các agent còn lại để sắp xếp.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATE FLOW -->
+    <div class="flow-panel" id="flow-navigate">
+      <div class="step-label"><span class="step-tag">Admin có thay đổi chưa lưu — click navigate ra ngoài</span></div>
+
+      <div class="dashboard-chrome" style="position:relative">
+        <div class="dash-topbar">
+          <div class="dash-logo"><span>VNG</span></div>
+          <div class="dash-breadcrumb">Agents / <b>Agents Management</b></div>
+          <div class="dash-user">Đồng. Đỗ Thanh ▾</div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-nav">
+            <div class="dash-nav-item" onclick="showDialog()" style="cursor:pointer">Work</div>
+            <div class="dash-nav-item active">Agents <span style="margin-left:auto;font-size:10px">▴</span></div>
+            <div class="dash-nav-item sub active">Agents Management</div>
+            <div class="dash-nav-item sub">Chat</div>
+          </div>
+          <div class="dash-content">
+            <div class="dash-page-title">Agents Management</div>
+            <div class="unsaved-bar visible">
+              ⚠️ Bạn có thay đổi thứ tự chưa lưu.
+              <div class="bar-actions">
+                <button class="btn-cancel-order">Hủy thay đổi</button>
+                <button class="btn-save">Lưu thứ tự</button>
+              </div>
+            </div>
+            <table class="agent-table">
+              <thead>
+                <tr>
+                  <th style="width:80px">Order</th>
+                  <th>Agent name</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Is published</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-fixed="true">
+                  <td><div class="drag-handle"><span class="handle-icon disabled">⠿</span><span class="order-num">—</span></div></td>
+                  <td><span class="agent-name">VNG Agent</span> <span class="badge badge-default">Default</span></td>
+                  <td>BO.BO1.CBC</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr class="reordered">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">1</span></div></td>
+                  <td><span class="agent-name">IT Agent</span> <span style="font-size:11px;color:var(--amber);font-family:var(--mono)">(moved)</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+                <tr class="reordered">
+                  <td><div class="drag-handle"><span class="handle-icon">⠿</span><span class="order-num">2</span></div></td>
+                  <td><span class="agent-name">Test - Data Analysis Agent</span> <span style="font-size:11px;color:var(--amber);font-family:var(--mono)">(moved)</span></td>
+                  <td>BO.TSE.IT</td>
+                  <td><span class="badge badge-active">Active</span></td>
+                  <td><span class="badge-yes">Yes</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-footer">Default agent được ghim cố định, không thể thay đổi thứ tự. Kéo thả các agent còn lại để sắp xếp.</div>
+          </div>
+        </div>
+
+        <!-- Dialog -->
+        <div class="dialog-overlay visible" id="nav-dialog">
+          <div class="dialog-box">
+            <div class="dialog-title">Bạn có thay đổi chưa lưu</div>
+            <div class="dialog-desc">Thứ tự agent chưa được lưu. Nếu rời khỏi trang, các thay đổi sẽ bị mất.</div>
+            <div class="dialog-actions">
+              <button class="btn-dialog-cancel" onclick="hideDialog()">Ở lại trang</button>
+              <button class="btn-dialog-confirm" onclick="hideDialog()">Rời khỏi trang</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="annotation">ℹ️ Admin click vào menu item khác khi chưa lưu → confirm dialog xuất hiện. "Ở lại trang" = dismiss dialog, tiếp tục edit. "Rời khỏi trang" = discard changes, navigate.</div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ Đã lưu thứ tự thành công</div>
+
+<script>
+  const flows = {
+    'happy':    { badge: 'badge-happy', badgeText: 'Happy Flow',  title: 'Kéo thả → Lưu thứ tự',                  desc: 'Kéo thả cập nhật local state — nhấn Lưu thứ tự mới save và phản ánh ra user page' },
+    'cancel':   { badge: 'badge-ex',    badgeText: 'Exceptional', title: 'Hủy thay đổi',                           desc: 'Admin kéo thả xong nhưng đổi ý — nhấn Hủy thay đổi để revert về thứ tự cũ' },
+    'navigate': { badge: 'badge-ex',    badgeText: 'Exceptional', title: 'Navigate ra ngoài khi chưa lưu',         desc: 'Click nav item khác khi có unsaved changes → confirm dialog xuất hiện' },
+  };
+
+  function showFlow(id) {
+    document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('flow-' + id).classList.add('active');
+    document.getElementById('btn-' + id).classList.add('active');
+    const f = flows[id];
+    const badge = document.getElementById('topbar-badge');
+    badge.className = 'flow-badge ' + f.badge;
+    badge.textContent = f.badgeText;
+    document.getElementById('topbar-title').textContent = f.title;
+    document.getElementById('topbar-desc').textContent = f.desc;
+  }
+
+  // Drag & drop for happy flow
+  let dragSrc = null;
+  const happyTbody = document.getElementById('happy-tbody');
+  const savedOrder = [];
+
+  function initDragDrop() {
+    const rows = happyTbody.querySelectorAll('tr[draggable="true"]');
+    rows.forEach(row => {
+      row.addEventListener('dragstart', e => {
+        dragSrc = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('dragging');
+        happyTbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (row === dragSrc || row.dataset.fixed) return;
+        happyTbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+        row.classList.add('drag-over');
+      });
+      row.addEventListener('drop', e => {
+        e.preventDefault();
+        if (row === dragSrc || row.dataset.fixed) return;
+        row.classList.remove('drag-over');
+        const allRows = [...happyTbody.querySelectorAll('tr')];
+        const srcIdx = allRows.indexOf(dragSrc);
+        const tgtIdx = allRows.indexOf(row);
+        if (srcIdx < tgtIdx) row.after(dragSrc);
+        else row.before(dragSrc);
+        updateOrderNums();
+        showUnsavedBar();
+      });
+    });
+  }
+
+  function updateOrderNums() {
+    let n = 1;
+    happyTbody.querySelectorAll('tr').forEach(row => {
+      const num = row.querySelector('.order-num');
+      if (!num) return;
+      if (row.dataset.fixed) { num.textContent = '—'; return; }
+      num.textContent = n++;
+    });
+  }
+
+  function showUnsavedBar() {
+    document.getElementById('happy-unsaved-bar').classList.add('visible');
+  }
+
+  function cancelOrder(prefix) {
+    if (prefix === 'happy') {
+      // Revert to original order by re-sorting by data-id
+      const rows = [...happyTbody.querySelectorAll('tr[data-id]')].sort((a, b) => {
+        const ai = a.dataset.id === 'default' ? -1 : parseInt(a.dataset.id);
+        const bi = b.dataset.id === 'default' ? -1 : parseInt(b.dataset.id);
+        return ai - bi;
+      });
+      rows.forEach(r => happyTbody.appendChild(r));
+      updateOrderNums();
+      document.getElementById('happy-unsaved-bar').classList.remove('visible');
+    }
+  }
+
+  function saveOrder(prefix) {
+    document.getElementById(prefix + '-unsaved-bar').classList.remove('visible');
+    const toast = document.getElementById('toast');
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 2500);
+  }
+
+  function showDialog() { document.getElementById('nav-dialog').classList.add('visible'); }
+  function hideDialog() { document.getElementById('nav-dialog').classList.remove('visible'); }
+
+  initDragDrop();
+</script>
+</body>
+</html>
