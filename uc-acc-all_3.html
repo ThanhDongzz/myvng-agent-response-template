@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IT Account Management — UC-ACC-1, 2, 3</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --vng: #E8590C; --vng-light: #FEF0E8; --vng-dark: #B8420A;
+    --bg: #F5F4F2; --surface: #FFFFFF; --surface2: #F0EEE9;
+    --border: #E2DED7; --text: #1A1917; --text2: #6B6760; --text3: #9E9B96;
+    --green: #16A34A; --green-bg: #ECFDF5;
+    --amber: #B45309; --amber-bg: #FFFBEB;
+    --red: #DC2626; --red-bg: #FEF2F2;
+    --font: 'IBM Plex Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    --r-sm: 6px;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .prod-name { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: .05em; margin-bottom: 4px; }
+  .sidebar-logo h1 { font-size: 14px; font-weight: 500; }
+  .uc-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .uc-tab { flex: 1; padding: 10px 6px; text-align: center; font-size: 11px; font-family: var(--mono); color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all .12s; line-height: 1.4; }
+  .uc-tab:hover { color: var(--text2); background: var(--surface2); }
+  .uc-tab.active { color: var(--vng); border-bottom-color: var(--vng); font-weight: 500; }
+  .flow-nav { flex: 1; padding: 16px 10px; overflow-y: auto; }
+  .flow-nav-section { margin-bottom: 6px; }
+  .flow-nav-label { font-size: 10px; font-family: var(--mono); letter-spacing: .08em; color: var(--text3); padding: 0 8px; margin-bottom: 3px; text-transform: uppercase; }
+  .flow-btn { display: flex; align-items: flex-start; gap: 9px; width: 100%; padding: 7px 10px; border: none; background: none; border-radius: var(--r-sm); cursor: pointer; font-family: var(--font); font-size: 12.5px; color: var(--text2); text-align: left; transition: background .12s, color .12s; line-height: 1.4; }
+  .flow-btn:hover { background: var(--surface2); color: var(--text); }
+  .flow-btn.active { background: var(--vng-light); color: var(--vng-dark); font-weight: 500; }
+  .flow-btn .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .dot-happy { background: #16A34A; } .dot-ex { background: #DC2626; } .dot-af { background: #B45309; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 8px; }
+  .sidebar-note { padding: 8px 18px 16px; font-size: 11px; color: var(--text3); line-height: 1.6; }
+  .main { display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; }
+  .flow-badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+  .badge-happy { background: var(--green-bg); color: var(--green); }
+  .badge-ex { background: var(--red-bg); color: var(--red); }
+  .badge-af { background: var(--amber-bg); color: var(--amber); }
+  .topbar-title { font-size: 13.5px; font-weight: 500; }
+  .topbar-desc { font-size: 12px; color: var(--text2); margin-left: auto; max-width: 380px; text-align: right; }
+  .chat-wrapper { flex: 1; padding: 28px 44px; max-width: 700px; width: 100%; margin: 0 auto; }
+  .uc-panel { display: none; } .uc-panel.active { display: block; }
+  .flow-panel { display: none; } .flow-panel.active { display: block; }
+  .chat-bubble { display: flex; gap: 10px; margin-bottom: 20px; }
+  .chat-bubble.user { flex-direction: row-reverse; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; font-family: var(--mono); margin-top: 18px; }
+  .avatar-agent { background: var(--vng); color: #fff; }
+  .avatar-user { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .bubble-content { max-width: 84%; }
+  .bubble-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-family: var(--mono); }
+  .chat-bubble.user .bubble-name { text-align: right; }
+  .bubble-text { background: var(--surface2); border-radius: 4px 12px 12px 12px; padding: 10px 14px; font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .chat-bubble.user .bubble-text { background: var(--vng); color: #fff; border-radius: 12px 4px 12px 12px; }
+  .bubble-text p { margin-bottom: 6px; } .bubble-text p:last-child { margin-bottom: 0; }
+  .bubble-text b { font-weight: 500; }
+  .bubble-text ul { padding-left: 18px; margin: 4px 0; } .bubble-text li { margin-bottom: 3px; }
+  .bubble-text .warn { font-size: 12.5px; color: var(--text2); margin-top: 8px; }
+  .account-info { margin-top: 10px; border-top: 1px solid var(--border); }
+  .account-row { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .account-row:last-child { border-bottom: none; }
+  .account-label { font-size: 11px; font-family: var(--mono); color: var(--text3); min-width: 130px; flex-shrink: 0; padding-top: 2px; }
+  .account-value { font-size: 13px; color: var(--text); }
+  .suggestions { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .suggestion-chip { padding: 7px 13px; border-radius: var(--r-sm); font-size: 12.5px; border: 1px solid var(--border); display: flex; align-items: center; gap: 6px; width: 100%; font-family: var(--font); text-align: left; }
+  .suggestion-chip.clickable { border-color: var(--vng); color: var(--vng-dark); background: var(--surface); cursor: pointer; transition: background .12s; }
+  .suggestion-chip.clickable::after { content: '\2192'; margin-left: auto; font-size: 13px; opacity: .7; }
+  .suggestion-chip.clickable:hover { background: var(--vng-light); }
+  .suggestion-chip.clickable.used { opacity: 0.4; cursor: default; pointer-events: none; }
+  .suggestion-chip.passive { color: var(--text3); cursor: default; border-color: var(--border); background: var(--surface2); }
+  .step-label { display: flex; align-items: center; gap: 10px; margin: 28px 0 12px; font-size: 10.5px; font-family: var(--mono); color: var(--text3); letter-spacing: .04em; }
+  .step-label::before, .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .step-tag { padding: 2px 9px; border-radius: 999px; background: var(--surface2); color: var(--text3); white-space: nowrap; }
+  .annotation { background: var(--amber-bg); border: 1px dashed #FCD34D; border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; color: var(--amber); margin: 6px 0 4px 40px; }
+  .action-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .action-icon { font-size: 16px; color: var(--text3); cursor: default; }
+  .injected { animation: fadeSlide .2s ease; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="prod-name">IT Agent — IT Account Requests</div>
+    <h1>Flow Review</h1>
+  </div>
+  <div class="uc-tabs">
+    <div class="uc-tab active" onclick="switchUC('uc1')">UC-ACC-1<br><span style="font-size:9px;opacity:.7">Xem TK</span></div>
+    <div class="uc-tab" onclick="switchUC('uc2')">UC-ACC-2<br><span style="font-size:9px;opacity:.7">Cập nhật TK</span></div>
+    <div class="uc-tab" onclick="switchUC('uc3')">UC-ACC-3<br><span style="font-size:9px;opacity:.7">Tạo TK mới</span></div>
+  </div>
+  <div class="flow-nav" id="nav-uc1">
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Happy Flow</div>
+      <button class="flow-btn active" onclick="showFlow('uc1','happy-personal')" id="uc1-btn-happy-personal"><span class="dot dot-happy"></span>Tài khoản cá nhân / chức năng</button>
+      <button class="flow-btn" onclick="showFlow('uc1','happy-group')" id="uc1-btn-happy-group"><span class="dot dot-happy"></span>Tài khoản nhóm</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Alternative Flow</div>
+      <button class="flow-btn" onclick="showFlow('uc1','af-more')" id="uc1-btn-af-more"><span class="dot dot-af"></span>Xem thêm thành viên</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Exception Flows</div>
+      <button class="flow-btn" onclick="showFlow('uc1','ef-invalid')" id="uc1-btn-ef-invalid"><span class="dot dot-ex"></span>Format ID không hợp lệ</button>
+      <button class="flow-btn" onclick="showFlow('uc1','ef-not-found')" id="uc1-btn-ef-not-found"><span class="dot dot-ex"></span>Tài khoản không tồn tại</button>
+      <button class="flow-btn" onclick="showFlow('uc1','ef-no-perm')" id="uc1-btn-ef-no-perm"><span class="dot dot-ex"></span>Không có quyền xem</button>
+      <button class="flow-btn" onclick="showFlow('uc1','ef-suspended')" id="uc1-btn-ef-suspended"><span class="dot dot-ex"></span>Tài khoản bị khóa/hết hạn</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-note"><b>Cách dùng:</b><br>• Click flow bên trái để xem<br>• Chip <span style="color:var(--vng-dark);font-weight:500">cam có mũi tên →</span> nhấn được<br>• Chip xám = chỉ xem</div>
+  </div>
+  <div class="flow-nav" id="nav-uc2" style="display:none">
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Happy Flow</div>
+      <button class="flow-btn active" onclick="showFlow('uc2','happy-approval')" id="uc2-btn-happy-approval"><span class="dot dot-happy"></span>Có thay đổi cần phê duyệt</button>
+      <button class="flow-btn" onclick="showFlow('uc2','happy-no-approval')" id="uc2-btn-happy-no-approval"><span class="dot dot-happy"></span>Chỉ thay đổi không cần duyệt</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Alternative Flows</div>
+      <button class="flow-btn" onclick="showFlow('uc2','af-cancel')" id="uc2-btn-af-cancel"><span class="dot dot-af"></span>User hủy trước khi tạo request</button>
+      <button class="flow-btn" onclick="showFlow('uc2','af-mixed')" id="uc2-btn-af-mixed"><span class="dot dot-af"></span>Vừa cần duyệt vừa không cần duyệt</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Exception Flows</div>
+      <button class="flow-btn" onclick="showFlow('uc2','ef-rejected')" id="uc2-btn-ef-rejected"><span class="dot dot-ex"></span>HoD từ chối phê duyệt</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-note"><b>Cách dùng:</b><br>• Click flow bên trái để xem<br>• Chip <span style="color:var(--vng-dark);font-weight:500">cam có mũi tên →</span> nhấn được<br>• Chip xám = chỉ xem</div>
+  </div>
+  <div class="flow-nav" id="nav-uc3" style="display:none">
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Happy Flow</div>
+      <button class="flow-btn active" onclick="showFlow('uc3','happy')" id="uc3-btn-happy"><span class="dot dot-happy"></span>Tạo tài khoản thành công</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Alternative Flow</div>
+      <button class="flow-btn" onclick="showFlow('uc3','af-cancel')" id="uc3-btn-af-cancel"><span class="dot dot-af"></span>User hủy trước khi tạo request</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="flow-nav-section">
+      <div class="flow-nav-label">Exception Flows</div>
+      <button class="flow-btn" onclick="showFlow('uc3','ef-duplicate')" id="uc3-btn-ef-duplicate"><span class="dot dot-ex"></span>Email tài khoản đã tồn tại</button>
+      <button class="flow-btn" onclick="showFlow('uc3','ef-date')" id="uc3-btn-ef-date"><span class="dot dot-ex"></span>Ngày sử dụng không hợp lệ</button>
+      <button class="flow-btn" onclick="showFlow('uc3','ef-rejected')" id="uc3-btn-ef-rejected"><span class="dot dot-ex"></span>HoD từ chối phê duyệt</button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-note"><b>Cách dùng:</b><br>• Click flow bên trái để xem<br>• Chip <span style="color:var(--vng-dark);font-weight:500">cam có mũi tên →</span> nhấn được<br>• Chip xám = chỉ xem</div>
+  </div>
+</nav>
+<main class="main">
+  <div class="topbar">
+    <div id="topbar-uc" style="font-size:11px;font-family:var(--mono);color:var(--text3)">UC-ACC-1</div>
+    <div id="topbar-badge" class="flow-badge badge-happy">Happy Flow</div>
+    <div class="topbar-title" id="topbar-title">Tài khoản cá nhân / chức năng</div>
+    <div class="topbar-desc" id="topbar-desc">User hỏi → Agent tóm tắt nhanh + chi tiết + gợi ý hành động</div>
+  </div>
+  <div class="chat-wrapper">
+
+  <!-- UC1 -->
+  <div class="uc-panel active" id="uc-uc1">
+    <!-- happy-personal -->
+    <div class="flow-panel active" id="uc1-flow-happy-personal">
+      <div class="step-label"><span class="step-tag">User hỏi về tài khoản service</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Account service my.it@vng.com.vn của tôi còn hạn không?</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent phản hồi — tóm tắt nhanh + thông tin chi tiết</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Tài khoản <b>my.it@vng.com.vn</b> của bạn được sử dụng vĩnh viễn và không có thời hạn. Dưới đây là thông tin chi tiết:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">my.it@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">IT Department</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Chức năng</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">Sử dụng vĩnh viễn</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Ngày tạo</span><span class="account-value">01/01/2020</span></div>
+          <div class="account-row"><span class="account-label">License</span><span class="account-value">Microsoft 365 E3, Teams</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1p-update','Cập nhật thông tin tài khoản này')">Cập nhật thông tin tài khoản này</button>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1p-alias','Thêm alias cho tài khoản này')">Thêm alias cho tài khoản này</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc1p-update" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn thay đổi thông tin nào của tài khoản <b>my.it@vng.com.vn</b>?</p><p>Các thông tin có thể thay đổi: Display Name, Status, Hạn sử dụng, Owner, Thêm/Xóa Alias.</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2</div></div>
+      <div id="uc1p-alias" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn thêm alias nào cho tài khoản <b>my.it@vng.com.vn</b>? Ví dụ: <b>it.support@vng.com.vn</b></p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2 — Thêm Alias</div></div>
+    </div>
+    <!-- happy-group -->
+    <div class="flow-panel" id="uc1-flow-happy-group">
+      <div class="step-label"><span class="step-tag">User hỏi thông tin tài khoản nhóm</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Nhóm email my.it@vng.com.vn có những ai vậy?</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent phản hồi — tóm tắt + tối đa 5 thành viên đầu</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Tài khoản <b>my.it@vng.com.vn</b> là tài khoản nhóm với tổng cộng 8 thành viên. Dưới đây là thông tin chi tiết:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">my.it@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">IT Department</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhóm</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">Sử dụng vĩnh viễn</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">quylph@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Ngày tạo</span><span class="account-value">01/01/2020</span></div>
+          <div class="account-row"><span class="account-label">Thành viên (8)</span><span class="account-value">dongdt@vng.com.vn, quylph@vng.com.vn, haidt@vng.com.vn, duytt3@vng.com.vn, duytt5@vng.com.vn và 3 thành viên khác</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1g-more','Xem thêm thành viên')">Xem thêm thành viên</button>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1g-update','Cập nhật thông tin nhóm')">Cập nhật thông tin nhóm</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc1g-more" style="display:none">
+        <div class="step-label"><span class="step-tag">Xem thêm — 3 thành viên còn lại</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Thành viên 6–8 / 8:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">6</span><span class="account-value">sonnc@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">7</span><span class="account-value">tult@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">8</span><span class="account-value">anhnv@vng.com.vn</span></div>
+          </div>
+        </div>
+        <div class="suggestions">
+          <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1g-add','Thêm thành viên vào nhóm')">Thêm thành viên vào nhóm</button>
+          <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc1g-remove','Xóa thành viên khỏi nhóm')">Xóa thành viên khỏi nhóm</button>
+        </div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div id="uc1g-add" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn thêm ai vào nhóm <b>my.it@vng.com.vn</b>? Vui lòng cung cấp username hoặc email.</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2 — Thêm Member</div></div>
+      <div id="uc1g-remove" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn xóa ai khỏi nhóm <b>my.it@vng.com.vn</b>? Vui lòng cung cấp username hoặc email.</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2 — Xóa Member</div></div>
+      <div id="uc1g-update" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn thay đổi thông tin nào của nhóm <b>my.it@vng.com.vn</b>?</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2</div></div>
+    </div>
+    <!-- af-more -->
+    <div class="flow-panel" id="uc1-flow-af-more">
+      <div class="step-label"><span class="step-tag">Nhóm lớn — user xem thêm từng trang 10 thành viên</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">all-vng@vng.com.vn có những ai?</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Tài khoản <b>all-vng@vng.com.vn</b> là tài khoản nhóm với tổng cộng 3.241 thành viên. Dưới đây là thông tin chi tiết:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">all-vng@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">All VNG</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhóm</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">admin@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Thành viên (3.241)</span><span class="account-value">nguyen.van.a@vng.com.vn, tran.thi.b@vng.com.vn, le.van.c@vng.com.vn, pham.van.d@vng.com.vn, hoang.thi.e@vng.com.vn và 3.236 thành viên khác</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'af-more-p2','Xem thêm thành viên')">Xem thêm thành viên</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="af-more-p2" style="display:none">
+        <div class="step-label"><span class="step-tag">Trang 2 — 10 thành viên tiếp theo (6–15 / 3.241)</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Thành viên 6–15 / 3.241:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">6</span><span class="account-value">bui.van.f@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">7</span><span class="account-value">vo.thi.g@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">8</span><span class="account-value">dang.van.h@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">9</span><span class="account-value">do.thi.i@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">10</span><span class="account-value">ngo.van.j@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">11</span><span class="account-value">ly.thi.k@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">12</span><span class="account-value">trinh.van.l@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">13</span><span class="account-value">mai.thi.m@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">14</span><span class="account-value">dinh.van.n@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">15</span><span class="account-value">luong.thi.o@vng.com.vn</span></div>
+          </div>
+        </div>
+        <div class="suggestions">
+          <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'af-more-note','Xem thêm thành viên')">Xem thêm thành viên</button>
+        </div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div id="af-more-note" style="display:none"><div class="annotation">ℹ️ Flow tiếp tục tương tự — mỗi lần hiển thị 10 thành viên tiếp theo cho đến hết 3.241 thành viên.</div></div>
+    </div>
+    <!-- ef-invalid -->
+    <div class="flow-panel" id="uc1-flow-ef-invalid">
+      <div class="step-label"><span class="step-tag">User nhập ID không đúng format</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">dong dt@vng</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Username không được chứa khoảng trắng. Vui lòng nhập lại đúng định dạng, ví dụ: <b>dongdt</b> hoặc <b>dongdt@vng.com.vn</b>.</p></div>
+      <div class="suggestions"><div class="suggestion-chip passive">Nhập lại thông tin tài khoản</div></div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="annotation">ℹ️ Agent không tạo request — báo lỗi ngay với lý do cụ thể.</div>
+    </div>
+    <!-- ef-not-found -->
+    <div class="flow-panel" id="uc1-flow-ef-not-found">
+      <div class="step-label"><span class="step-tag">Tài khoản không tồn tại</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">my.xyz2024@vng.com.vn còn dùng được không?</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Không tìm thấy tài khoản <b>my.xyz2024@vng.com.vn</b> trên hệ thống. Vui lòng kiểm tra lại email hoặc username.</p></div>
+      <div class="suggestions">
+        <div class="suggestion-chip passive">Nhập lại thông tin tài khoản</div>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'ef-nf-create','Tạo tài khoản mới với email này')">Tạo tài khoản mới với email này</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="ef-nf-create" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Mình sẽ giúp bạn tạo tài khoản mới. Bạn cần cung cấp: Display Name, Ngày bắt đầu, Ngày kết thúc, Mục đích sử dụng...</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-3</div></div>
+    </div>
+    <!-- ef-no-perm -->
+    <div class="flow-panel" id="uc1-flow-ef-no-perm">
+      <div class="step-label"><span class="step-tag">User không phải owner — Agent từ chối</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Thông tin tài khoản quylph@vng.com.vn</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn không có quyền xem thông tin tài khoản này. Nếu cần hỗ trợ, vui lòng liên hệ IT Helpdesk.</p></div>
+      <div class="suggestions">
+        <div class="suggestion-chip passive">Xem thông tin liên hệ IT Helpdesk</div>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="ef-np-helpdesk" style="display:none">
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Thông tin liên hệ IT Helpdesk:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">Email</span><span class="account-value">helpdesk@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Microsoft Teams</span><span class="account-value">IT Helpdesk</span></div>
+            <div class="account-row"><span class="account-label">Hệ thống ticket</span><span class="account-value">request.vng.vn</span></div>
+          </div>
+        </div>
+        <div class="suggestions"><div class="suggestion-chip passive">Tạo ticket IT Helpdesk</div></div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div class="annotation">ℹ️ Agent không tiết lộ tài khoản có tồn tại hay không — tránh lộ thông tin người khác.</div>
+    </div>
+    <!-- ef-suspended -->
+    <div class="flow-panel" id="uc1-flow-ef-suspended">
+      <div class="step-label"><span class="step-tag">Tài khoản bị khóa/hết hạn</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">my.event2024@vng.com.vn còn dùng được không?</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Tài khoản <b>my.event2024@vng.com.vn</b> hiện <b>không còn hoạt động</b> — đã hết hạn sử dụng vào 31/12/2024. Dưới đây là thông tin chi tiết:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">my.event2024@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Event 2024</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Chức năng</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Inactive — đã hết hạn sử dụng</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">31/12/2024</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Ngày tạo</span><span class="account-value">01/06/2024</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'ef-sus-extend','Gia hạn tài khoản này')">Gia hạn tài khoản này</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="ef-sus-extend" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn gia hạn tài khoản <b>my.event2024@vng.com.vn</b> đến ngày nào?</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Tiếp tục sang UC-ACC-2 — Thay đổi Expiry Date</div></div>
+    </div>
+  </div><!-- end uc1 -->
+
+  <!-- UC2 -->
+  <div class="uc-panel" id="uc-uc2">
+    <!-- happy-approval -->
+    <div class="flow-panel active" id="uc2-flow-happy-approval">
+      <div class="step-label"><span class="step-tag">User yêu cầu cập nhật thông tin tài khoản</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Tôi muốn cập nhật thông tin tài khoản dongdt@vng.com.vn</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Đây là thông tin tài khoản hiện tại của <b>dongdt@vng.com.vn</b>. Bạn muốn thay đổi thông tin nào?</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Đồng. Đỗ Thanh</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhân viên</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">Sử dụng vĩnh viễn</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Ngày tạo</span><span class="account-value">15/03/2021</span></div>
+          <div class="account-row"><span class="account-label">License</span><span class="account-value">Microsoft 365 E3, Teams, OneDrive 1TB</span></div>
+          <div class="account-row"><span class="account-label">Alias</span><span class="account-value">dong.dothanh@vng.com.vn</span></div>
+        </div>
+        <p style="margin-top:10px">Các thông tin có thể thay đổi:</p>
+        <ul><li>Display Name</li><li>Status (Activate / Deactivate)</li><li>Hạn sử dụng (tăng hoặc giảm)</li><li>Owner</li><li>Thêm Alias</li><li>Xóa Alias</li><li>Thêm / Xóa Member (chỉ tài khoản nhóm)</li></ul>
+      </div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Đổi display name thành Đồng Đỗ Thanh, gia hạn đến 31/12/2026</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent tổng hợp và xác nhận</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Mình sẽ thực hiện các thay đổi sau cho tài khoản <b>dongdt@vng.com.vn</b>:</p>
+        <ul><li>Display Name: Đồng. Đỗ Thanh → <b>Đồng Đỗ Thanh</b></li><li>Hạn sử dụng: Vĩnh viễn → <b>31/12/2026</b></li></ul>
+        <p class="warn">⚠️ Các thay đổi trên cần được Department Head phê duyệt trước khi thực hiện.</p>
+        <p>Bạn xác nhận thực hiện các thay đổi trên không?</p>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2a-step2','Xác nhận')">Xác nhận</button>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2a-cancel','Hủy')">Hủy</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc2a-step2" style="display:none">
+        <div class="step-label"><span class="step-tag">Tạo request — chờ HoD phê duyệt</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Yêu cầu đã được gửi và đang chờ phê duyệt từ <b>Tú. Lê Thanh (tult)</b>. Bạn sẽ nhận được email và thông báo khi có kết quả.</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+        <div class="step-label"><span class="step-tag">HoD duyệt → IT Ops thực thi → Agent thông báo kết quả</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Tài khoản <b>dongdt@vng.com.vn</b> đã được cập nhật thành công:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">dongdt@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Đồng Đỗ Thanh</span></div>
+            <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhân viên</span></div>
+            <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+            <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">31/12/2026</span></div>
+            <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Cập nhật gần nhất</span><span class="account-value">10/06/2026</span></div>
+            <div class="account-row"><span class="account-label">Phê duyệt bởi</span><span class="account-value">Tú. Lê Thanh (tult) — 10/06/2026 09:14</span></div>
+            <div class="account-row"><span class="account-label">Ghi chú</span><span class="account-value">Đồng ý đổi tên theo đề nghị của nhân viên.</span></div>
+          </div>
+        </div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div id="uc2a-cancel" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Đã hủy yêu cầu. Nếu cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+      <div id="uc2a-done" style="display:none"><div class="annotation">ℹ️ Quay về UC-ACC-1 để lấy thông tin mới nhất</div></div>
+    </div>
+    <!-- happy-no-approval -->
+    <div class="flow-panel" id="uc2-flow-happy-no-approval">
+      <div class="step-label"><span class="step-tag">User thay đổi không cần phê duyệt</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Thêm haidt@vng.com.vn vào nhóm my.it@vng.com.vn</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent load thông tin tài khoản hiện tại trước</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Trước tiên mình sẽ hiển thị thông tin tài khoản hiện tại của <b>my.it@vng.com.vn</b>:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">my.it@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">IT Department</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhóm</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">quylph@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Thành viên (5)</span><span class="account-value">dongdt@vng.com.vn, quylph@vng.com.vn, duytt3@vng.com.vn, duytt5@vng.com.vn, sonnc@vng.com.vn</span></div>
+        </div>
+        <p style="margin-top:10px">Mình sẽ thêm <b>haidt@vng.com.vn</b> vào nhóm <b>my.it@vng.com.vn</b>. Thay đổi này không cần phê duyệt và sẽ được thực hiện ngay.</p>
+        <p>Bạn xác nhận thực hiện các thay đổi trên không?</p>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2n-step2','Xác nhận')">Xác nhận</button>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2n-cancel','Hủy')">Hủy</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc2n-step2" style="display:none">
+        <div class="step-label"><span class="step-tag">IT Ops thực thi ngay — Agent thông báo kết quả</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Nhóm <b>my.it@vng.com.vn</b> đã được cập nhật thành công:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">my.it@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">IT Department</span></div>
+            <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhóm</span></div>
+            <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+            <div class="account-row"><span class="account-label">Owner</span><span class="account-value">quylph@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Thành viên (6)</span><span class="account-value">dongdt@vng.com.vn, quylph@vng.com.vn, haidt@vng.com.vn, duytt3@vng.com.vn, duytt5@vng.com.vn và 1 thành viên khác</span></div>
+            <div class="account-row"><span class="account-label">Cập nhật gần nhất</span><span class="account-value">10/06/2026</span></div>
+          </div>
+        </div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div id="uc2n-cancel" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Đã hủy yêu cầu. Nếu cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+      <div id="uc2n-done" style="display:none"><div class="annotation">ℹ️ Quay về UC-ACC-1 để xem thông tin mới nhất</div></div>
+    </div>
+    <!-- af-cancel -->
+    <div class="flow-panel" id="uc2-flow-af-cancel">
+      <div class="step-label"><span class="step-tag">Agent đã tổng hợp — user muốn hủy</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Đổi display name tài khoản dongdt thành Đồng Đỗ Thanh</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent load thông tin tài khoản hiện tại trước</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Trước tiên mình sẽ hiển thị thông tin tài khoản hiện tại của <b>dongdt@vng.com.vn</b>:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Đồng. Đỗ Thanh</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhân viên</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">Sử dụng vĩnh viễn</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+        </div>
+        <p style="margin-top:10px">Mình sẽ thực hiện thay đổi sau cho tài khoản <b>dongdt@vng.com.vn</b>:</p>
+        <ul><li>Display Name: Đồng. Đỗ Thanh → <b>Đồng Đỗ Thanh</b></li></ul>
+        <p class="warn">⚠️ Thay đổi trên cần được Department Head phê duyệt trước khi thực hiện.</p>
+        <p>Bạn xác nhận thực hiện các thay đổi trên không?</p>
+      </div>
+      <div class="suggestions">
+        <div class="suggestion-chip passive">Xác nhận</div>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2c-done','Hủy')">Hủy</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc2c-done" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Đã hủy yêu cầu. Nếu cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div>
+      <div class="suggestions"><div class="suggestion-chip passive">Quay lại xem thông tin tài khoản</div></div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+    </div>
+    <!-- af-mixed -->
+    <div class="flow-panel" id="uc2-flow-af-mixed">
+      <div class="step-label"><span class="step-tag">Thay đổi vừa cần vừa không cần phê duyệt</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Đổi display name thành Đồng Đỗ Thanh và thêm haidt vào nhóm my.it luôn</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent load thông tin tài khoản hiện tại trước</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Trước tiên mình sẽ hiển thị thông tin tài khoản hiện tại của <b>dongdt@vng.com.vn</b>:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email (ID)</span><span class="account-value">dongdt@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Đồng. Đỗ Thanh</span></div>
+          <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Nhân viên</span></div>
+          <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+          <div class="account-row"><span class="account-label">Hạn sử dụng</span><span class="account-value">Sử dụng vĩnh viễn</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+        </div>
+        <p style="margin-top:10px">Mình sẽ thực hiện các thay đổi sau:</p>
+        <ul><li>Display Name: Đồng. Đỗ Thanh → <b>Đồng Đỗ Thanh</b></li><li>Thêm Member: haidt@vng.com.vn vào nhóm my.it@vng.com.vn</li></ul>
+        <p class="warn">⚠️ Các thay đổi trên cần được Department Head phê duyệt trước khi thực hiện.</p>
+        <p>Bạn xác nhận thực hiện các thay đổi trên không?</p>
+      </div>
+      <div class="suggestions"><div class="suggestion-chip passive">Xác nhận</div><div class="suggestion-chip passive">Hủy</div></div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="annotation">ℹ️ Nếu có ít nhất 1 thay đổi cần HoD duyệt → toàn bộ request chờ duyệt trước, kể cả thay đổi không cần duyệt.</div>
+    </div>
+    <!-- ef-rejected -->
+    <div class="flow-panel" id="uc2-flow-ef-rejected">
+      <div class="step-label"><span class="step-tag">User gửi yêu cầu — HoD từ chối</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Đổi display name tài khoản dongdt thành Đồng Đỗ Thanh</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent load thông tin TK → tổng hợp → user xác nhận → tạo request</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Yêu cầu đã được gửi và đang chờ phê duyệt từ <b>Tú. Lê Thanh (tult)</b>...</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="step-label"><span class="step-tag">HoD từ chối — Agent thông báo</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Yêu cầu cập nhật tài khoản <b>dongdt@vng.com.vn</b> đã bị từ chối.</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Từ chối bởi</span><span class="account-value">Tú. Lê Thanh (tult)</span></div>
+          <div class="account-row"><span class="account-label">Thời gian</span><span class="account-value">10/06/2026 09:14</span></div>
+          <div class="account-row"><span class="account-label">Lý do</span><span class="account-value">Display name không đúng quy định. Vui lòng giữ format "Họ. Tên" theo chuẩn VNG.</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc2r-retry','Tạo yêu cầu mới')">Tạo yêu cầu mới</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc2r-retry" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Bạn muốn thay đổi thông tin nào cho tài khoản <b>dongdt@vng.com.vn</b>?</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+      <div class="annotation">ℹ️ Lý do từ chối lấy từ comment của HoD. Nếu HoD không để lại comment thì không hiển thị trường "Lý do".</div>
+    </div>
+  </div><!-- end uc2 -->
+
+  <!-- UC3 -->
+  <div class="uc-panel" id="uc-uc3">
+    <!-- happy -->
+    <div class="flow-panel active" id="uc3-flow-happy">
+      <div class="step-label"><span class="step-tag">Agent list thông tin cần cung cấp ngay từ đầu</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Tôi cần tạo tài khoản cho cộng tác viên tham gia sự kiện tháng 7</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Mình sẽ giúp bạn tạo tài khoản. Bạn cần cung cấp các thông tin sau:</p>
+        <ul>
+          <li><b>Email tài khoản</b> — ví dụ: my.event2025@vng.com.vn</li>
+          <li><b>Display Name</b> — tên hiển thị của tài khoản</li>
+          <li><b>Ngày bắt đầu sử dụng</b> — ví dụ: hôm nay</li>
+          <li><b>Ngày kết thúc sử dụng</b> — tối đa 12 tháng kể từ ngày bắt đầu</li>
+          <li><b>Mục đích sử dụng</b></li>
+          <li><b>Dịch vụ đi kèm</b> (không bắt buộc) — Email, Microsoft Teams, OneDrive</li>
+          <li><b>Tập tin đính kèm</b> (không bắt buộc)</li>
+          <li><b>Owner</b> (không bắt buộc) — mặc định là bạn</li>
+        </ul>
+        <p>Bạn có thể cung cấp tất cả cùng một lúc hoặc từng thông tin một đều được.</p>
+      </div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">my.event.july2025@vng.com.vn, tên là Event July 2025, dùng từ 01/07/2025 đến 31/07/2025, mục đích để cộng tác viên đăng nhập vào các công cụ làm việc trong sự kiện, có kèm Teams và OneDrive</div></div></div>
+      <div class="step-label"><span class="step-tag">Agent tổng hợp và xác nhận</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Mình sẽ tạo tài khoản với thông tin sau:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email tài khoản</span><span class="account-value">my.event.july2025@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Event July 2025</span></div>
+          <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt</span></div>
+          <div class="account-row"><span class="account-label">Ngày bắt đầu</span><span class="account-value">01/07/2025</span></div>
+          <div class="account-row"><span class="account-label">Ngày kết thúc</span><span class="account-value">31/07/2025</span></div>
+          <div class="account-row"><span class="account-label">Mục đích sử dụng</span><span class="account-value">Cộng tác viên đăng nhập vào các công cụ làm việc trong sự kiện</span></div>
+          <div class="account-row"><span class="account-label">Dịch vụ đi kèm</span><span class="account-value">Microsoft Teams, OneDrive</span></div>
+        </div>
+        <p class="warn">⚠️ Yêu cầu này cần được Department Head phê duyệt trước khi thực hiện.</p>
+        <p>Bạn xác nhận tạo tài khoản với thông tin trên không? Nếu cần chỉnh sửa, cho mình biết nhé.</p>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc3h-step2','Xác nhận tạo')">Xác nhận tạo</button>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc3h-cancel','Hủy')">Hủy</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc3h-cancel" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Đã hủy yêu cầu. Nếu cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div><div class="suggestions"><div class="suggestion-chip passive">Tạo yêu cầu mới</div></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+      <div id="uc3h-step2" style="display:none">
+        <div class="step-label"><span class="step-tag">Tạo request — chờ HoD phê duyệt</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Yêu cầu đã được gửi và đang chờ phê duyệt từ <b>Tú. Lê Thanh (tult)</b>. Bạn sẽ nhận được email và thông báo khi có kết quả.</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+        <div class="step-label"><span class="step-tag">HoD duyệt → IT Ops tạo tài khoản → Agent thông báo</span></div>
+        <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+          <p>Tài khoản <b>my.event.july2025@vng.com.vn</b> đã được tạo thành công:</p>
+          <div class="account-info">
+            <div class="account-row"><span class="account-label">Email tài khoản</span><span class="account-value">my.event.july2025@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Event July 2025</span></div>
+            <div class="account-row"><span class="account-label">Loại tài khoản</span><span class="account-value">Chức năng</span></div>
+            <div class="account-row"><span class="account-label">Trạng thái</span><span class="account-value">Active</span></div>
+            <div class="account-row"><span class="account-label">Ngày bắt đầu</span><span class="account-value">01/07/2025</span></div>
+            <div class="account-row"><span class="account-label">Ngày kết thúc</span><span class="account-value">31/07/2025</span></div>
+            <div class="account-row"><span class="account-label">Owner</span><span class="account-value">dongdt@vng.com.vn</span></div>
+            <div class="account-row"><span class="account-label">Dịch vụ đi kèm</span><span class="account-value">Microsoft Teams, OneDrive</span></div>
+            <div class="account-row"><span class="account-label">Cập nhật gần nhất</span><span class="account-value">10/06/2026</span></div>
+            <div class="account-row"><span class="account-label">Phê duyệt bởi</span><span class="account-value">Tú. Lê Thanh (tult) — 10/06/2026 09:14</span></div>
+          </div>
+        </div>
+        <div class="suggestions">
+          <div class="suggestion-chip passive">Cập nhật thông tin tài khoản</div>
+        </div>
+        <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      </div>
+      <div id="uc3h-done" style="display:none"><div class="annotation">ℹ️ Quay về UC-ACC-1 để xem thông tin tài khoản vừa tạo</div></div>
+    </div>
+    <!-- af-cancel -->
+    <div class="flow-panel" id="uc3-flow-af-cancel">
+      <div class="step-label"><span class="step-tag">Agent đã tổng hợp — user muốn hủy</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Tôi cần tạo tài khoản my.event.july2025@vng.com.vn cho sự kiện tháng 7...</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Mình sẽ tạo tài khoản với thông tin sau:</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Email tài khoản</span><span class="account-value">my.event.july2025@vng.com.vn</span></div>
+          <div class="account-row"><span class="account-label">Display Name</span><span class="account-value">Event July 2025</span></div>
+          <div class="account-row"><span class="account-label">Ngày bắt đầu</span><span class="account-value">01/07/2025</span></div>
+          <div class="account-row"><span class="account-label">Ngày kết thúc</span><span class="account-value">31/07/2025</span></div>
+          <div class="account-row"><span class="account-label">Mục đích sử dụng</span><span class="account-value">Cộng tác viên đăng nhập vào các công cụ trong sự kiện</span></div>
+        </div>
+        <p class="warn">⚠️ Yêu cầu này cần được Department Head phê duyệt trước khi thực hiện.</p>
+        <p>Bạn xác nhận tạo tài khoản với thông tin trên không? Nếu cần chỉnh sửa, cho mình biết nhé.</p>
+      </div>
+      <div class="suggestions">
+        <div class="suggestion-chip passive">Xác nhận tạo</div>
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc3c-done','Hủy')">Hủy</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc3c-done" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Đã hủy yêu cầu. Nếu cần hỗ trợ thêm, mình luôn ở đây nhé!</p></div><div class="suggestions"><div class="suggestion-chip passive">Tạo yêu cầu mới</div></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div></div>
+    </div>
+    <!-- ef-duplicate -->
+    <div class="flow-panel" id="uc3-flow-ef-duplicate">
+      <div class="step-label"><span class="step-tag">Email tài khoản đã tồn tại</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Tôi muốn tạo tài khoản mới, email là my.it@vng.com.vn, tên hiển thị IT Team New, dùng từ hôm nay đến 31/12/2026, mục đích dùng cho team IT mới thành lập</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Email <b>my.it@vng.com.vn</b> đã tồn tại trên hệ thống. Vui lòng chọn một email khác.</p>
+        <p>Ví dụ: <b>my.it.2025@vng.com.vn</b>, <b>my.it.team@vng.com.vn</b></p>
+      </div>
+      <div class="suggestions">
+        <div class="suggestion-chip passive">Nhập email khác</div>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc3d-view" style="display:none"><div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Mình sẽ lấy thông tin tài khoản <b>my.it@vng.com.vn</b>...</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div><div class="annotation">ℹ️ Chuyển sang UC-ACC-1 để xem thông tin tài khoản đã tồn tại</div></div>
+    </div>
+    <!-- ef-date -->
+    <div class="flow-panel" id="uc3-flow-ef-date">
+      <div class="step-label"><span class="step-tag">Ngày sử dụng không hợp lệ</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">my.event.july2025@vng.com.vn, Event July 2025, dùng từ 01/07/2025 đến 01/10/2026</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Thời gian sử dụng tối đa là 12 tháng kể từ ngày bắt đầu. Với ngày bắt đầu 01/07/2025, ngày kết thúc tối đa là <b>01/07/2026</b>. Vui lòng chọn lại ngày bắt đầu và ngày kết thúc.</p></div>
+      <div class="suggestions"><div class="suggestion-chip passive">Nhập lại ngày bắt đầu và ngày kết thúc</div></div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Dùng từ 01/01/2025 đến 31/12/2025</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Ngày bắt đầu sử dụng phải từ hôm nay (10/06/2026) trở đi. Vui lòng chọn lại ngày bắt đầu và ngày kết thúc.</p></div>
+      <div class="suggestions"><div class="suggestion-chip passive">Nhập lại ngày bắt đầu và ngày kết thúc</div></div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="annotation">ℹ️ Agent validate ngày ngay khi user nhập — không tạo request khi ngày không hợp lệ.</div>
+    </div>
+    <!-- ef-rejected -->
+    <div class="flow-panel" id="uc3-flow-ef-rejected">
+      <div class="step-label"><span class="step-tag">User gửi yêu cầu — HoD từ chối</span></div>
+      <div class="chat-bubble user"><div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">Tôi cần tạo tài khoản my.event.july2025@vng.com.vn cho sự kiện tháng 7...</div></div></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text"><p>Yêu cầu đã được gửi và đang chờ phê duyệt từ <b>Tú. Lê Thanh (tult)</b>...</p></div><div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div class="step-label"><span class="step-tag">HoD từ chối — Agent thông báo</span></div>
+      <div class="chat-bubble"><div class="avatar avatar-agent">IT</div><div class="bubble-content"><div class="bubble-name">IT Agent</div><div class="bubble-text">
+        <p>Yêu cầu tạo tài khoản <b>my.event.july2025@vng.com.vn</b> đã bị từ chối.</p>
+        <div class="account-info">
+          <div class="account-row"><span class="account-label">Từ chối bởi</span><span class="account-value">Tú. Lê Thanh (tult)</span></div>
+          <div class="account-row"><span class="account-label">Thời gian</span><span class="account-value">10/06/2026 09:14</span></div>
+          <div class="account-row"><span class="account-label">Lý do</span><span class="account-value">Chưa có hợp đồng cộng tác viên đính kèm. Vui lòng bổ sung và tạo lại yêu cầu.</span></div>
+        </div>
+      </div>
+      <div class="suggestions">
+        <button class="suggestion-chip clickable" onclick="injectAndReveal(this,'uc3r-retry','Tạo yêu cầu mới')">Tạo yêu cầu mới</button>
+      </div>
+      <div class="action-bar"><span class="action-icon">📋</span><span class="action-icon">👍</span><span class="action-icon">👎</span></div></div></div>
+      <div id="uc3r-retry" style="display:none"><div class="annotation">ℹ️ Agent quay lại bước thu thập thông tin — lần này nhắc user đính kèm file theo yêu cầu của HoD.</div></div>
+      <div class="annotation">ℹ️ Lý do từ chối lấy từ comment của HoD. Nếu HoD không để lại comment thì không hiển thị trường "Lý do".</div>
+    </div>
+  </div><!-- end uc3 -->
+
+  </div>
+</main>
+</div>
+<script>
+const meta={uc1:{label:'UC-ACC-1 — Xem thông tin tài khoản',flows:{'happy-personal':{badge:'badge-happy',text:'Happy Flow',title:'Tài khoản cá nhân / chức năng',desc:'User hỏi → Agent tóm tắt nhanh + chi tiết + gợi ý hành động tiếp theo'},'happy-group':{badge:'badge-happy',text:'Happy Flow',title:'Tài khoản nhóm',desc:'User hỏi → Agent trả thông tin kèm tối đa 5 thành viên đầu + gợi ý xem thêm'},'af-more':{badge:'badge-af',text:'Alt Flow',title:'Xem thêm thành viên',desc:'User yêu cầu xem thêm — Agent hiển thị mỗi lần 10 thành viên tiếp theo'},'ef-invalid':{badge:'badge-ex',text:'Exception',title:'Format ID không hợp lệ',desc:'Agent báo lỗi ngay với lý do cụ thể — không tạo request'},'ef-not-found':{badge:'badge-ex',text:'Exception',title:'Tài khoản không tồn tại',desc:'Agent thông báo và gợi ý tạo tài khoản mới'},'ef-no-perm':{badge:'badge-ex',text:'Exception',title:'Không có quyền xem',desc:'Agent từ chối, không tiết lộ tài khoản có tồn tại không, gợi ý liên hệ IT Helpdesk'},'ef-suspended':{badge:'badge-ex',text:'Exception',title:'Tài khoản bị khóa/hết hạn',desc:'Agent tóm tắt rõ trạng thái ngay từ đầu, gợi ý gia hạn'}}},uc2:{label:'UC-ACC-2 — Cập nhật thông tin tài khoản',flows:{'happy-approval':{badge:'badge-happy',text:'Happy Flow',title:'Có thay đổi cần phê duyệt',desc:'User yêu cầu → Agent xác nhận → Tạo request chờ HoD duyệt → Thực thi → Thông báo kết quả'},'happy-no-approval':{badge:'badge-happy',text:'Happy Flow',title:'Chỉ thay đổi không cần duyệt',desc:'Xóa Alias hoặc Thêm/Xóa Member → Thực thi ngay, không cần duyệt'},'af-cancel':{badge:'badge-af',text:'Alt Flow',title:'User hủy trước khi tạo request',desc:'User đổi ý sau khi Agent đã tổng hợp — không tạo request'},'af-mixed':{badge:'badge-af',text:'Alt Flow',title:'Vừa cần duyệt vừa không cần duyệt',desc:'Nếu có ít nhất 1 thay đổi cần HoD duyệt → toàn bộ request chờ duyệt trước'},'ef-rejected':{badge:'badge-ex',text:'Exception',title:'HoD từ chối phê duyệt',desc:'Agent thông báo kèm người từ chối, thời gian và lý do nếu có'}}},uc3:{label:'UC-ACC-3 — Tạo tài khoản IT mới',flows:{'happy':{badge:'badge-happy',text:'Happy Flow',title:'Tạo tài khoản thành công',desc:'Agent list thông tin cần → User cung cấp → Xác nhận → HoD duyệt → IT Ops tạo → Thông báo kết quả'},'af-cancel':{badge:'badge-af',text:'Alt Flow',title:'User hủy trước khi tạo request',desc:'User đổi ý sau khi Agent đã tổng hợp — không tạo request'},'ef-duplicate':{badge:'badge-ex',text:'Exception',title:'Email tài khoản đã tồn tại',desc:'Agent thông báo trùng email, gợi ý email khác hoặc xem thông tin tài khoản đã có'},'ef-date':{badge:'badge-ex',text:'Exception',title:'Ngày sử dụng không hợp lệ',desc:'Agent validate ngay khi user nhập — báo lỗi cụ thể, không tạo request'},'ef-rejected':{badge:'badge-ex',text:'Exception',title:'HoD từ chối phê duyệt',desc:'Agent thông báo kèm người từ chối, thời gian và lý do nếu có'}}}};
+let curUC='uc1',curFlow={uc1:'happy-personal',uc2:'happy-approval',uc3:'happy'};
+function switchUC(uc){document.querySelectorAll('.uc-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.flow-nav').forEach(n=>n.style.display='none');document.querySelectorAll('.uc-tab').forEach(t=>t.classList.remove('active'));document.getElementById('uc-'+uc).classList.add('active');document.getElementById('nav-'+uc).style.display='block';const tabs=document.querySelectorAll('.uc-tab');tabs[uc==='uc1'?0:uc==='uc2'?1:2].classList.add('active');curUC=uc;document.getElementById('topbar-uc').textContent=meta[uc].label;showFlow(uc,curFlow[uc]);}
+function showFlow(uc,flowId){const ucEl=document.getElementById('uc-'+uc);ucEl.querySelectorAll('.flow-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('#nav-'+uc+' .flow-btn').forEach(b=>b.classList.remove('active'));const panel=document.getElementById(uc+'-flow-'+flowId);if(panel)panel.classList.add('active');const btn=document.getElementById(uc+'-btn-'+flowId);if(btn)btn.classList.add('active');curFlow[uc]=flowId;const m=meta[uc]?.flows[flowId];if(m){const badge=document.getElementById('topbar-badge');badge.className='flow-badge '+m.badge;badge.textContent=m.text;document.getElementById('topbar-title').textContent=m.title;document.getElementById('topbar-desc').textContent=m.desc;}}
+function injectAndReveal(chip,nextId,userText){chip.closest('.suggestions').querySelectorAll('.suggestion-chip').forEach(c=>{c.classList.add('used');c.disabled=true;});const nextEl=document.getElementById(nextId);if(!nextEl)return;const ub=document.createElement('div');ub.className='chat-bubble user injected';ub.innerHTML=`<div class="avatar avatar-user">U</div><div class="bubble-content"><div class="bubble-name">User</div><div class="bubble-text">${userText}</div></div>`;nextEl.parentNode.insertBefore(ub,nextEl);nextEl.style.display='block';nextEl.classList.add('injected');setTimeout(()=>nextEl.scrollIntoView({behavior:'smooth',block:'nearest'}),80);}
+document.getElementById('topbar-uc').textContent=meta['uc1'].label;
+</script>
+</body>
+</html>
