@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agents — myVNG Mockup</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #F0EFED;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+}
+
+/* ─── Phone frame ─── */
+.phone {
+  width: 375px;
+  height: 780px;
+  background: #fff;
+  border-radius: 44px;
+  border: 8px solid #1C1C1E;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* ─── Status bar ─── */
+.sb {
+  height: 44px;
+  padding: 14px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+.sb-time { font-size: 15px; font-weight: 600; color: #1C1C1E; letter-spacing: -0.3px; }
+.sb-icons { display: flex; align-items: center; gap: 6px; }
+
+/* ─── Screen stack ─── */
+/* Each "screen" is an absolutely positioned layer that slides in/out */
+.screen {
+  position: absolute;
+  top: 44px; /* below status bar */
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+.screen.active  { transform: translateX(0); z-index: 5; }
+.screen.behind  { transform: translateX(0); z-index: 4; }
+.screen.right   { transform: translateX(100%); z-index: 5; }
+.screen.left    { transform: translateX(-28%); z-index: 4; }
+
+/* ─── Shared nav header ─── */
+.page-header {
+  padding: 12px 20px 0;
+  flex-shrink: 0;
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1C1C1E;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+/* ─── Tab bar ─── */
+.tab-bar {
+  display: flex;
+  border-bottom: 0.5px solid #E5E5EA;
+  flex-shrink: 0;
+}
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8E8E93;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab.active { color: #E8590C; border-bottom-color: #E8590C; font-weight: 600; }
+
+/* ─── Scrollable content ─── */
+.scroll-content { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.scroll-content::-webkit-scrollbar { display: none; }
+
+/* ─── Section labels ─── */
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8E8E93;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 16px 20px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Agent cards ─── */
+.agent-card {
+  margin: 0 16px 8px;
+  background: #fff;
+  border-radius: 14px;
+  border: 0.5px solid #E5E5EA;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+.agent-card:active { background: #FFF5F0; }
+.agent-card.default { background: #FFF5F0; border-color: #F5C4A8; }
+.agent-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.agent-icon.orange { background: #FDE9DE; }
+.agent-icon.teal   { background: #E1F5EE; }
+.agent-info { flex: 1; min-width: 0; }
+.agent-name { font-size: 15px; font-weight: 600; color: #1C1C1E; margin-bottom: 2px; letter-spacing: -0.2px; }
+.agent-desc { font-size: 13px; color: #8E8E93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-default-badge {
+  font-size: 10px; font-weight: 600; color: #E8590C;
+  background: #FDE9DE; padding: 2px 7px; border-radius: 99px; flex-shrink: 0;
+}
+.chevron { color: #C7C7CC; font-size: 18px; flex-shrink: 0; }
+
+/* ─── Conversations ─── */
+.search-bar {
+  margin: 12px 16px 4px;
+  background: #F2F2F7; border-radius: 10px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 7px;
+}
+.search-bar svg { width: 16px; height: 16px; fill: #8E8E93; flex-shrink: 0; }
+.search-bar span { font-size: 14px; color: #8E8E93; }
+
+.convo-item {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid #F2F2F7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.12s;
+}
+.convo-item:active { background: #F2F2F7; }
+.convo-item.pinned-item { background: #FAFAFA; }
+.pin-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.35; margin-top: 2px; }
+.convo-text-wrap { flex: 1; min-width: 0; }
+.convo-title {
+  font-size: 15px; font-weight: 500; color: #1C1C1E;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+.convo-time { font-size: 12px; color: #C7C7CC; flex-shrink: 0; }
+.convo-more-btn {
+  width: 28px; height: 28px; border-radius: 99px;
+  display: flex; align-items: center; justify-content: center;
+  color: #C7C7CC; font-size: 18px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; line-height: 1;
+}
+.convo-more-btn:active { background: #F2F2F7; }
+
+/* ─── Tab panel ─── */
+.tab-panel { display: none; }
+.tab-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+/* ─── Bottom nav ─── */
+.bottom-nav {
+  height: 82px;
+  background: rgba(255,255,255,0.96);
+  border-top: 0.5px solid #E5E5EA;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  flex-shrink: 0;
+}
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer;
+}
+.nav-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.nav-icon svg { width: 24px; height: 24px; }
+.nav-label { font-size: 10px; font-weight: 500; color: #8E8E93; }
+.nav-item.active .nav-label { color: #E8590C; }
+.nav-fab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+}
+.fab-circle {
+  width: 44px; height: 44px; border-radius: 50%; background: #E8590C;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: -14px;
+  box-shadow: 0 4px 12px rgba(232,89,12,0.4);
+}
+.fab-circle svg { width: 22px; height: 22px; fill: #fff; }
+.nav-fab .nav-label { color: #E8590C; font-weight: 600; }
+
+/* ─── Context menu (conversations) ─── */
+.ctx-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 20; display: none; }
+.ctx-overlay.show { display: block; }
+.ctx-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.04); }
+.ctx-menu {
+  position: absolute;
+  background: #fff; border-radius: 14px; border: 0.5px solid #E5E5EA;
+  overflow: hidden; min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+.ctx-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px; font-size: 14px; color: #1C1C1E;
+  cursor: pointer; border-bottom: 0.5px solid #F2F2F7;
+}
+.ctx-item:last-child { border-bottom: none; }
+.ctx-item:active { background: #F2F2F7; }
+.ctx-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.ctx-item.danger { color: #FF3B30; }
+
+/* ══════════════════════════════════════
+   CHAT SCREEN
+══════════════════════════════════════ */
+
+/* Chat header */
+.chat-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 0.5px solid #E5E5EA;
+  flex-shrink: 0;
+  background: #fff;
+}
+.btn-back {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  color: #E8590C; cursor: pointer; flex-shrink: 0;
+  border-radius: 8px;
+}
+.btn-back:active { background: #FFF5F0; }
+.btn-back svg { width: 22px; height: 22px; }
+.chat-agent-title {
+  flex: 1; font-size: 15px; font-weight: 600;
+  color: #1C1C1E; letter-spacing: -0.2px; text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-header-actions { display: flex; align-items: center; gap: 2px; }
+.hbtn {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #8E8E93; transition: background 0.12s;
+}
+.hbtn:active { background: #F2F2F7; }
+.hbtn svg { width: 20px; height: 20px; }
+.hbtn.files-active { background: #FDE9DE; color: #E8590C; }
+.hbtn.files-disabled { opacity: 0.3; pointer-events: none; }
+
+/* Chat body */
+.chat-body-wrap {
+  flex: 1; display: flex; overflow: hidden; position: relative; background: #F7F7F7;
+}
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+  display: flex; flex-direction: column; background: #F7F7F7;
+}
+.chat-messages::-webkit-scrollbar { display: none; }
+
+/* Agent start */
+.agent-start-wrap {
+  padding: 24px 20px 0;
+  display: flex; flex-direction: column;
+}
+.as-icon { font-size: 38px; margin-bottom: 10px; line-height: 1; }
+.as-name { font-size: 26px; font-weight: 700; color: #1C1C1E; letter-spacing: -0.5px; margin-bottom: 6px; }
+.as-desc { font-size: 15px; color: #8E8E93; line-height: 1.5; margin-bottom: 20px; }
+.topic-chips { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.topic-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 99px;
+  border: 0.5px solid #E5E5EA; background: #fff;
+  font-size: 14px; color: #1C1C1E; cursor: pointer;
+  transition: background 0.12s;
+}
+.topic-chip:active { background: #F2F2F7; }
+.topic-chip .tc-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
+.spark-btn {
+  width: 44px !important; height: 44px; padding: 0 !important;
+  justify-content: center; border-radius: 99px;
+}
+.spark-btn svg { width: 20px; height: 20px; }
+
+/* Messages */
+.msg-agent-group { padding: 4px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.msg-agent {
+  background: #F2F2F7; border-radius: 4px 18px 18px 18px;
+  padding: 10px 14px; font-size: 15px; color: #1C1C1E;
+  line-height: 1.5; max-width: 82%;
+}
+.msg-user-group { padding: 4px 16px; display: flex; justify-content: flex-end; }
+.msg-user {
+  background: #E8590C; border-radius: 18px 4px 18px 18px;
+  padding: 10px 14px; font-size: 15px; color: #fff;
+  line-height: 1.5; max-width: 75%;
+}
+.msg-actions { display: flex; gap: 14px; padding: 2px 16px 6px; }
+.mac { display: flex; align-items: center; justify-content: center; color: #C7C7CC; cursor: pointer; }
+.mac svg { width: 16px; height: 16px; }
+.mac.active-like { color: #E8590C; }
+.mac.active-like svg { fill: #E8590C; }
+
+/* Files side panel */
+.files-panel {
+  width: 52%; border-left: 0.5px solid #E5E5EA;
+  display: flex; flex-direction: column; background: #FAFAFA;
+  flex-shrink: 0;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute; top: 0; right: 0; bottom: 0;
+}
+.files-panel.open { transform: translateX(0); }
+.fp-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; border-bottom: 0.5px solid #E5E5EA;
+  background: #fff; flex-shrink: 0;
+}
+.fp-head svg { width: 15px; height: 15px; flex-shrink: 0; }
+.fp-head-title { font-size: 13px; font-weight: 600; color: #1C1C1E; flex: 1; }
+.fp-close { color: #C7C7CC; cursor: pointer; }
+.fp-close svg { width: 18px; height: 18px; }
+.fp-list { flex: 1; overflow-y: auto; }
+.fp-list::-webkit-scrollbar { display: none; }
+.fp-file {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px; border-bottom: 0.5px solid #F2F2F7;
+}
+.fp-num { font-size: 11px; color: #C7C7CC; width: 14px; text-align: center; flex-shrink: 0; }
+.fp-thumb {
+  width: 34px; height: 34px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.fp-thumb.img { background: #EAF3DE; }
+.fp-thumb.doc { background: #E6F1FB; }
+.fp-thumb svg { width: 17px; height: 17px; }
+.fp-fi { flex: 1; min-width: 0; }
+.fp-fname { font-size: 12px; font-weight: 500; color: #1C1C1E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-fmeta { font-size: 11px; color: #8E8E93; }
+
+/* Input area — floating card like Claude */
+.input-area {
+  flex-shrink: 0; background: transparent;
+  padding: 6px 12px 16px;
+}
+.input-float-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 12px 14px 10px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.06);
+}
+.input-text-box {
+  font-size: 16px; color: #8E8E93; min-height: 26px;
+  display: flex; align-items: center;
+  margin-bottom: 10px; padding: 0;
+  line-height: 1.4;
+}
+.input-text-box.has-text { color: #1C1C1E; }
+.input-controls { display: flex; align-items: center; gap: 8px; }
+.i-plus {
+  width: 36px; height: 36px; border-radius: 99px;
+  border: 1.5px solid #E5E5EA; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.i-plus:active { background: #F2F2F7; }
+.i-plus svg { width: 18px; height: 18px; }
+.i-agent-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px 7px 8px; border-radius: 99px;
+  border: 1.5px solid #E5E5EA; background: #fff;
+  cursor: pointer; flex-shrink: 0; transition: background 0.12s;
+}
+.i-agent-chip:active { background: #F2F2F7; }
+.iac-dot {
+  width: 20px; height: 20px; border-radius: 6px; background: #FDE9DE;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.iac-label { font-size: 13px; font-weight: 500; color: #1C1C1E; }
+.i-space { flex: 1; }
+.i-send {
+  width: 36px; height: 36px; border-radius: 99px; background: #E8590C;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(232,89,12,0.35);
+  transition: transform 0.1s;
+}
+.i-send:active { transform: scale(0.94); }
+.i-send.off { opacity: 0.5; }
+.i-send svg { width: 18px; height: 18px; }
+
+/* Overflow menu (chat) */
+.om-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 25; display: none;
+}
+.om-overlay.show { display: block; }
+.om-bd { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+.om-menu {
+  position: absolute; top: 54px; right: 10px;
+  background: #fff; border-radius: 14px; border: 0.5px solid #E5E5EA;
+  overflow: hidden; min-width: 196px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+}
+.om-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; font-size: 15px; color: #1C1C1E;
+  cursor: pointer; border-bottom: 0.5px solid #F2F2F7;
+}
+.om-item:last-child { border-bottom: none; }
+.om-item:active { background: #F2F2F7; }
+.om-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.om-item.red { color: #FF3B30; }
+.om-sep { height: 0.5px; background: #E5E5EA; }
+
+/* Prompt expand panel */
+.prompt-panel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #fff; border-top: 0.5px solid #E5E5EA;
+  border-radius: 20px 20px 0 0; z-index: 15; display: none;
+}
+.prompt-panel.show { display: block; }
+.pp-handle { width: 36px; height: 4px; background: #E5E5EA; border-radius: 99px; margin: 10px auto 0; }
+.pp-topic-label {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px 8px; font-size: 12px; font-weight: 600;
+  color: #8E8E93; letter-spacing: 0.04em; text-transform: uppercase;
+  border-bottom: 0.5px solid #F2F2F7;
+}
+.pp-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px; border-bottom: 0.5px solid #F2F2F7;
+  cursor: pointer;
+}
+.pp-item:active { background: #F2F2F7; }
+.pp-item-icon { font-size: 18px; flex-shrink: 0; }
+.pp-item-text { font-size: 14px; color: #1C1C1E; line-height: 1.3; }
+.pp-more {
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 16px 16px; font-size: 14px; color: #E8590C;
+  font-weight: 500; cursor: pointer;
+}
+.pp-more svg { width: 16px; height: 16px; }
+
+/* Bottom sheet (attach / agent select) */
+.bs-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 30; display: none;
+}
+.bs-overlay.show { display: block; }
+.bs-bd { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.32); }
+.bs-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #fff; border-radius: 20px 20px 0 0; padding-bottom: 24px;
+}
+.bs-handle { width: 36px; height: 4px; background: #E5E5EA; border-radius: 99px; margin: 10px auto 4px; }
+.bs-title {
+  font-size: 13px; font-weight: 600; color: #8E8E93;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 6px 20px 12px; border-bottom: 0.5px solid #F2F2F7;
+}
+/* 3-col attach grid */
+.attach-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: #F2F2F7; border-radius: 14px;
+  margin: 14px 16px 0; overflow: hidden; border: 0.5px solid #E5E5EA;
+}
+.attach-cell {
+  background: #fff; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 18px 8px 14px; gap: 8px; cursor: pointer;
+}
+.attach-cell:active { background: #F2F2F7; }
+.attach-circle {
+  width: 48px; height: 48px; border-radius: 12px; background: #F2F2F7;
+  display: flex; align-items: center; justify-content: center;
+}
+.attach-circle svg { width: 24px; height: 24px; }
+.attach-lbl { font-size: 13px; color: #1C1C1E; font-weight: 500; }
+.ws-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; margin: 10px 16px 0;
+  border-radius: 14px; border: 0.5px solid #E5E5EA; cursor: pointer;
+}
+.ws-circle { width: 40px; height: 40px; border-radius: 10px; background: #F2F2F7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ws-circle svg { width: 22px; height: 22px; }
+.ws-lbl { flex: 1; font-size: 15px; font-weight: 500; color: #1C1C1E; }
+.toggle { width: 48px; height: 28px; border-radius: 99px; background: #E5E5EA; position: relative; transition: background 0.2s; flex-shrink: 0; cursor: pointer; }
+.toggle.on { background: #34C759; }
+.tknob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: left 0.2s; }
+.toggle.on .tknob { left: 23px; }
+/* Agent select list */
+.as-list { padding: 8px 0 0; }
+.as-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 20px; cursor: pointer; border-bottom: 0.5px solid #F2F2F7;
+}
+.as-row:last-child { border-bottom: none; }
+.as-row:active { background: #F2F2F7; }
+.as-icon-wrap { width: 44px; height: 44px; border-radius: 12px; background: #FDE9DE; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.as-icon-wrap.teal { background: #E1F5EE; }
+.as-info { flex: 1; min-width: 0; }
+.as-aname { font-size: 15px; font-weight: 600; color: #1C1C1E; margin-bottom: 2px; }
+.as-adesc { font-size: 13px; color: #8E8E93; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.as-check { flex-shrink: 0; }
+.as-check svg { width: 20px; height: 20px; }
+
+/* Toast */
+.toast {
+  position: absolute; top: 60px; left: 16px; right: 16px;
+  background: #fff; border-radius: 12px; border: 0.5px solid #E5E5EA;
+  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12); z-index: 50;
+  transform: translateY(-8px); opacity: 0;
+  transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.toast-dot { width: 28px; height: 28px; border-radius: 99px; background: #34C759; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.toast-dot svg { width: 16px; height: 16px; fill: #fff; }
+.toast-msg { font-size: 14px; color: #1C1C1E; flex: 1; }
+.toast-x { color: #C7C7CC; cursor: pointer; font-size: 20px; line-height: 1; }
+
+/* Home indicator */
+.home-indicator {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 5px; background: #1C1C1E; border-radius: 3px; opacity: 0.18;
+  z-index: 100;
+}
+
+  /* ─── File preview chips (above input) ─── */
+  .file-preview-strip {
+    display: none;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 0 8px 0;
+    scrollbar-width: none;
+  }
+  .file-preview-strip::-webkit-scrollbar { display: none; }
+  .file-preview-strip.has-files { display: flex; }
+  .file-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: #F2F2F7; border-radius: 10px;
+    padding: 7px 10px 7px 8px;
+    flex-shrink: 0; min-width: 160px; max-width: 200px;
+    position: relative;
+  }
+  .file-chip-thumb {
+    width: 36px; height: 36px; border-radius: 7px;
+    flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .file-chip-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+  .file-chip-thumb.doc-bg { background: #2563EB; }
+  .file-chip-thumb.xls-bg { background: #16A34A; }
+  .file-chip-info { flex: 1; min-width: 0; }
+  .file-chip-name { font-size: 13px; font-weight: 500; color: #1C1C1E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-chip-size { font-size: 12px; color: #8E8E93; }
+  .file-chip-remove {
+    width: 18px; height: 18px; border-radius: 99px;
+    background: #8E8E93; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .file-chip-remove svg { width: 10px; height: 10px; fill: #fff; }
+
+  /* ─── Sent message with file attachments ─── */
+  .msg-files-row {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    padding: 4px 16px 0; justify-content: flex-end;
+  }
+  .msg-file-thumb {
+    width: 80px; height: 80px; border-radius: 10px; overflow: hidden;
+    background: #F2F2F7; position: relative;
+  }
+  .msg-file-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .msg-file-doc {
+    display: flex; align-items: center; gap: 7px;
+    background: #F2F2F7; border-radius: 10px;
+    padding: 8px 12px; max-width: 160px;
+  }
+  .mfd-icon { width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .mfd-icon.doc { background: #2563EB; }
+  .mfd-icon.xls { background: #16A34A; }
+  .mfd-icon svg { width: 18px; height: 18px; fill: #fff; }
+  .mfd-info { flex:1; min-width: 0; }
+  .mfd-name { font-size: 12px; font-weight: 500; color: #1C1C1E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mfd-size { font-size: 11px; color: #8E8E93; }
+
+  /* ─── Working indicator ─── */
+  .working-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+  }
+  .working-agent-icon { font-size: 16px; }
+  .working-dots { display: flex; gap: 4px; align-items: center; }
+  .wd { width: 6px; height: 6px; border-radius: 50%; background: #C7C7CC; animation: wdpulse 1.2s ease-in-out infinite; }
+  .wd:nth-child(2) { animation-delay: 0.2s; }
+  .wd:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes wdpulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+  .working-label { font-size: 13px; color: #8E8E93; }
+
+  /* ─── Stop button (while agent working) ─── */
+  .i-stop {
+    width: 36px; height: 36px; border-radius: 99px; background: #E8590C;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(232,89,12,0.35);
+  }
+  .i-stop svg { width: 14px; height: 14px; fill: #fff; }
+
+
+  /* ─── Rich response ─── */
+  .msg-agent-text {
+    font-size: 15px; color: #1C1C1E; line-height: 1.6;
+    padding: 0 16px;
+  }
+  .msg-agent-text p { margin-bottom: 8px; }
+  .msg-agent-text b { font-weight: 600; }
+  .msg-agent-text ul { padding-left: 18px; margin-bottom: 8px; }
+  .msg-agent-text li { margin-bottom: 4px; }
+
+  /* media grid */
+  .media-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 4px; margin: 8px 16px;
+    border-radius: 12px; overflow: hidden;
+  }
+  .media-cell {
+    aspect-ratio: 1; position: relative; overflow: hidden;
+    background: #1a0a2e; cursor: pointer;
+  }
+  .media-cell img { width:100%; height:100%; object-fit:cover; display:block; }
+  .media-cell .play-btn {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  }
+  .play-circle {
+    width:32px; height:32px; border-radius:50%;
+    background:rgba(255,255,255,0.85);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .play-circle svg { width:14px; height:14px; fill:#1C1C1E; margin-left:2px; }
+  .media-cell .more-overlay {
+    position:absolute; inset:0; background:rgba(0,0,0,0.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:700; color:#fff; letter-spacing:-0.5px;
+  }
+
+  /* reference sections */
+  .ref-sections { margin: 8px 16px; display:flex; flex-direction:column; gap:6px; }
+  .ref-section {
+    border: 0.5px solid #E5E5EA; border-radius: 12px; overflow:hidden;
+  }
+  .ref-sec-header {
+    display:flex; align-items:center; gap:8px;
+    padding: 11px 14px; background:#FAFAFA; cursor:pointer;
+    border-bottom: 0.5px solid #E5E5EA;
+  }
+  .ref-sec-header svg { width:16px; height:16px; flex-shrink:0; }
+  .ref-sec-title { font-size:14px; font-weight:600; color:#1C1C1E; flex:1; }
+  .ref-sec-chev { font-size:14px; color:#C7C7CC; transition: transform 0.2s; }
+  .ref-sec-header.collapsed + .ref-sec-body { display:none; }
+  .ref-sec-header.collapsed .ref-sec-chev { transform: rotate(-180deg); }
+  .ref-sec-body { padding: 4px 14px 8px; }
+  .ref-link {
+    display:block; font-size:14px; color:#E8590C;
+    padding: 9px 0; border-bottom:0.5px solid #F2F2F7;
+    text-decoration:none; cursor:pointer;
+  }
+  .ref-link:last-child { border-bottom:none; }
+
+  /* msg action bar — matches web: save, copy, like, dislike, share */
+  .msg-action-bar {
+    display:flex; align-items:center; gap:16px;
+    padding: 4px 16px 10px;
+  }
+  .mab-btn {
+    display:flex; align-items:center; justify-content:center;
+    color:#C7C7CC; cursor:pointer; width:24px; height:24px;
+  }
+  .mab-btn svg { width:18px; height:18px; }
+  .mab-btn:active { color:#8E8E93; }
+  .mab-btn.liked { color:#E8590C; }
+  .mab-btn.liked svg { fill:#E8590C; }
+  .mab-btn.disliked { color:#8E8E93; }
+  .mab-btn.disliked svg { fill:#8E8E93; }
+
+
+  /* ─── History drawer (slides from right) ─── */
+  .history-drawer {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 88%; background: #fff;
+    z-index: 40; display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  }
+  .history-drawer.open { transform: translateX(0); }
+  .drawer-backdrop {
+    position: absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.3); z-index: 39;
+    display: none; opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .drawer-backdrop.open { display: block; opacity: 1; }
+  .drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 12px; flex-shrink: 0;
+    border-bottom: 0.5px solid #E5E5EA;
+  }
+  .drawer-agent-name { font-size: 16px; font-weight: 600; color: #1C1C1E; letter-spacing: -0.2px; }
+  .drawer-close {
+    width: 30px; height: 30px; border-radius: 99px;
+    background: #F2F2F7; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .drawer-close svg { width: 16px; height: 16px; }
+  .drawer-scroll { flex: 1; overflow-y: auto; }
+  .drawer-scroll::-webkit-scrollbar { display: none; }
+  /* drawer-new-chat now uses inline style */
+
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+
+  <!-- ── Status bar (always visible) ── -->
+  <div class="sb">
+    <span class="sb-time">9:41</span>
+    <div class="sb-icons">
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#1C1C1E"><rect x="0" y="4" width="3" height="8" rx="1"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="1"/><rect x="9" y="1" width="3" height="11" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity="0.3"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="#1C1C1E"><path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm0-4a6 6 0 0 1 4.24 1.76l-1.41 1.41A4 4 0 0 0 8 7.5a4 4 0 0 0-2.83 1.17L3.76 7.26A6 6 0 0 1 8 5.5zm0-4a9.5 9.5 0 0 1 6.72 2.78L13.3 5.69A7.5 7.5 0 0 0 8 3.5a7.5 7.5 0 0 0-5.3 2.19L1.28 4.28A9.5 9.5 0 0 1 8 1.5z"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0" y="1" width="22" height="10" rx="3" stroke="#1C1C1E" stroke-width="1"/><rect x="1.5" y="2.5" width="19" height="7" rx="2" fill="#1C1C1E"/><rect x="22.5" y="4" width="2" height="4" rx="1" fill="#1C1C1E" opacity="0.4"/></svg>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SCREEN 0: Home
+  ══════════════════════════════ -->
+  <div class="screen active" id="s-home">
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 8px;flex-shrink:0;">
+      <div style="width:40px;height:40px;background:#E8590C;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:#fff;font-size:16px;font-weight:700;letter-spacing:-1px;">VNG</span>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div style="width:32px;height:32px;border-radius:50%;background:#C7C7CC;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+    </div>
+    <!-- Quick links -->
+    <div style="display:flex;gap:10px;padding:6px 16px 12px;flex-shrink:0;">
+      <div style="flex:1;background:#fff;border-radius:12px;border:0.5px solid #E5E5EA;padding:12px 14px;display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="1.8" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <div><div style="font-size:13px;font-weight:600;color:#1C1C1E;">Open Tasks</div><div style="font-size:11px;color:#8E8E93;">24 Open</div></div>
+      </div>
+      <div style="flex:1;background:#fff;border-radius:12px;border:0.5px solid #E5E5EA;padding:12px 14px;display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div><div style="font-size:13px;font-weight:600;color:#1C1C1E;">Open Forms</div><div style="font-size:11px;color:#8E8E93;">31 Open</div></div>
+      </div>
+    </div>
+    <!-- Content area -->
+    <div style="flex:1;padding:0 16px;overflow-y:auto;">
+      <div style="font-size:18px;font-weight:700;color:#1C1C1E;margin-bottom:4px;letter-spacing:-0.3px;">You may need</div>
+      <div style="font-size:13px;color:#8E8E93;margin-bottom:16px;">Manage your suggestions in the eform page</div>
+      <div style="height:80px;background:#FFF5F0;border-radius:12px;margin-bottom:20px;"></div>
+      <div style="font-size:18px;font-weight:700;color:#1C1C1E;margin-bottom:4px;letter-spacing:-0.3px;">Upcoming events</div>
+      <div style="font-size:13px;color:#8E8E93;margin-bottom:16px;">Today, Thursday 11/06/2026 📅</div>
+      <div style="display:flex;flex-direction:column;align-items:center;padding:24px 0;gap:8px;">
+        <svg width="64" height="64" viewBox="0 0 80 80" fill="none"><rect x="10" y="20" width="60" height="50" rx="4" stroke="#E5E5EA" stroke-width="2" fill="#fff"/><rect x="10" y="20" width="60" height="14" rx="4" fill="#F2F2F7"/><line x1="25" y1="14" x2="25" y2="26" stroke="#C7C7CC" stroke-width="2" stroke-linecap="round"/><line x1="55" y1="14" x2="55" y2="26" stroke="#C7C7CC" stroke-width="2" stroke-linecap="round"/></svg>
+        <div style="font-size:14px;font-weight:500;color:#1C1C1E;">No event found</div>
+        <div style="font-size:13px;color:#8E8E93;">There were no events on this date.</div>
+      </div>
+    </div>
+    <!-- Bottom nav: Home · AI Agents · Communication · Document · More, all equal height -->
+    <div class="bottom-nav" style="height:60px;padding-top:6px;">
+      <div class="nav-item" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div class="nav-icon" style="width:26px;height:26px;"><svg viewBox="0 0 24 24" fill="#E8590C" width="24" height="24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <span style="font-size:10px;color:#E8590C;font-weight:600;">Home</span>
+      </div>
+      <div class="nav-item" onclick="goToAgentsDefault()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;">
+        <div class="nav-icon" style="width:26px;height:26px;"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+  <circle cx="73" cy="21" r="8" fill="#8E8E93"/>
+  <path d="M 86 50 A 36 36 0 1 1 64 14" fill="none" stroke="#8E8E93" stroke-width="11" stroke-linecap="round"/>
+  <path d="M 70 50 A 20 20 0 1 1 57 32" fill="none" stroke="#8E8E93" stroke-width="9" stroke-linecap="round"/>
+  <path d="M 59 50 A 9 9 0 1 1 52 42" fill="none" stroke="#8E8E93" stroke-width="7" stroke-linecap="round"/>
+</svg></div>
+        <span style="font-size:10px;color:#8E8E93;font-weight:500;">AI Agents</span>
+      </div>
+      <div class="nav-item" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div class="nav-icon" style="width:26px;height:26px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span style="font-size:10px;color:#8E8E93;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:54px;">Communicatio...</span>
+      </div>
+      <div class="nav-item" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div class="nav-icon" style="width:26px;height:26px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.6" stroke-linecap="round" width="24" height="24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <span style="font-size:10px;color:#8E8E93;font-weight:500;">Document</span>
+      </div>
+      <div class="nav-item" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div class="nav-icon" style="width:26px;height:26px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.6" stroke-linecap="round" width="24" height="24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <span style="font-size:10px;color:#8E8E93;font-weight:500;">More</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       SCREEN 1: AI Agents Tab (now secondary)
+  ══════════════════════════════ -->
+  <div class="screen right" id="s-tab">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-title">AI Agents</div>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="tab-bar">
+      <div class="tab active" id="tab-agents-btn" onclick="switchTab('agents')">Agents</div>
+      <div class="tab" id="tab-convos-btn" onclick="switchTab('convos')">Conversations</div>
+    </div>
+
+    <!-- Agents panel -->
+    <div class="tab-panel active scroll-content" id="panel-agents">
+
+      <div class="section-label">Default agent</div>
+
+      <div class="agent-card default" onclick="goToChat('VNG Agent', '🤖', 'orange', 'Trợ lý nội bộ chung — tin tức, chính sách, đồng nghiệp, kênh hỗ trợ')">
+        <div class="agent-icon orange">🤖</div>
+        <div class="agent-info">
+          <div class="agent-name">VNG Agent</div>
+          <div class="agent-desc">Trợ lý nội bộ chung — tin tức, chính sách, đồng nghiệp</div>
+        </div>
+        <span class="agent-default-badge">Default</span>
+      </div>
+
+      <div class="section-label">Other agents</div>
+
+      <div class="agent-card" onclick="goToChat('IT Agent', '🖥️', 'orange', 'Hỗ trợ IT, tạo ticket helpdesk, troubleshoot thiết bị và kết nối')">
+        <div class="agent-icon orange">🖥️</div>
+        <div class="agent-info">
+          <div class="agent-name">IT Agent</div>
+          <div class="agent-desc">Hỗ trợ IT, tạo ticket helpdesk, troubleshoot thiết bị</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+
+      <div class="agent-card" onclick="goToChat('VNG InfoSec Q&A', '🛡️', 'teal', 'Tra cứu văn bản, chính sách, quy định ISO bảo mật thông tin VNG')">
+        <div class="agent-icon teal">🛡️</div>
+        <div class="agent-info">
+          <div class="agent-name">VNG InfoSec Q&A</div>
+          <div class="agent-desc">Tra cứu văn bản, chính sách, quy định ISO bảo mật</div>
+        </div>
+        <span class="chevron">›</span>
+      </div>
+
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- Conversations panel -->
+    <div class="tab-panel" id="panel-convos">
+
+      <div class="search-bar">
+        <svg viewBox="0 0 20 20"><path d="M8.5 3a5.5 5.5 0 0 1 4.22 9.01l4.13 4.14a.75.75 0 0 1-1.06 1.06l-4.14-4.13A5.5 5.5 0 1 1 8.5 3zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+        <span>Search conversations</span>
+      </div>
+
+      <div class="section-label">
+        <svg style="width:13px;height:13px;" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v3.76z"/></svg>
+        Pinned
+      </div>
+
+      <div class="convo-item pinned-item" onclick="goToChat('IT Agent','🖥️','orange','')">
+        <div class="convo-text-wrap"><div class="convo-title">Không kết nối được máy in</div></div>
+        <span class="convo-time">Now</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+      <div class="convo-item pinned-item" onclick="goToChat('VNG Agent','🤖','orange','')">
+        <div class="convo-text-wrap"><div class="convo-title">VNG Ironman Việt Nam 2026 hành trình</div></div>
+        <span class="convo-time">1d</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+
+      <div class="section-label">History</div>
+
+      <div class="convo-item" onclick="goToChat('VNG Agent','🤖','orange','')">
+        <div class="convo-text-wrap"><div class="convo-title">Bạn có thể làm được những gì</div></div>
+        <span class="convo-time">2h</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+      <div class="convo-item" onclick="goToChat('VNG Agent','🤖','orange','')">
+        <div class="convo-text-wrap"><div class="convo-title">Phê duyệt yêu cầu nghỉ phép</div></div>
+        <span class="convo-time">3h</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+      <div class="convo-item" onclick="goToChat('VNG Agent','🤖','orange','')">
+        <div class="convo-text-wrap"><div class="convo-title">Xem thông tin tài khoản Tuannc2</div></div>
+        <span class="convo-time">5h</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+      <div class="convo-item" onclick="goToChat('VNG InfoSec Q&A','🛡️','teal','')">
+        <div class="convo-text-wrap"><div class="convo-title">Yêu cầu bảo mật với nhà cung cấp</div></div>
+        <span class="convo-time">2d</span>
+        <div class="convo-more-btn" onclick="showCtx(event)">···</div>
+      </div>
+
+      <div style="height:24px"></div>
+    </div>
+
+    <!-- Conversations context menu -->
+    <div class="ctx-overlay" id="ctx-convo" onclick="document.getElementById('ctx-convo').classList.remove('show')">
+      <div class="ctx-backdrop"></div>
+      <div class="ctx-menu" id="ctx-convo-menu">
+        <div class="ctx-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v3.76z"/></svg>
+          Pin
+        </div>
+        <div class="ctx-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+          Rename
+        </div>
+        <div class="ctx-item danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          Delete
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="#8E8E93"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <span class="nav-label">Home</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <span class="nav-label">Chat</span>
+      </div>
+      <div class="nav-fab">
+        <div class="fab-circle"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Small circle top-right -->
+  <circle cx="74" cy="20" r="9" fill="white"/>
+  <!-- Outer arc — large C shape -->
+  <path d="M 88 50 A 38 38 0 1 1 65 12" fill="none" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <!-- Middle arc -->
+  <path d="M 72 50 A 22 22 0 1 1 58 30" fill="none" stroke="white" stroke-width="9" stroke-linecap="round"/>
+  <!-- Inner spiral -->
+  <path d="M 60 50 A 10 10 0 1 1 52 41" fill="none" stroke="white" stroke-width="7" stroke-linecap="round"/>
+</svg></div>
+        <span class="nav-label">AI Agents</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <span class="nav-label">Document</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+        <span class="nav-label">More</span>
+      </div>
+    </div>
+  </div><!-- /s-tab -->
+
+  <!-- ══════════════════════════════
+       SCREEN 2: Chat
+  ══════════════════════════════ -->
+  <div class="screen right" id="s-chat">
+
+    <!-- Chat header -->
+    <div class="chat-header">
+      <div class="btn-back" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="chat-agent-title" id="chat-title" style="font-size:15px;letter-spacing:-0.1px;text-align:left;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;">VNG Agent</div>
+      <div class="chat-header-actions">
+        <div class="hbtn files-disabled" id="files-hbtn" onclick="toggleFilePanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="hbtn" onclick="openHistoryDrawer()" id="history-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body: messages + files panel -->
+    <div class="chat-body-wrap" id="chat-body-wrap">
+      <div class="chat-messages" id="chat-msgs">
+        <!-- Start screen (shown when no messages) -->
+        <div id="start-screen" class="agent-start-wrap">
+          <div class="as-icon" id="as-icon">🤖</div>
+          <div class="as-name" id="as-name">VNG Agent</div>
+          <div class="as-desc" id="as-desc">I'm VNG Agent — your go-to assistant for anything work-related.</div>
+          <div class="topic-chips" id="topic-chips">
+            <div class="topic-chip" onclick="openPromptPanel('🔍', 'Analyze &amp; Summarize')">
+              <span class="tc-icon">🔍</span> Analyze this text and make suggestions
+            </div>
+            <div class="topic-chip" onclick="openPromptPanel('📊', 'Draft &amp; Write')">
+              <span class="tc-icon">📊</span> Draft an email to my team asking for assets
+            </div>
+            <div class="topic-chip" onclick="openPromptPanel('📢', 'VNG News')">
+              <span class="tc-icon">📢</span> Summarize the latest VNG announcement
+            </div>
+            <div class="topic-chip spark-btn" style="cursor:default; opacity:0.45; pointer-events:none;">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 C12 3 12.8 7.5 15 9.5 C17.2 11.5 21 12 21 12 C21 12 17.2 12.5 15 14.5 C12.8 16.5 12 21 12 21 C12 21 11.2 16.5 9 14.5 C6.8 12.5 3 12 3 12 C3 12 6.8 11.5 9 9.5 C11.2 7.5 12 3 12 3Z" fill="currentColor"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files side panel -->
+      <div class="files-panel" id="files-panel">
+        <div class="fp-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span class="fp-head-title">Files</span>
+          <div class="fp-close" onclick="toggleFilePanel()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <div class="fp-list" id="fp-list"></div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-area">
+      <div class="input-float-box">
+        <div class="file-preview-strip" id="file-preview-strip"></div>
+        <div class="input-text-box" id="input-display" onclick="prefillUprace()" style="cursor:text;">Ask anything with VNG Agent</div>
+        <div class="input-controls">
+        <div class="i-plus" onclick="document.getElementById('bs-attach').classList.add('show')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <div class="i-space"></div>
+        <div class="i-send off" id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+      </div><!-- /input-float-box -->
+    </div>
+
+    <!-- Prompt expand panel -->
+    <div class="prompt-panel" id="pp">
+      <div class="pp-handle"></div>
+      <div class="pp-topic-label" id="pp-label"><span>🔍</span> Analyze & Summarize</div>
+      <div class="pp-item" onclick="selectPrompt('Analyze this text and make suggestions')"><span class="pp-item-icon">🔍</span><span class="pp-item-text">Analyze this text and make suggestions</span></div>
+      <div class="pp-item" onclick="selectPrompt('Summarize the main points of the event')"><span class="pp-item-icon">📝</span><span class="pp-item-text">Summarize the main points of the event</span></div>
+      <div class="pp-item" onclick="selectPrompt('Give me 3 key takeaways from this document')"><span class="pp-item-icon">💡</span><span class="pp-item-text">Give me 3 key takeaways from this document</span></div>
+      <div class="pp-item" onclick="selectPrompt('What are the action items here?')"><span class="pp-item-icon">🎯</span><span class="pp-item-text">What are the action items here?</span></div>
+      <div class="pp-more" onclick="noop()" style="color:#C7C7CC!important;font-weight:400;">Xem thêm</div>
+    </div>
+
+    <!-- Overflow menu -->
+    <div class="om-overlay" id="om-chat" onclick="document.getElementById('om-chat').classList.remove('show')">
+      <div class="om-bd"></div>
+      <div class="om-menu" onclick="event.stopPropagation()">
+        <div class="om-item"><svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>New chat</div>
+        <div class="om-sep"></div>
+        <div class="om-item" onclick="doPinChat()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="fill:none!important"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v3.76z"/></svg>
+          Pin chat
+        </div>
+        <div class="om-item"><svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Rename</div>
+        <div class="om-sep"></div>
+        <div class="om-item red"><svg viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>Delete chat</div>
+      </div>
+    </div>
+
+    <!-- Attach bottom sheet -->
+    <div class="bs-overlay" id="bs-attach" onclick="document.getElementById('bs-attach').classList.remove('show')">
+      <div class="bs-bd"></div>
+      <div class="bs-sheet" onclick="event.stopPropagation()">
+        <div class="bs-handle"></div>
+        <div class="attach-grid">
+          <div class="attach-cell">
+            <div class="attach-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+            <span class="attach-lbl">Camera</span>
+          </div>
+          <div class="attach-cell">
+            <div class="attach-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+            <span class="attach-lbl">Photos</span>
+          </div>
+          <div class="attach-cell" onclick="addFakeFile()">
+            <div class="attach-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+            <span class="attach-lbl">Files</span>
+          </div>
+        </div>
+        <!-- Web search with checkmark -->
+        <div style="margin:10px 16px 0;border:0.5px solid #E5E5EA;border-radius:14px;overflow:hidden;">
+          <div onclick="toggleWSCheck()" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;">
+            <div style="width:40px;height:40px;border-radius:10px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <span style="flex:1;font-size:15px;font-weight:500;color:#1C1C1E;">Web search</span>
+            <svg id="ws-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <!-- Agent select with checkmark -->
+        <div style="margin:8px 16px 16px;border:0.5px solid #E5E5EA;border-radius:14px;overflow:hidden;">
+          <div style="padding:10px 16px 6px;font-size:11px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:0.05em;border-bottom:0.5px solid #F2F2F7;">Agent</div>
+          <div onclick="selectAgentInSheet('VNG Agent','🤖','orange')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:0.5px solid #F2F2F7;" id="sheet-row-vng">
+            <div style="width:36px;height:36px;border-radius:9px;background:#FDE9DE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
+            <span style="flex:1;font-size:14px;font-weight:500;color:#1C1C1E;">VNG Agent</span>
+            <svg id="sac-vng" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div onclick="selectAgentInSheet('IT Agent','🖥️','orange')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:0.5px solid #F2F2F7;" id="sheet-row-it">
+            <div style="width:36px;height:36px;border-radius:9px;background:#FDE9DE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🖥️</div>
+            <span style="flex:1;font-size:14px;font-weight:500;color:#1C1C1E;">IT Agent</span>
+            <svg id="sac-it" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="2.5" stroke-linecap="round" style="opacity:0"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div onclick="selectAgentInSheet('VNG InfoSec Q&A','🛡️','teal')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;" id="sheet-row-infosec">
+            <div style="width:36px;height:36px;border-radius:9px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🛡️</div>
+            <span style="flex:1;font-size:14px;font-weight:500;color:#1C1C1E;">VNG InfoSec Q&A</span>
+            <svg id="sac-infosec" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="2.5" stroke-linecap="round" style="opacity:0"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast-chat">
+      <div class="toast-dot"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <div class="toast-msg">Đã ghim cuộc trò chuyện</div>
+      <div class="toast-x" onclick="document.getElementById('toast-chat').classList.remove('show')">×</div>
+    </div>
+
+
+    <!-- ── History drawer (slides from right) ── -->
+    <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeHistoryDrawer()"></div>
+    <div class="history-drawer" id="history-drawer">
+      <div class="drawer-head">
+        <span class="drawer-agent-name" id="drawer-agent-name">VNG Agent</span>
+        <div class="drawer-close" onclick="closeHistoryDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <!-- Search bar -->
+      <div style="padding:10px 14px 6px;flex-shrink:0;">
+        <div style="background:#F2F2F7;border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:7px;">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="#8E8E93"><path d="M8.5 3a5.5 5.5 0 0 1 4.22 9.01l4.13 4.14a.75.75 0 0 1-1.06 1.06l-4.14-4.13A5.5 5.5 0 1 1 8.5 3zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+          <span style="font-size:14px;color:#8E8E93;">Search conversations</span>
+        </div>
+      </div>
+      <div class="drawer-scroll">
+        <div class="section-label" style="display:flex;align-items:center;gap:6px;">
+          <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v3.76z"/></svg>
+          Pinned
+        </div>
+        <div class="convo-item pinned-item"><div class="convo-text-wrap"><div class="convo-title">Không kết nối được máy in</div></div><span class="convo-time">Now</span><div class="convo-more-btn" onclick="showCtxDrawerPinned(event)">···</div></div>
+        <div class="convo-item pinned-item"><div class="convo-text-wrap"><div class="convo-title">VNG Ironman Việt Nam 2026</div></div><span class="convo-time">1d</span><div class="convo-more-btn" onclick="showCtxDrawerPinned(event)">···</div></div>
+        <div class="section-label">History</div>
+        <div class="convo-item"><div class="convo-text-wrap"><div class="convo-title">thông tin sự kiện uprace 2025</div></div><span class="convo-time">2h</span><div class="convo-more-btn" onclick="showCtxDrawer(event)">···</div></div>
+        <div class="convo-item"><div class="convo-text-wrap"><div class="convo-title">Phê duyệt yêu cầu nghỉ phép</div></div><span class="convo-time">3h</span><div class="convo-more-btn" onclick="showCtxDrawer(event)">···</div></div>
+        <div class="convo-item"><div class="convo-text-wrap"><div class="convo-title">Xem thông tin tài khoản Tuannc2</div></div><span class="convo-time">5h</span><div class="convo-more-btn" onclick="showCtxDrawer(event)">···</div></div>
+        <div class="convo-item"><div class="convo-text-wrap"><div class="convo-title">Kiểm tra số ngày phép còn lại</div></div><span class="convo-time">1d</span><div class="convo-more-btn" onclick="showCtxDrawer(event)">···</div></div>
+        <div class="convo-item"><div class="convo-text-wrap"><div class="convo-title">Yêu cầu bảo mật với nhà cung cấp</div></div><span class="convo-time">2d</span><div class="convo-more-btn" onclick="showCtxDrawer(event)">···</div></div>
+        <div style="height:72px;"></div>
+      </div>
+      <!-- New chat — left-aligned at bottom of drawer -->
+      <div style="padding:10px 14px 16px;border-top:0.5px solid #F2F2F7;background:#fff;flex-shrink:0;">
+        <div onclick="newChatFromDrawer()" style="display:inline-flex;align-items:center;gap:8px;background:#E8590C;color:#fff;border-radius:99px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 3px 10px rgba(232,89,12,0.35);">
+          <svg width="16" height="16" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+          New chat
+        </div>
+      </div>
+      <!-- Context menu — history items (Pin) -->
+      <div class="ctx-overlay" id="ctx-drawer" onclick="document.getElementById('ctx-drawer').classList.remove('show')">
+        <div class="ctx-backdrop"></div>
+        <div class="ctx-menu" id="ctx-drawer-menu">
+          <div class="ctx-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v3.76z"/></svg>
+            Pin
+          </div>
+          <div class="ctx-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+            Rename
+          </div>
+          <div class="ctx-item danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            Delete
+          </div>
+        </div>
+      </div>
+      <!-- Context menu — pinned items (Unpin) -->
+      <div class="ctx-overlay" id="ctx-drawer-pinned" onclick="document.getElementById('ctx-drawer-pinned').classList.remove('show')">
+        <div class="ctx-backdrop"></div>
+        <div class="ctx-menu" id="ctx-drawer-pinned-menu">
+          <div class="ctx-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h10"/></svg>
+            Unpin
+          </div>
+          <div class="ctx-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+            Rename
+          </div>
+          <div class="ctx-item danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            Delete
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /s-chat -->
+
+  <div class="home-indicator"></div>
+</div><!-- /phone -->
+
+<script>
+// Wait for DOM before any JS runs
+// ── State ──
+let uploadedFiles = [];
+let sentFiles = [];
+let currentAgent = { name: 'VNG Agent', icon: '🤖', color: 'orange' };
+let wsEnabled = true;
+let conversationTitle = null;
+
+// ── Navigate: Home → Chat (default agent) ──
+function goToAgentsDefault() {
+  currentAgent = { name: 'VNG Agent', icon: '🤖', color: 'orange' };
+  resetChatToStart('VNG Agent','🤖','Trợ lý nội bộ chung — tin tức, chính sách, đồng nghiệp, kênh hỗ trợ');
+  document.getElementById('chat-title').textContent = 'VNG Agent';
+  conversationTitle = null;
+  // Home → Chat (push right)
+  document.getElementById('s-home').classList.remove('active');
+  document.getElementById('s-home').classList.add('left');
+  document.getElementById('s-chat').classList.remove('right');
+  document.getElementById('s-chat').classList.add('active');
+}
+
+// ── Navigate: Chat → Home (back) ──
+function goBack() {
+  document.getElementById('s-chat').classList.remove('active');
+  document.getElementById('s-chat').classList.add('right');
+  document.getElementById('s-home').classList.remove('left');
+  document.getElementById('s-home').classList.add('active');
+  closeAllOverlays();
+  closeHistoryDrawer();
+}
+
+// ── Old goToChat (from conversations/history) ──
+function goToChat(name, icon, color, desc) {
+  currentAgent = { name, icon, color };
+  resetChatToStart(name, icon, desc || '');
+  document.getElementById('chat-title').textContent = name;
+  conversationTitle = null;
+  document.getElementById('s-home').classList.remove('active');
+  document.getElementById('s-home').classList.add('left');
+  document.getElementById('s-chat').classList.remove('right');
+  document.getElementById('s-chat').classList.add('active');
+}
+
+function resetChatToStart(name, icon, desc) {
+  uploadedFiles = [];
+  sentFiles = [];
+  renderFilePreviews();
+  updateFilesState();
+  const msgs = document.getElementById('chat-msgs');
+  msgs.innerHTML = `<div id="start-screen" class="agent-start-wrap">
+    <div class="as-icon">${icon}</div>
+    <div class="as-name">${name}</div>
+    <div class="as-desc">${desc || 'Your intelligent assistant.'}</div>
+    <div class="topic-chips" id="topic-chips">
+      <div class="topic-chip" onclick="openPromptPanel('🔍', 'Analyze &amp; Summarize')">
+        <span class="tc-icon">🔍</span> Analyze this text and make suggestions
+      </div>
+      <div class="topic-chip" onclick="openPromptPanel('📊', 'Draft &amp; Write')">
+        <span class="tc-icon">📊</span> Draft an email to my team asking for assets
+      </div>
+      <div class="topic-chip" onclick="openPromptPanel('📢', 'VNG News')">
+        <span class="tc-icon">📢</span> Summarize the latest VNG announcement
+      </div>
+      <div class="topic-chip spark-btn" onclick="noop()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3 C12 3 12.8 7.5 15 9.5 C17.2 11.5 21 12 21 12 C21 12 17.2 12.5 15 14.5 C12.8 16.5 12 21 12 21 C12 21 11.2 16.5 9 14.5 C6.8 12.5 3 12 3 12 C3 12 6.8 11.5 9 9.5 C11.2 7.5 12 3 12 3Z" fill="currentColor"/></svg>
+      </div>
+    </div>
+  </div>`;
+  const inp = document.getElementById('input-display');
+  inp.textContent = 'Ask anything with ' + name;
+  inp.classList.remove('has-text');
+  document.getElementById('send-btn').classList.add('off');
+  { var _dan = document.getElementById('drawer-agent-name'); if(_dan) _dan.textContent = name; }
+}
+
+// ── Tab switch (agents list) ──
+function switchTab(tab) {
+  ['agents','convos'].forEach(t => {
+    document.getElementById('tab-'+t+'-btn').classList.toggle('active', t===tab);
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+// ── History drawer ──
+function openHistoryDrawer() {
+  document.getElementById('history-drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.add('open');
+}
+function closeHistoryDrawer() {
+  document.getElementById('history-drawer').classList.remove('open');
+  document.getElementById('drawer-backdrop').classList.remove('open');
+}
+function newChatFromDrawer() {
+  closeHistoryDrawer();
+  resetChatToStart(currentAgent.name, currentAgent.icon, '');
+  document.getElementById('chat-title').textContent = currentAgent.name;
+  conversationTitle = null;
+}
+function showCtxDrawer(e) {
+  e.stopPropagation();
+  const overlay = document.getElementById('ctx-drawer');
+  const menu = document.getElementById('ctx-drawer-menu');
+  overlay.classList.add('show');
+  const phone = overlay.closest('.phone');
+  const phoneRect = phone.getBoundingClientRect();
+  const btnRect = e.currentTarget.getBoundingClientRect();
+  const relX = btnRect.left - phoneRect.left;
+  const relY = btnRect.top - phoneRect.top;
+  menu.style.left = Math.max(relX - 150, 10) + 'px';
+  menu.style.top = (relY + 28) + 'px';
+}
+
+function showCtxDrawerPinned(e) {
+  e.stopPropagation();
+  const overlay = document.getElementById('ctx-drawer-pinned');
+  const menu = document.getElementById('ctx-drawer-pinned-menu');
+  overlay.classList.add('show');
+  const phone = overlay.closest('.phone');
+  const phoneRect = phone.getBoundingClientRect();
+  const btnRect = e.currentTarget.getBoundingClientRect();
+  const relX = btnRect.left - phoneRect.left;
+  const relY = btnRect.top - phoneRect.top;
+  menu.style.left = Math.max(relX - 150, 10) + 'px';
+  menu.style.top = (relY + 28) + 'px';
+}
+
+// ── Conversations context menu (tab) ──
+function showCtx(e) {
+  e.stopPropagation();
+  const overlay = document.getElementById('ctx-convo');
+  const menu = document.getElementById('ctx-convo-menu');
+  overlay.classList.add('show');
+  const phone = overlay.closest('.phone');
+  const phoneRect = phone.getBoundingClientRect();
+  const btnRect = e.currentTarget.getBoundingClientRect();
+  const relX = btnRect.left - phoneRect.left;
+  const relY = btnRect.top - phoneRect.top;
+  const left = Math.min(relX - 140, phone.clientWidth - 170);
+  menu.style.left = Math.max(left, 10) + 'px';
+  menu.style.top = (relY + 32) + 'px';
+}
+
+// ── Web search checkmark ──
+function toggleWSCheck() {
+  wsEnabled = !wsEnabled;
+  document.getElementById('ws-check').style.opacity = wsEnabled ? '1' : '0.15';
+}
+
+// ── Agent select in attach sheet ──
+function selectAgentInSheet(name, icon, color) {
+  currentAgent = { name, icon, color };
+  // Close attach sheet
+  document.getElementById('bs-attach').classList.remove('show');
+  // Reset to new chat with selected agent
+  const agentDescs = {
+    'VNG Agent': 'Trợ lý nội bộ chung — tin tức, chính sách, đồng nghiệp, kênh hỗ trợ',
+    'IT Agent': 'Hỗ trợ IT, tạo ticket helpdesk, troubleshoot thiết bị và kết nối',
+    'VNG InfoSec Q&A': 'Tra cứu văn bản, chính sách, quy định ISO bảo mật thông tin VNG'
+  };
+  resetChatToStart(name, icon, agentDescs[name] || '');
+  conversationTitle = null;
+  document.getElementById('chat-title').textContent = name;
+  // Update checkmarks
+  ['vng','it','infosec'].forEach(k => {
+    document.getElementById('sac-'+k).style.opacity = '0';
+  });
+  const map = {'VNG Agent':'vng','IT Agent':'it','VNG InfoSec Q&A':'infosec'};
+  if (map[name]) document.getElementById('sac-'+map[name]).style.opacity = '1';
+  { var _dan = document.getElementById('drawer-agent-name'); if(_dan) _dan.textContent = name; }
+}
+
+// ── File previews ──
+const FAKE_FILES = [
+  { name:'Image 1.png', size:'34 KB', type:'img', ext:'PNG' },
+  { name:'Contract.docx', size:'512 KB', type:'doc', ext:'DOC' },
+  { name:'Contract.xls', size:'512 KB', type:'xls', ext:'XLS' },
+];
+
+function renderFilePreviews() {
+  const strip = document.getElementById('file-preview-strip');
+  if (!uploadedFiles.length) { strip.classList.remove('has-files'); strip.innerHTML = ''; return; }
+  strip.classList.add('has-files');
+  strip.innerHTML = uploadedFiles.map((f,i) => {
+    const thumb = f.type === 'img'
+      ? `<div class="file-chip-thumb" style="background:#E5E5EA;"><svg viewBox="0 0 36 36" style="width:36px;height:36px;"><rect width="36" height="36" rx="7" fill="#9CA3AF"/><path d="M8 26l7-9 5 6 4-5 7 8H8z" fill="#fff" opacity="0.8"/><circle cx="13" cy="15" r="3" fill="#fff" opacity="0.9"/></svg></div>`
+      : `<div class="file-chip-thumb ${f.type}-bg"><svg viewBox="0 0 24 24" fill="white" style="width:20px;height:20px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8" fill="none" stroke="white" stroke-width="1.5"/></svg></div>`;
+    return `<div class="file-chip"><div>${thumb}</div><div class="file-chip-info"><div class="file-chip-name">${f.name}</div><div class="file-chip-size">${f.size}</div></div><div class="file-chip-remove" onclick="removeFile(${i})"><svg viewBox="0 0 10 10"><line x1="2" y1="2" x2="8" y2="8" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="2" x2="2" y2="8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div></div>`;
+  }).join('');
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i,1);
+  renderFilePreviews();
+  updateFilesState();
+}
+
+function toggleFilePanel() {
+  if (!sentFiles.length && !uploadedFiles.length) return;
+  const panel = document.getElementById('files-panel');
+  const btn = document.getElementById('files-hbtn');
+  panel.classList.toggle('open');
+  btn.classList.toggle('files-active');
+}
+
+function updateFilesState() {
+  const btn = document.getElementById('files-hbtn');
+  if (!uploadedFiles.length && !sentFiles.length) {
+    btn.classList.add('files-disabled');
+    btn.classList.remove('files-active');
+    document.getElementById('files-panel').classList.remove('open');
+  } else {
+    btn.classList.remove('files-disabled');
+  }
+  const list = document.getElementById('fp-list');
+  const allFiles = [...sentFiles, ...uploadedFiles];
+  list.innerHTML = allFiles.map((f,i) => `
+    <div class="fp-file">
+      <span class="fp-num">${i+1}.</span>
+      <div class="fp-thumb ${f.type==='img'?'img':'doc'}">
+        ${f.type==='img'
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}
+      </div>
+      <div class="fp-fi"><div class="fp-fname">${f.name}</div><div class="fp-fmeta">${f.size}</div></div>
+    </div>`).join('');
+}
+
+function updateSentFilesPanel() { updateFilesState(); }
+
+function addFakeFile() {
+  document.getElementById('bs-attach').classList.remove('show');
+  if (uploadedFiles.length < 3) {
+    uploadedFiles.push(FAKE_FILES[uploadedFiles.length]);
+    renderFilePreviews();
+    updateFilesState();
+    document.getElementById('send-btn').classList.remove('off');
+  }
+}
+
+// ── Send message ──
+function sendMessage() {
+  const inp = document.getElementById('input-display');
+  const text = inp.textContent.trim();
+  if (!text && !uploadedFiles.length) return;
+  if (document.getElementById('send-btn').classList.contains('off')) return;
+
+  const msgs = document.getElementById('chat-msgs');
+  const ss = document.getElementById('start-screen');
+  if (ss) ss.remove();
+
+  // Set conversation title from first message
+  if (!conversationTitle) {
+    conversationTitle = text.length > 40 ? text.substring(0,40)+'...' : text;
+    document.getElementById('chat-title').textContent = conversationTitle;
+  }
+
+  // Build message HTML
+  let html = '';
+  if (uploadedFiles.length) {
+    const imgFiles = uploadedFiles.filter(f=>f.type==='img');
+    const docFiles = uploadedFiles.filter(f=>f.type!=='img');
+    html += '<div class="msg-files-row">';
+    imgFiles.forEach(f => { html += `<div class="msg-file-thumb"><svg viewBox="0 0 80 80" style="width:80px;height:80px;border-radius:10px;"><rect width="80" height="80" fill="#9CA3AF"/><path d="M14 58 28 38l12 15 10-12 16 17H14z" fill="white" opacity="0.8"/><circle cx="26" cy="28" r="7" fill="white" opacity="0.9"/></svg></div>`; });
+    docFiles.forEach(f => { const cls=f.type==='xls'?'xls':'doc'; html += `<div class="msg-file-doc"><div class="mfd-icon ${cls}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="mfd-info"><div class="mfd-name">${f.name}</div><div class="mfd-size">${f.size}</div></div></div>`; });
+    html += '</div>';
+  }
+  if (text && text !== 'Ask anything about VNG') {
+    html += `<div class="msg-user-group"><div class="msg-user">${text}</div></div>`;
+  }
+  msgs.insertAdjacentHTML('beforeend', html);
+
+  // Move files to sent panel
+  if (uploadedFiles.length) {
+    sentFiles = sentFiles.concat(uploadedFiles);
+    uploadedFiles = [];
+    renderFilePreviews();
+    updateFilesState();
+  }
+  inp.textContent = 'Ask anything with ' + name;
+  inp.classList.remove('has-text');
+  document.getElementById('send-btn').classList.add('off');
+
+  // Working indicator
+  const workingId = 'w'+Date.now();
+  msgs.insertAdjacentHTML('beforeend', `<div class="working-row" id="${workingId}"><span class="working-agent-icon">${currentAgent.icon}</span><div class="working-dots"><div class="wd"></div><div class="wd"></div><div class="wd"></div></div><span class="working-label">${currentAgent.name} is working...</span></div>`);
+  msgs.parentElement.scrollTop = msgs.parentElement.scrollHeight;
+
+  // Change send to stop
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.classList.remove('off');
+  sendBtn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#fff"/></svg>';
+  sendBtn.onclick = null;
+
+  setTimeout(() => {
+    const wr = document.getElementById(workingId);
+    if (wr) wr.remove();
+    const msgText = text.toLowerCase();
+    const isUprace = msgText.includes('uprace') || msgText.includes('sự kiện');
+    let respHTML = isUprace ? buildUpraceResponse() : `<div class="msg-agent-text"><p>${['Có nhiều nguyên nhân có thể khiến bạn gặp vấn đề này. Hãy thử kiểm tra kết nối mạng và quyền truy cập.','Tôi đã tìm thấy thông tin liên quan. Để giải quyết vấn đề này, bạn có thể thực hiện các bước sau.','Xin chào! Tôi đã xem qua file bạn gửi. Đây là phân tích của tôi về nội dung tài liệu.'][Math.floor(Math.random()*3)]}</p></div>${actionBar()}`;
+    msgs.insertAdjacentHTML('beforeend', respHTML);
+    sendBtn.classList.add('off');
+    sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+    sendBtn.onclick = sendMessage;
+    msgs.parentElement.scrollTop = msgs.parentElement.scrollHeight;
+  }, 2000);
+}
+
+// ── Prompt panel ──
+function openPromptPanel(icon, title) {
+  document.getElementById('pp-label').innerHTML = icon + ' ' + title;
+  document.getElementById('pp').classList.add('show');
+  const ss = document.getElementById('start-screen');
+  if (ss) ss.style.opacity = '0.35';
+}
+function selectPrompt(text) {
+  document.getElementById('pp').classList.remove('show');
+  const ss = document.getElementById('start-screen');
+  if (ss) ss.style.opacity = '1';
+  const inp = document.getElementById('input-display');
+  inp.textContent = text;
+  inp.classList.add('has-text');
+  document.getElementById('send-btn').classList.remove('off');
+}
+
+// ── Pin chat ──
+function doPinChat() {
+  document.getElementById('om-chat').classList.remove('show');
+  const t = document.getElementById('toast-chat');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── Switch agent (legacy — now handled in sheet) ──
+function switchAgent(name, icon, color) {
+  selectAgentInSheet(name, icon, color);
+  document.getElementById('bs-agents') && document.getElementById('bs-agents').classList.remove('show');
+}
+
+// ── Prefill uprace ──
+function prefillUprace() {
+  const inp = document.getElementById('input-display');
+  const t = inp.textContent.trim();
+  // Fill if still showing placeholder (any "Ask anything with..." variant or empty)
+  if (!t || t.startsWith('Ask anything with') || t === 'Ask anything about VNG') {
+    inp.textContent = 'thông tin sự kiện uprace 2025';
+    inp.classList.add('has-text');
+    document.getElementById('send-btn').classList.remove('off');
+  }
+}
+
+// ── Close all overlays ──
+function closeAllOverlays() {
+  ['om-chat','bs-attach','bs-agents'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  const pp = document.getElementById('pp');
+  if (pp) pp.classList.remove('show');
+}
+
+// Close prompt panel on click outside
+document.getElementById('s-chat').addEventListener('click', function(e) {
+  const pp = document.getElementById('pp');
+  if (pp && pp.classList.contains('show')) {
+    if (!e.target.closest('.prompt-panel') && !e.target.closest('.topic-chip')) {
+      pp.classList.remove('show');
+      const ss = document.getElementById('start-screen');
+      if (ss) ss.style.opacity = '1';
+    }
+  }
+});
+
+// ── Action bar helpers ──
+function noop() {}
+function actionBar() {
+  return `<div class="msg-action-bar">
+    <div class="mab-btn" title="Lưu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+    <div class="mab-btn" title="Sao chép"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+    <div class="mab-btn" onclick="toggleLike(this)" title="Like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></div>
+    <div class="mab-btn" onclick="toggleDislike(this)" title="Dislike"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg></div>
+  </div>`;
+}
+function toggleLike(btn) {
+  btn.classList.toggle('liked');
+  btn.closest('.msg-action-bar').querySelector('[title="Dislike"]').classList.remove('disliked');
+}
+function toggleDislike(btn) {
+  btn.classList.toggle('disliked');
+  btn.closest('.msg-action-bar').querySelector('[title="Like"]').classList.remove('liked');
+}
+function toggleRefSection(header) { header.classList.toggle('collapsed'); }
+
+function buildUpraceResponse() {
+  // Use unique IDs to avoid SVG gradient conflicts on repeated renders
+  const uid = Date.now();
+  const thumb1 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ga${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6B21A8"/><stop offset="100%" stop-color="#E8590C"/></linearGradient></defs><rect width="100" height="100" fill="url(#ga${uid})"/><text x="50" y="28" text-anchor="middle" font-size="9" fill="white" font-weight="600" font-family="sans-serif">3 THÁNG</text><text x="50" y="42" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.85)" font-family="sans-serif">Hội nhập</text><text x="50" y="54" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.7)" font-family="sans-serif">Xây dựng kiến thức</text><text x="50" y="64" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,0.6)" font-family="sans-serif">nền tảng</text></svg>`;
+  const thumb2 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gb${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9D174D"/><stop offset="100%" stop-color="#E8590C"/></linearGradient></defs><rect width="100" height="100" fill="url(#gb${uid})"/></svg>`;
+  const thumb3 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gc${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1E3A5F"/><stop offset="100%" stop-color="#0EA5E9"/></linearGradient></defs><rect width="100" height="100" fill="url(#gc${uid})"/><circle cx="50" cy="50" r="22" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/></svg>`;
+  const thumb4 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gd${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6B21A8"/><stop offset="100%" stop-color="#E8590C"/></linearGradient></defs><rect width="100" height="100" fill="url(#gd${uid})"/><text x="50" y="28" text-anchor="middle" font-size="9" fill="white" font-weight="600" font-family="sans-serif">3 THÁNG</text><text x="50" y="42" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.85)" font-family="sans-serif">Hội nhập</text><text x="50" y="54" text-anchor="middle" font-size="6" fill="rgba(255,255,255,0.7)" font-family="sans-serif">Xây dựng kiến thức</text><text x="50" y="64" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,0.6)" font-family="sans-serif">nền tảng</text></svg>`;
+  const thumb5 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ge${uid}" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#DB2777"/></linearGradient></defs><rect width="100" height="100" fill="url(#ge${uid})"/></svg>`;
+  const thumb6 = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gf${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0F4C81"/><stop offset="100%" stop-color="#1D8CF8"/></linearGradient></defs><rect width="100" height="100" fill="url(#gf${uid})"/><circle cx="50" cy="50" r="22" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" stroke-width="1"/></svg>`;
+
+  const svgToDataUrl = (svg) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+
+  return `
+    <div class="msg-agent-text">
+      <p>Mình tìm thấy các bài đăng nội bộ của VNG về UpRace 2025, bao gồm UpRace Day tại TP.HCM và Lễ tổng kết/trao giải của VNG UpRace Challenge 2025.</p>
+      <p><b>1. UpRace Day TP.HCM 2025</b></p>
+      <ul>
+        <li>Sáng 14/12 tại VNG Campus, hơn 1.600 VĐV tham gia sôi nổi.</li>
+        <li>Cự ly: 5km, 10km, 21km — ghi nhận 21.700+ km tổng quãng đường.</li>
+      </ul>
+    </div>
+    <div class="media-grid">
+      <div class="media-cell"><img src="${svgToDataUrl(thumb1)}" alt=""/></div>
+      <div class="media-cell">
+        <img src="${svgToDataUrl(thumb2)}" alt=""/>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+      </div>
+      <div class="media-cell">
+        <img src="${svgToDataUrl(thumb3)}" alt=""/>
+        <div class="more-overlay">+3</div>
+      </div>
+    </div>
+    <div class="msg-agent-text">
+      <p><b>2. VNG UpRace Challenge 2025 &amp; Lễ tổng kết</b></p>
+      <ul>
+        <li>Hành trình 24 ngày: 62 đội, 950+ Starter, đạt 226.188 km tích lũy.</li>
+        <li>Lễ trao giải diễn ra vào 25/12 với chương trình Lucky Draw hấp dẫn.</li>
+      </ul>
+    </div>
+    <div class="media-grid">
+      <div class="media-cell"><img src="${svgToDataUrl(thumb4)}" alt=""/></div>
+      <div class="media-cell">
+        <img src="${svgToDataUrl(thumb5)}" alt=""/>
+        <div class="play-btn"><div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+      </div>
+      <div class="media-cell">
+        <img src="${svgToDataUrl(thumb6)}" alt=""/>
+        <div class="more-overlay">+3</div>
+      </div>
+    </div>
+    <div class="ref-sections">
+      <div class="ref-section">
+        <div class="ref-sec-header collapsed" onclick="toggleRefSection(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="ref-sec-title">File đính kèm</span>
+          <svg class="ref-sec-chev" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;transition:transform 0.2s;"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div class="ref-sec-body">
+          <span class="ref-link">Helpdesk - VI - Android connect to VNG Corp.pdf (5MB)</span>
+          <span class="ref-link">Helpdesk - VI - Android connect to VNG Corp.pdf (5MB)</span>
+          <span class="ref-link">Helpdesk - VI - Android connect to VNG Corp.pdf (5MB)</span>
+        </div>
+      </div>
+      <div class="ref-section">
+        <div class="ref-sec-header collapsed" onclick="toggleRefSection(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span class="ref-sec-title">Hỗ trợ</span>
+          <svg class="ref-sec-chev" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;transition:transform 0.2s;"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div class="ref-sec-body">
+          <span class="ref-link">Internal Communications</span>
+          <span class="ref-link">Human Resources</span>
+        </div>
+      </div>
+      <div class="ref-section">
+        <div class="ref-sec-header collapsed" onclick="toggleRefSection(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.8" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span class="ref-sec-title">Nguồn tham khảo</span>
+          <svg class="ref-sec-chev" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;transition:transform 0.2s;"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div class="ref-sec-body">
+          <span class="ref-link">VNG UpRace Challenge 2025 &amp; Lễ tổng kết</span>
+          <span class="ref-link">UpRace Day TP.HCM 2025</span>
+        </div>
+      </div>
+    </div>
+    ${actionBar()}`;
+}
+
+</script>
+
+
+<!-- ── Guide button (outside phone frame) ── -->
+<div id="guide-fab" onclick="toggleGuide()" title="Hướng dẫn dùng mockup" style="
+  position:fixed;bottom:32px;right:32px;z-index:9999;
+  width:48px;height:48px;border-radius:50%;
+  background:#1C1C1E;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.25);
+  font-size:22px;font-weight:700;user-select:none;
+  transition:transform 0.15s;
+" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">?</div>
+
+<!-- ── Guide overlay ── -->
+<div id="guide-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:24px;
+" onclick="closeGuide(event)">
+  <div onclick="event.stopPropagation()" style="
+    background:#fff;border-radius:20px;max-width:480px;width:100%;max-height:88vh;
+    overflow-y:auto;padding:28px 28px 24px;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;
+    box-shadow:0 24px 64px rgba(0,0,0,0.2);
+  ">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#1C1C1E;letter-spacing:-0.3px;">Hướng dẫn dùng mockup</div>
+        <div style="font-size:13px;color:#8E8E93;margin-top:2px;">AI Agents — myVNG · Design review</div>
+      </div>
+      <div onclick="toggleGuide()" style="width:32px;height:32px;border-radius:99px;background:#F2F2F7;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#8E8E93;flex-shrink:0;">×</div>
+    </div>
+
+    <!-- Flow 1 -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Flow 1 — Vào chat với Agent</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn tab <b>AI Agents</b> (tab 2 trên bottom bar) → vào thẳng chat với <b>VNG Agent</b> (default)</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>← back</b> góc trái header để về màn <b>Home</b></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>icon đồng hồ 🕐</b> trên header → History drawer trượt từ phải ra, có Pinned + History + nút <b>+ New chat</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#F2F2F7;margin-bottom:20px;"></div>
+
+    <!-- Flow 2 -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Flow 2 — Gửi tin nhắn & demo UpRace</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;"><b>Nhấn vào ô chat input</b> → tự điền <em>"thông tin sự kiện uprace 2025"</em> → nhấn <b>↑</b> để gửi → nhận response với text, 2 media grid (ảnh/video), và 3 sections (File đính kèm · Hỗ trợ · Nguồn tham khảo) mặc định collapse — nhấn để mở từng section</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>topic chip</b> bất kỳ → prompt list hiện lên → nhấn 1 prompt → text điền vào input → gửi để xem response thông thường</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>+</b> → attach sheet: Camera / Photos / <b>Files</b> (nhấn để thêm file, tối đa 3) + Web search tick + chọn Agent</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">4</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Sau khi gửi file, nhấn <b>icon 📁 trên header</b> → Files panel mở bên phải hiện danh sách file đã gửi</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#F2F2F7;margin-bottom:20px;"></div>
+
+    <!-- Flow 3 -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Flow 3 — Switch agent & pin</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">1</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>+</b> → chọn Agent khác → new chat với agent đó, icon + tên + mô tả thay đổi, placeholder input cập nhật</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">2</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Nhấn <b>⋮ ba chấm... à không, icon đồng hồ</b> → History drawer → ··· trên conversation History → Pin / Rename / Delete. ··· trên Pinned → <b>Unpin</b></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="width:22px;height:22px;border-radius:99px;background:#E8590C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">3</div>
+          <div style="font-size:14px;color:#1C1C1E;line-height:1.5;">Action bar dưới response: <b>lưu · copy · 👍 · 👎</b> — like/dislike toggle, mutual exclusive</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:0.5px;background:#F2F2F7;margin-bottom:16px;"></div>
+
+    <!-- Not yet -->
+    <div style="background:#FFF5F0;border-radius:12px;padding:14px 16px;">
+      <div style="font-size:12px;font-weight:600;color:#E8590C;margin-bottom:8px;">💡 Các tính năng chưa được mock — dựa vào behavior hiện tại anh QuynhND3 đã build ở UAT</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="font-size:13px;color:#1C1C1E;">• <b>Prompt gallery</b> (icon ✦ và "Xem thêm")</div>
+        <div style="font-size:13px;color:#1C1C1E;">• <b>Rename</b> conversation</div>
+        <div style="font-size:13px;color:#1C1C1E;">• <b>Delete</b> conversation</div>
+        <div style="font-size:13px;color:#1C1C1E;">• <b>Camera / Photos</b> trong attach sheet</div>
+        <div style="font-size:13px;color:#1C1C1E;">• <b>Search conversations</b> trong History drawer</div>
+        <div style="font-size:13px;color:#1C1C1E;">• <b>New chat</b> từ overflow menu (⋮)</div>
+        <div style="font-size:13px;color:#1C1C1E;">• Nhấn vào conversation trong History drawer để load lại chat</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function toggleGuide() {
+  const o = document.getElementById('guide-overlay');
+  o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
+}
+function closeGuide(e) {
+  if (e.target === document.getElementById('guide-overlay')) toggleGuide();
+}
+</script>
+
+</body>
+</html>
