@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agents Roles — myVNG Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #f5f5f5; display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 180px; background: #fff; border-right: 1px solid #e8e8e8; padding: 16px 0; flex-shrink: 0; }
+  .sidebar-logo { padding: 4px 16px 20px; }
+  .sidebar-logo svg { width: 48px; }
+  .sidebar-section { margin-bottom: 4px; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px; color: #555; cursor: pointer; }
+  .sidebar-item i { font-size: 16px; }
+  .sidebar-item:hover { background: #fef6f2; color: #E8590C; }
+  .sidebar-item.active { color: #E8590C; font-weight: 500; }
+  .sidebar-item.has-arrow { justify-content: space-between; }
+  .sidebar-item.has-arrow .left { display: flex; align-items: center; gap: 8px; }
+  .sidebar-group { padding-left: 0; }
+  .sidebar-sub { padding: 6px 16px 6px 40px; font-size: 13px; color: #555; cursor: pointer; display: block; }
+  .sidebar-sub:hover { color: #E8590C; background: #fef6f2; }
+  .sidebar-sub.active { color: #E8590C; font-weight: 500; background: #fef6f2; }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .topbar { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 18px; font-weight: 600; color: #111; }
+  .breadcrumb { font-size: 12px; color: #999; margin-top: 2px; }
+  .breadcrumb span { color: #E8590C; }
+  .topbar-user { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #E8590C; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+
+  .content { padding: 24px 28px; flex: 1; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+  .search-wrap { flex: 1; position: relative; }
+  .search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 15px; }
+  .search-wrap input { width: 100%; padding: 8px 12px 8px 34px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fff; outline: none; }
+  .search-wrap input:focus { border-color: #E8590C; }
+  .btn-search { background: #E8590C; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .btn-reset { background: #fff; color: #444; border: 1px solid #ddd; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+
+  /* Table */
+  .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .table-header .total { font-size: 13px; color: #555; }
+  .btn-add { background: #E8590C; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e8e8e8; }
+  thead tr { background: #fafafa; }
+  th { text-align: left; padding: 11px 16px; font-size: 13px; font-weight: 500; color: #666; border-bottom: 1px solid #e8e8e8; }
+  td { padding: 12px 16px; font-size: 13px; color: #333; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fef9f7; }
+
+  .action-btns { display: flex; gap: 6px; }
+  .btn-icon { width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: opacity 0.15s; }
+  .btn-icon.edit { background: #E8590C; color: #fff; }
+  .btn-icon.edit:hover { opacity: 0.85; }
+  .btn-icon.delete { background: #f5f5f5; color: #888; border: 1px solid #e0e0e0; }
+  .btn-icon.delete:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+  .btn-icon.delete.disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-icon.delete.disabled:hover { background: #f5f5f5; color: #888; border-color: #e0e0e0; }
+
+  /* Detail page */
+  .detail-page { display: none; }
+  .detail-page.active { display: block; }
+  .list-page { display: block; }
+  .list-page.hidden { display: none; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 12px; width: 400px; padding: 24px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 18px; cursor: pointer; color: #888; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 13px; font-weight: 500; color: #444; margin-bottom: 6px; display: flex; align-items: center; gap: 3px; }
+  .form-label .req { color: #E8590C; }
+  .form-select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; background: #fff; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .form-select:focus { border-color: #E8590C; }
+  .radio-group { display: flex; gap: 20px; }
+  .radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+  .radio-label input[type=radio] { accent-color: #E8590C; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+  .btn-back { background: #fff; border: 1px solid #ddd; padding: 8px 20px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .btn-save { background: #E8590C; color: #fff; border: none; padding: 8px 24px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="20" font-family="Arial Black, sans-serif" font-weight="900" font-size="22" fill="#E8590C">VNG</text>
+    </svg>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-item has-arrow">
+      <div class="left"><i class="ti ti-briefcase"></i> Work</div>
+      <i class="ti ti-chevron-down" style="font-size:12px;color:#bbb"></i>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-item has-arrow">
+      <div class="left"><i class="ti ti-book"></i> Wiki</div>
+      <i class="ti ti-chevron-up" style="font-size:12px;color:#bbb"></i>
+    </div>
+    <div class="sidebar-group">
+      <a class="sidebar-sub">Documents</a>
+      <a class="sidebar-sub">Folders</a>
+      <a class="sidebar-sub">Roles</a>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-item"><i class="ti ti-address-book"></i> Contacts</div>
+    <div class="sidebar-item"><i class="ti ti-database"></i> Master Data</div>
+    <div class="sidebar-item"><i class="ti ti-id-badge-2"></i> Staff Card</div>
+    <div class="sidebar-item"><i class="ti ti-headset"></i> Support Center</div>
+    <div class="sidebar-item"><i class="ti ti-receipt"></i> Expenses</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-item has-arrow active">
+      <div class="left"><i class="ti ti-robot"></i> Agents</div>
+      <i class="ti ti-chevron-up" style="font-size:12px;color:#E8590C"></i>
+    </div>
+    <div class="sidebar-group">
+      <a class="sidebar-sub" onclick="showList()">Agents Management</a>
+      <a class="sidebar-sub">Chat</a>
+      <a class="sidebar-sub active" id="roles-nav">Roles</a>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-item has-arrow">
+      <div class="left"><i class="ti ti-settings"></i> App Setting</div>
+      <i class="ti ti-chevron-down" style="font-size:12px;color:#bbb"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- LIST PAGE -->
+  <div class="list-page" id="listPage">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">myVNG Dashboard</div>
+        <div class="breadcrumb">Agents / <span>Roles</span></div>
+      </div>
+      <div class="topbar-user">
+        <div class="avatar">ĐT</div>
+        Đồng. Đỗ Thanh ▾
+      </div>
+    </div>
+    <div class="content">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search by Department">
+        </div>
+        <button class="btn-search"><i class="ti ti-search"></i> Search</button>
+        <button class="btn-reset">Reset Filter</button>
+      </div>
+      <div class="table-header">
+        <div class="total">Total: 8</div>
+        <button class="btn-add" onclick="openAddModal()"><i class="ti ti-plus"></i> Add</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px">No.</th>
+            <th>Department</th>
+            <th>Members</th>
+            <th>Total Agents</th>
+            <th style="width:100px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td><td>BO.TSE.IT</td><td>5 people</td>
+            <td>3</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.TSE.IT','5 people',3)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete disabled" title="Cannot delete — has active agents"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>2</td><td>BO.TSE.ISO</td><td>3 people</td>
+            <td>1</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.TSE.ISO','3 people',1)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete disabled" title="Cannot delete — has active agents"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>3</td><td>BO.FO.AF</td><td>2 people</td>
+            <td>2</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.FO.AF','2 people',2)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete disabled" title="Cannot delete — has active agents"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>4</td><td>BO.HR.R&R</td><td>2 people</td>
+            <td>1</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.HR.R&R','2 people',1)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete disabled" title="Cannot delete — has active agents"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>5</td><td>Zalo.ZSL</td><td>1 people</td>
+            <td>1</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('Zalo.ZSL','1 people',1)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete disabled" title="Cannot delete — has active agents"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>6</td><td>BO.BO1.CBC</td><td>2 people</td>
+            <td>0</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.BO1.CBC','2 people',0)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete" title="Delete" onclick="alert('Deleted BO.BO1.CBC')"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>7</td><td>BO.BO2.LG</td><td>0 people</td>
+            <td>0</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('BO.BO2.LG','0 people',0)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete" title="Delete" onclick="alert('Deleted BO.BO2.LG')"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>8</td><td>PY.TEP.PQE</td><td>3 people</td>
+            <td>0</td>
+            <td><div class="action-btns">
+              <button class="btn-icon edit" onclick="showDetail('PY.TEP.PQE','3 people',0)" title="Edit"><i class="ti ti-pencil"></i></button>
+              <button class="btn-icon delete" title="Delete" onclick="alert('Deleted PY.TEP.PQE')"><i class="ti ti-trash"></i></button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DETAIL PAGE -->
+  <div class="detail-page" id="detailPage">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">myVNG Dashboard</div>
+        <div class="breadcrumb">Agents / <a href="#" onclick="showList()" style="color:#999;text-decoration:none">Roles</a> / <span id="detailBreadcrumb"></span></div>
+      </div>
+      <div class="topbar-user">
+        <div class="avatar">ĐT</div>
+        Đồng. Đỗ Thanh ▾
+      </div>
+    </div>
+    <div class="content">
+      <div style="display:flex;gap:16px;margin-bottom:20px;align-items:flex-start">
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:14px 20px;flex:1">
+          <div style="font-size:12px;color:#999;margin-bottom:2px">Department</div>
+          <div style="font-size:14px;font-weight:500;color:#333" id="detailDept"></div>
+        </div>
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:14px 20px;flex:1">
+          <div style="font-size:12px;color:#999;margin-bottom:2px">Department Name</div>
+          <div style="font-size:14px;font-weight:500;color:#333" id="detailDeptName"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+        <select style="padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;color:#555;background:#fff;outline:none">
+          <option>All</option><option>Editor</option><option>Viewer</option>
+        </select>
+        <div class="search-wrap" style="flex:1">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search by Employee Name">
+        </div>
+        <button class="btn-search"><i class="ti ti-search"></i></button>
+        <button class="btn-reset">Reset Filter</button>
+      </div>
+
+      <div class="table-header">
+        <div class="total" id="detailTotal">Total: 3</div>
+        <button class="btn-add" onclick="openRoleModal()"><i class="ti ti-plus"></i> Add</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px">No.</th>
+            <th>Employee Name</th>
+            <th>Roles</th>
+            <th style="width:100px"></th>
+          </tr>
+        </thead>
+        <tbody id="detailTableBody"></tbody>
+      </table>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;gap:8px;align-items:center">
+        <button style="width:28px;height:28px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;color:#aaa">‹</button>
+        <button style="width:28px;height:28px;border:1px solid #E8590C;border-radius:4px;background:#E8590C;color:#fff;font-size:12px;font-weight:600;cursor:pointer">1</button>
+        <button style="width:28px;height:28px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;color:#aaa">›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Dept -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    <h3>Add Department Role</h3>
+    <div class="form-group">
+      <div class="form-label">Department <span class="req">*</span></div>
+      <input type="text" class="form-select" placeholder="e.g. BO.FINANCE.ACC" style="padding:8px 12px">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Department Name <span class="req">*</span></div>
+      <input type="text" class="form-select" placeholder="e.g. Finance Accounting" style="padding:8px 12px">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-back" onclick="closeModal('addModal')">Cancel</button>
+      <button class="btn-save" onclick="closeModal('addModal')">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Role -->
+<div class="modal-overlay" id="roleModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('roleModal')">✕</button>
+    <h3>Add role</h3>
+    <div class="form-group">
+      <div class="form-label">Employee Name <span class="req">*</span></div>
+      <select class="form-select">
+        <option value="">Choose an employee...</option>
+        <option>Hải. Đào Gia</option>
+        <option>Nam. Trần Minh</option>
+        <option>Linh. Phạm Thu</option>
+        <option>Tuấn. Nguyễn Văn</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Role <span class="req">*</span></div>
+      <div class="radio-group">
+        <label class="radio-label"><input type="radio" name="role" value="editor" checked> Editor</label>
+        <label class="radio-label"><input type="radio" name="role" value="viewer"> Viewer</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-back" onclick="closeModal('roleModal')">Back</button>
+      <button class="btn-save" onclick="closeModal('roleModal')">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const deptNames = {
+  'BO.TSE.IT': 'IT Department',
+  'BO.TSE.ISO': 'ISO Department',
+  'BO.FO.AF': 'Finance & Accounting',
+  'BO.HR.R&R': 'HR Rewards & Recognition',
+  'Zalo.ZSL': 'Zalo Solutions',
+  'BO.BO1.CBC': 'Commercial BC',
+  'BO.BO2.LG': 'Legal & Governance',
+  'PY.TEP.PQE': 'Quality Engineering and Assurance'
+};
+
+const memberData = {
+  'BO.TSE.IT': [
+    { name: 'Đồng. Đỗ Thanh', role: 'Viewer' },
+    { name: 'Quý. Lê Phạm Hoàng', role: 'Editor' },
+    { name: 'DuyTT3. Trần Tiến Duy', role: 'Editor' },
+    { name: 'Hải. Nguyễn Gia', role: 'Editor' },
+    { name: 'DuyTT5. Trần Tường Duy', role: 'Editor' }
+  ],
+  'BO.TSE.ISO': [
+    { name: 'An. Hồ Hải', role: 'Editor' },
+    { name: 'Linh. Phạm Thu', role: 'Viewer' },
+    { name: 'Sơn. Nguyễn Hoàng', role: 'Viewer' }
+  ],
+  'BO.FO.AF': [
+    { name: 'Nam. Trần Minh', role: 'Editor' },
+    { name: 'Lan. Nguyễn Thị', role: 'Viewer' }
+  ],
+  'BO.HR.R&R': [
+    { name: 'Tuấn. Nguyễn Văn', role: 'Editor' },
+    { name: 'Hoa. Lê Thị', role: 'Viewer' }
+  ],
+  'Zalo.ZSL': [
+    { name: 'Minh. Phạm Văn', role: 'Editor' }
+  ],
+  'BO.BO1.CBC': [
+    { name: 'Duy. Trần Tường (3)', role: 'Editor' },
+    { name: 'An. Hồ Hải', role: 'Editor' }
+  ],
+  'BO.BO2.LG': [],
+  'PY.TEP.PQE': [
+    { name: 'Đồng. Đỗ Thanh', role: 'Viewer' },
+    { name: 'An. Hồ Hải', role: 'Editor' },
+    { name: 'Duy. Trần Tường (3)', role: 'Editor' }
+  ]
+};
+
+function showDetail(dept, members, agentCount) {
+  document.getElementById('listPage').classList.add('hidden');
+  document.getElementById('detailPage').classList.add('active');
+  document.getElementById('detailBreadcrumb').textContent = dept;
+  document.getElementById('detailDept').textContent = dept;
+  document.getElementById('detailDeptName').textContent = deptNames[dept] || dept;
+  const rows = memberData[dept] || [];
+  document.getElementById('detailTotal').textContent = 'Total: ' + rows.length;
+  const tbody = document.getElementById('detailTableBody');
+  tbody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td>${r.role}</td>
+      <td><div class="action-btns">
+        <button class="btn-icon edit" title="Edit"><i class="ti ti-pencil"></i></button>
+        <button class="btn-icon delete" title="Remove" onclick="this.closest('tr').remove()"><i class="ti ti-trash"></i></button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function showList() {
+  document.getElementById('listPage').classList.remove('hidden');
+  document.getElementById('detailPage').classList.remove('active');
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function openRoleModal() { document.getElementById('roleModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>
