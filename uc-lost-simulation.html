@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UC-Lost — Q&A Simulation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --vng:#E8590C;--vng-light:#FEF0E8;--vng-dark:#B8420A;
+    --bg:#F5F4F2;--surface:#FFFFFF;--surface2:#F0EEE9;
+    --border:#E2DED7;--text:#1A1917;--text2:#6B6760;--text3:#9E9B96;
+    --green:#16A34A;--green-bg:#ECFDF5;
+    --amber:#B45309;--amber-bg:#FFFBEB;
+    --red:#DC2626;--red-bg:#FEF2F2;
+    --blue:#1D4ED8;--blue-bg:#EFF6FF;
+    --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+    --r:6px;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+  .shell{display:grid;grid-template-columns:256px 1fr;min-height:100vh}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+  .sidebar-logo{padding:14px 18px;border-bottom:1px solid var(--border)}
+  .sidebar-logo .prod-name{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:2px}
+  .sidebar-logo h1{font-size:13px;font-weight:500}
+  .sidebar-logo .sub{font-size:11px;color:var(--text3);margin-top:2px}
+  .glabel{font-size:9.5px;font-family:var(--mono);letter-spacing:.1em;color:var(--text3);padding:12px 18px 4px;text-transform:uppercase}
+  .nbtn{display:flex;align-items:flex-start;gap:8px;width:100%;padding:7px 18px;border:none;background:none;cursor:pointer;font-family:var(--font);font-size:12px;color:var(--text2);text-align:left;transition:background .1s,color .1s;line-height:1.4}
+  .nbtn:hover{background:var(--surface2);color:var(--text)}
+  .nbtn.active{background:var(--vng-light);color:var(--vng-dark);font-weight:500}
+  .nbtn .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .d1{background:#16A34A}.d2{background:#1D4ED8}.d3{background:#DC2626}
+  .sdiv{height:1px;background:var(--border);margin:6px 12px}
+  .main{display:flex;flex-direction:column;min-height:100vh}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+  .tb-group{font-size:10px;font-family:var(--mono);color:var(--text3)}
+  .tb-title{font-size:13px;font-weight:500}
+  .tb-desc{font-size:11.5px;color:var(--text2);margin-left:auto;max-width:380px;text-align:right}
+  .gbadge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-family:var(--mono);font-weight:500}
+  .bg1{background:var(--green-bg);color:var(--green)}
+  .bg2{background:var(--blue-bg);color:var(--blue)}
+  .bg3{background:var(--red-bg);color:var(--red)}
+  .chat-wrap{flex:1;padding:24px 40px;max-width:680px;width:100%;margin:0 auto}
+  .sc{display:none}.sc.active{display:block}
+  .cb{display:flex;gap:10px;margin-bottom:18px}
+  .cb.user{flex-direction:row-reverse}
+  .av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;font-family:var(--mono);margin-top:16px}
+  .av-a{background:var(--vng);color:#fff}
+  .av-u{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+  .bc{max-width:88%}
+  .bn{font-size:10px;color:var(--text3);margin-bottom:3px;font-family:var(--mono)}
+  .cb.user .bn{text-align:right}
+  .bt{background:var(--surface2);border-radius:4px 12px 12px 12px;padding:10px 14px;font-size:13.5px;line-height:1.65;color:var(--text)}
+  .cb.user .bt{background:var(--vng);color:#fff;border-radius:12px 4px 12px 12px}
+  .bt p{margin-bottom:6px}.bt p:last-child{margin-bottom:0}
+  .bt b{font-weight:500}
+  .detail-card{margin:8px 0 4px}
+  .kv-row{display:flex;gap:0;border-bottom:1px solid var(--border)}
+  .kv-row:last-child{border-bottom:none}
+  .kv-k{font-size:11px;font-family:var(--mono);color:var(--text3);min-width:155px;flex-shrink:0;padding:6px 12px 6px 0}
+  .kv-v{font-size:13px;color:var(--text);padding:6px 0;flex:1}
+  .kv-v.mono{font-family:var(--mono);font-size:11.5px}
+  .atbl{width:100%;border-collapse:collapse;margin:10px 0 4px;font-size:12.5px}
+  .atbl th{text-align:left;padding:5px 9px;font-size:10.5px;font-family:var(--mono);color:var(--text3);border-bottom:1px solid var(--border);font-weight:400}
+  .atbl td{padding:7px 9px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+  .atbl tr:last-child td{border-bottom:none}
+  .stt{color:var(--text3);font-family:var(--mono);font-size:11px}
+  .ac{font-family:var(--mono);font-size:11px;color:var(--text2)}
+  .tbadge{display:inline-flex;font-size:10px;font-family:var(--mono);background:var(--surface2);color:var(--text3);border-radius:4px;padding:1px 5px}
+  .chips{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+  .chip{padding:6px 12px;border-radius:var(--r);font-size:12.5px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;width:100%;font-family:var(--font);text-align:left;cursor:default;background:var(--surface)}
+  .chip-a{border-color:var(--vng);color:var(--vng-dark);cursor:pointer;transition:background .1s}
+  .chip-a::after{content:'\2192';margin-left:auto;font-size:13px;opacity:.6}
+  .chip-a:hover{background:var(--vng-light)}
+  .chip-a.used{opacity:.4;pointer-events:none}
+  .chip-cancel{border-color:var(--red);color:var(--red);cursor:pointer;background:var(--surface);transition:background .1s}
+  .chip-cancel:hover{background:var(--red-bg)}
+  .chip-cancel.used{opacity:.4;pointer-events:none}
+  .slabel{display:flex;align-items:center;gap:10px;margin:22px 0 10px;font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.04em}
+  .slabel::before,.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+  .stag{padding:2px 9px;border-radius:999px;background:var(--surface2);color:var(--text3);white-space:nowrap}
+  .stag.blue{background:var(--blue-bg);color:var(--blue)}
+  .stag.orange{background:var(--vng-light);color:var(--vng-dark)}
+  .stag.red{background:var(--red-bg);color:var(--red)}
+  .ann{background:var(--amber-bg);border:1px dashed #FCD34D;border-radius:var(--r);padding:7px 11px;font-size:11.5px;color:var(--amber);margin:4px 0 4px 38px}
+  .ann.blue{background:var(--blue-bg);border-color:#93C5FD;color:var(--blue)}
+  .abar{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .aicon{font-size:15px;color:var(--text3);cursor:default}
+  .injected{animation:fi .2s ease}
+  @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="prod-name">UC-Báo mất · IT Agent</div>
+    <h1>Mô phỏng hỏi đáp</h1>
+    <div class="sub">Báo mất tài sản IT</div>
+  </div>
+  <div class="glabel">Luồng chính</div>
+  <button class="nbtn active" id="btn-h1" onclick="show('h1',this)"><span class="dot d1"></span>Từ chip xem chi tiết tài sản</button>
+  <button class="nbtn" id="btn-h2" onclick="show('h2',this)"><span class="dot d1"></span>Ngôn ngữ tự nhiên — 1 tài sản</button>
+  <button class="nbtn" id="btn-h3" onclick="show('h3',this)"><span class="dot d1"></span>Ngôn ngữ tự nhiên — nhiều tài sản</button>
+  <div class="sdiv"></div>
+  <div class="glabel">Luồng thay thế</div>
+  <button class="nbtn" id="btn-a1" onclick="show('a1',this)"><span class="dot d2"></span>Chỉnh sửa qua tin nhắn</button>
+  <button class="nbtn" id="btn-a2" onclick="show('a2',this)"><span class="dot d2"></span>Hủy trước khi gửi</button>
+  <div class="sdiv"></div>
+  <div class="glabel">Luồng ngoại lệ</div>
+  <button class="nbtn" id="btn-e1" onclick="show('e1',this)"><span class="dot d3"></span>Tài sản không xác định được</button>
+</nav>
+
+<main class="main">
+  <div class="topbar">
+    <span class="tb-group" id="tb-group">Luồng chính</span>
+    <span id="tb-badge" class="gbadge bg1">Luồng chính</span>
+    <span class="tb-title" id="tb-title">Từ chip xem chi tiết tài sản</span>
+    <span class="tb-desc" id="tb-desc">Context từ AST-1 → hỏi lý do mất → draft inline → xác nhận → gửi</span>
+  </div>
+  <div class="chat-wrap">
+
+  <!-- ===== H1: Từ chip AST-1 ===== -->
+  <div class="sc active" id="h1">
+    <div class="ann blue">ℹ️ User vừa xem chi tiết PHO08821 ở UC-AST-1 và nhấn chip "Báo mất". Agent đã có context — không hỏi lại tài sản.</div>
+    <div class="slabel"><span class="stag orange">Agent nhận context → hỏi lý do mất</span></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Bạn muốn báo mất <b>PHO08821 — iPhone XR 64GB</b>.</p>
+        <p>Vui lòng mô tả lý do mất tài sản:</p>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Bị mất điện thoại khi đi công tác ở Hà Nội, không tìm lại được</div></div></div>
+    <div class="slabel"><span class="stag orange">Nhận lý do → tổng hợp draft inline → chờ xác nhận</span></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi gửi:</p>
+        <div class="detail-card">
+          <div class="kv-row"><span class="kv-k">Loại yêu cầu</span><span class="kv-v">Báo mất tài sản</span></div>
+          <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono">PHO08821 (iPhone XR 64GB)</span></div>
+          <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Bị mất điện thoại khi đi công tác ở Hà Nội, không tìm lại được</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <button class="chip chip-a" onclick="inj(this,'h1-success')">Xác nhận gửi yêu cầu</button>
+        <button class="chip chip-cancel" onclick="inj(this,'h1-cancel')">Hủy</button>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+
+    <div id="h1-success" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận gửi yêu cầu</div></div></div>
+      <div class="slabel"><span class="stag orange">Gửi lên hệ thống → tạo yêu cầu → trả kết quả</span></div>
+      <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+        <div class="bt">
+          <p>Yêu cầu báo mất tài sản của bạn đã được gửi thành công!</p>
+          <div class="detail-card" style="margin:8px 0">
+            <div class="kv-row"><span class="kv-k">Mã yêu cầu</span><span class="kv-v mono">#1444040</span></div>
+            <div class="kv-row"><span class="kv-k">Xem yêu cầu</span><span class="kv-v" style="color:var(--blue)">https://my.vng.vn/me/my_forms/detail?taskID=1444040</span></div>
+            <div class="kv-row"><span class="kv-k">Ngày tạo</span><span class="kv-v">16/06/2026</span></div>
+            <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono">PHO08821 (iPhone XR 64GB)</span></div>
+            <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Bị mất điện thoại khi đi công tác ở Hà Nội, không tìm lại được</span></div>
+          </div>
+          <p>Bạn sẽ sớm được liên hệ hỗ trợ bởi đội ngũ IT Helpdesk!</p>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+    </div>
+    <div id="h1-cancel" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+      <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+        <div class="bt"><p>Đã hủy, thông tin không được lưu lại. Nếu bạn cần hỗ trợ thêm điều gì khác thì cứ nhắn mình nhé!</p></div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+    </div>
+  </div><!-- end h1 -->
+
+  <!-- ===== H2: Ngôn ngữ tự nhiên — 1 tài sản ===== -->
+  <div class="sc" id="h2">
+    <div class="ann blue">ℹ️ User chưa xem chi tiết tài sản trước đó — Agent cần show full detail để user xác nhận đúng tài sản.</div>
+    <div class="slabel"><span class="stag">User nói thẳng muốn báo mất tài sản</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Tôi muốn báo mất điện thoại</div></div></div>
+    <div class="slabel"><span class="stag orange">Truy vấn danh sách → lọc iPhone → 1 kết quả → hiển thị để xác nhận</span></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Mình tìm thấy <b>1 điện thoại</b> đứng tên bạn. Đây có phải tài sản bạn muốn báo mất không?</p>
+        <div class="detail-card">
+          <div class="kv-row"><span class="kv-k">Mã tài sản</span><span class="kv-v mono">PHO08821</span></div>
+          <div class="kv-row"><span class="kv-k">Tên tài sản</span><span class="kv-v">iPhone XR 64GB</span></div>
+          <div class="kv-row"><span class="kv-k">Ngày bắt đầu sử dụng</span><span class="kv-v">15/03/2019 · 7 năm 92 ngày</span></div>
+          <div class="kv-row"><span class="kv-k">Chi phí đầu tư</span><span class="kv-v">14,725,000 VND</span></div>
+          <div class="kv-row"><span class="kv-k">Loại tài sản</span><span class="kv-v">iPhone</span></div>
+          <div class="kv-row"><span class="kv-k">Nhà cung cấp</span><span class="kv-v">IT Services</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <button class="chip chip-a" onclick="inj(this,'h2-reason')">Đúng, tôi muốn báo mất cái này</button>
+        <button class="chip chip-a">Không phải, xem lại danh sách tài sản</button>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+
+    <div id="h2-reason" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đúng, tôi muốn báo mất cái này</div></div></div>
+      <div class="slabel"><span class="stag orange">Tài sản xác nhận → hỏi lý do mất</span></div>
+      <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+        <div class="bt"><p>Vui lòng mô tả lý do mất tài sản:</p></div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Để quên trên taxi, đã gọi lại nhưng không lấy lại được</div></div></div>
+      <div class="slabel"><span class="stag orange">Nhận lý do → tổng hợp draft inline</span></div>
+      <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi gửi:</p>
+          <div class="detail-card">
+            <div class="kv-row"><span class="kv-k">Loại yêu cầu</span><span class="kv-v">Báo mất tài sản</span></div>
+            <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono">PHO08821 (iPhone XR 64GB)</span></div>
+            <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Để quên trên taxi, đã gọi lại nhưng không lấy lại được</span></div>
+          </div>
+        </div>
+        <div class="chips">
+          <button class="chip chip-a" onclick="inj(this,'h2-success')">Xác nhận gửi yêu cầu</button>
+          <button class="chip chip-cancel" onclick="inj(this,'h2-cancel')">Hủy</button>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+      <div id="h2-success" style="display:none">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận gửi yêu cầu</div></div></div>
+        <div class="slabel"><span class="stag orange">Gửi lên hệ thống → tạo yêu cầu</span></div>
+        <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+          <div class="bt">
+            <p>Yêu cầu báo mất tài sản của bạn đã được gửi thành công!</p>
+            <div class="detail-card" style="margin:8px 0">
+              <div class="kv-row"><span class="kv-k">Mã yêu cầu</span><span class="kv-v mono">#1444041</span></div>
+              <div class="kv-row"><span class="kv-k">Xem yêu cầu</span><span class="kv-v" style="color:var(--blue)">https://my.vng.vn/me/my_forms/detail?taskID=1444041</span></div>
+              <div class="kv-row"><span class="kv-k">Ngày tạo</span><span class="kv-v">16/06/2026</span></div>
+              <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono">PHO08821 (iPhone XR 64GB)</span></div>
+              <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Để quên trên taxi, đã gọi lại nhưng không lấy lại được</span></div>
+            </div>
+            <p>Bạn sẽ sớm được liên hệ hỗ trợ bởi đội ngũ IT Helpdesk!</p>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div></div>
+      </div>
+      <div id="h2-cancel" style="display:none">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+        <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+          <div class="bt"><p>Đã hủy, thông tin không được lưu lại. Nếu bạn cần hỗ trợ thêm điều gì khác thì cứ nhắn mình nhé!</p></div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div><!-- end h2 -->
+
+  <!-- ===== H3: Nhiều tài sản ===== -->
+  <div class="sc" id="h3">
+    <div class="slabel"><span class="stag">User đề cập nhiều tài sản trong một câu</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Tôi muốn báo mất điện thoại và Macbook, cả hai bị mất trong vụ trộm tại văn phòng</div></div></div>
+    <div class="slabel"><span class="stag orange">Xác định 2 tài sản + lý do từ câu → query My Asset List → xác nhận danh sách</span></div>
+    <div class="ann">ℹ️ Agent identify được cả tài sản lẫn lý do từ 1 câu → query My Asset List → confirm danh sách với user trước khi tổng hợp draft.</div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Mình xác định được <b>2 tài sản</b> bạn muốn báo mất. Vui lòng xác nhận danh sách:</p>
+        <table class="atbl">
+          <thead><tr><th>#</th><th>Mã tài sản</th><th>Loại</th><th>Tên tài sản</th></tr></thead>
+          <tbody>
+            <tr><td class="stt">1</td><td class="ac">PHO08821</td><td><span class="tbadge">iPhone</span></td><td>iPhone XR 64GB</td></tr>
+            <tr><td class="stt">2</td><td class="ac">LAP14115</td><td><span class="tbadge">Macbook</span></td><td>Macbook Pro 13-inch 2020</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chips">
+        <button class="chip chip-a" onclick="inj(this,'h3-draft')">Đúng, tiếp tục</button>
+        <button class="chip chip-a">Không phải, xem lại danh sách tài sản</button>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+
+    <div id="h3-draft" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đúng, tiếp tục</div></div></div>
+      <div class="slabel"><span class="stag orange">Đã xác nhận + lý do đã có từ câu đầu → tổng hợp draft batch luôn</span></div>
+      <div class="ann">ℹ️ User đã cung cấp lý do ngay trong câu đầu ("bị mất trong vụ trộm tại văn phòng") → Agent không hỏi lại lý do, tổng hợp draft luôn.</div>
+      <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi gửi:</p>
+          <div class="detail-card">
+            <div class="kv-row"><span class="kv-k">Loại yêu cầu</span><span class="kv-v">Báo mất tài sản</span></div>
+            <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono" style="line-height:1.8">PHO08821 (iPhone XR 64GB)<br>LAP14115 (Macbook Pro 13-inch 2020)</span></div>
+            <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Cả hai bị mất trong vụ trộm tại văn phòng</span></div>
+          </div>
+        </div>
+        <div class="chips">
+          <button class="chip chip-a" onclick="inj(this,'h3-success')">Xác nhận gửi yêu cầu</button>
+          <button class="chip chip-cancel" onclick="inj(this,'h3-cancel')">Hủy</button>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+      <div id="h3-success" style="display:none">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận gửi yêu cầu</div></div></div>
+        <div class="slabel"><span class="stag orange">Gửi lên hệ thống → tạo 1 yêu cầu chứa cả 2 tài sản</span></div>
+        <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+          <div class="bt">
+            <p>Yêu cầu báo mất tài sản của bạn đã được gửi thành công!</p>
+            <div class="detail-card" style="margin:8px 0">
+              <div class="kv-row"><span class="kv-k">Mã yêu cầu</span><span class="kv-v mono">#1444042</span></div>
+              <div class="kv-row"><span class="kv-k">Xem yêu cầu</span><span class="kv-v" style="color:var(--blue)">https://my.vng.vn/me/my_forms/detail?taskID=1444042</span></div>
+              <div class="kv-row"><span class="kv-k">Ngày tạo</span><span class="kv-v">16/06/2026</span></div>
+              <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono" style="line-height:1.8">PHO08821 (iPhone XR 64GB)<br>LAP14115 (Macbook Pro 13-inch 2020)</span></div>
+              <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v">Cả hai bị mất trong vụ trộm tại văn phòng</span></div>
+            </div>
+            <p>Bạn sẽ sớm được liên hệ hỗ trợ bởi đội ngũ IT Helpdesk!</p>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div></div>
+      </div>
+      <div id="h3-cancel" style="display:none">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+        <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+          <div class="bt"><p>Đã hủy, thông tin không được lưu lại. Nếu bạn cần hỗ trợ thêm điều gì khác thì cứ nhắn mình nhé!</p></div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div><!-- end h3 -->
+
+  <!-- ===== A1: Chỉnh sửa ===== -->
+  <div class="sc" id="a1">
+    <div class="ann blue">ℹ️ User đang thấy draft, muốn chỉnh sửa — nhắn text trực tiếp.</div>
+    <div class="slabel"><span class="stag blue">User nhắn text để chỉnh sửa lý do trong draft</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đổi lý do lại là: bị mất khi đi họp bên ngoài văn phòng, không tìm lại được</div></div></div>
+    <div class="slabel"><span class="stag orange">Agent cập nhật lý do → hiển thị draft mới</span></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Đã cập nhật. Vui lòng kiểm tra lại:</p>
+        <div class="detail-card">
+          <div class="kv-row"><span class="kv-k">Loại yêu cầu</span><span class="kv-v">Báo mất tài sản</span></div>
+          <div class="kv-row"><span class="kv-k">Tài sản</span><span class="kv-v mono">PHO08821 (iPhone XR 64GB)</span></div>
+          <div class="kv-row"><span class="kv-k">Lý do mất</span><span class="kv-v hi">Bị mất khi đi họp bên ngoài văn phòng, không tìm lại được</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <button class="chip chip-a">Xác nhận gửi yêu cầu</button>
+        <button class="chip chip-cancel">Hủy</button>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+  </div>
+
+  <!-- ===== A2: Hủy ===== -->
+  <div class="sc" id="a2">
+    <div class="ann blue">ℹ️ User đang thấy draft, nhấn chip "Hủy".</div>
+    <div class="slabel"><span class="stag blue">User nhấn chip "Hủy" trên draft</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt"><p>Đã hủy, thông tin không được lưu lại. Nếu bạn cần hỗ trợ thêm điều gì khác thì cứ nhắn mình nhé!</p></div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+  </div>
+
+  <!-- ===== E1: Tài sản không xác định ===== -->
+  <div class="sc" id="e1">
+    <div class="slabel"><span class="stag red">Tài sản không có trong danh sách của user</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Tôi muốn báo mất màn hình</div></div></div>
+    <div class="slabel"><span class="stag orange">Truy vấn danh sách → lọc màn hình → 0 kết quả</span></div>
+    <div class="cb"><div class="av av-a">IT</div><div class="bc"><div class="bn">IT Agent</div>
+      <div class="bt">
+        <p>Mình không tìm thấy màn hình nào đứng tên bạn trong hệ thống.</p>
+        <p>Mình chỉ có thể hỗ trợ báo mất tài sản IT đang đứng tên bạn. Bạn muốn xem lại toàn bộ danh sách tài sản không?</p>
+      </div>
+      <div class="chips">
+        <button class="chip chip-a">Xem toàn bộ tài sản của tôi</button>
+      </div>
+      <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+    </div></div>
+    <div class="ann">ℹ️ Cover cả trường hợp tài sản thuộc người khác — kết quả đều là 0 trong My Asset List của user.</div>
+  </div>
+
+  </div><!-- chat-wrap -->
+</main>
+</div>
+
+<script>
+const meta={
+  'h1':{g:'Luồng chính',b:'bg1',bt:'Luồng chính',t:'Từ chip xem chi tiết tài sản',d:'Context từ AST-1 → hỏi lý do mất → draft inline → xác nhận → gửi'},
+  'h2':{g:'Luồng chính',b:'bg1',bt:'Luồng chính',t:'Ngôn ngữ tự nhiên — 1 tài sản',d:'Truy vấn → hiển thị chi tiết → xác nhận tài sản → hỏi lý do → draft → gửi'},
+  'h3':{g:'Luồng chính',b:'bg1',bt:'Luồng chính',t:'Ngôn ngữ tự nhiên — nhiều tài sản',d:'Identify tài sản + lý do từ 1 câu → xác nhận danh sách → draft batch luôn nếu đã có lý do'},
+  'a1':{g:'Luồng thay thế',b:'bg2',bt:'Luồng thay thế',t:'Chỉnh sửa qua tin nhắn',d:'User nhắn text đổi lý do → Agent cập nhật draft → hiển thị lại'},
+  'a2':{g:'Luồng thay thế',b:'bg2',bt:'Luồng thay thế',t:'Hủy trước khi gửi',d:'User nhấn Hủy → không lưu, hỏi cần hỗ trợ thêm không'},
+  'e1':{g:'Luồng ngoại lệ',b:'bg3',bt:'Luồng ngoại lệ',t:'Tài sản không xác định được',d:'0 kết quả trong My Asset List → thông báo + chip xem toàn bộ'},
+};
+let cur='h1';
+function show(id,btn){
+  document.getElementById(cur).classList.remove('active');
+  document.getElementById('btn-'+cur).classList.remove('active');
+  cur=id;
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  const m=meta[id];
+  document.getElementById('tb-group').textContent=m.g;
+  const badge=document.getElementById('tb-badge');
+  badge.className='gbadge '+m.b;
+  badge.textContent=m.bt;
+  document.getElementById('tb-title').textContent=m.t;
+  document.getElementById('tb-desc').textContent=m.d;
+}
+function inj(btn,id){
+  btn.classList.add('used');
+  const el=document.getElementById(id);
+  if(el&&el.style.display==='none'){
+    el.style.display='';
+    el.classList.add('injected');
+    setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),50);
+  }
+}
+</script>
+</body>
+</html>
