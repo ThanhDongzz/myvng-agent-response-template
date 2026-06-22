@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UC-BME-1 — Đặt lịch họp</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --vng:#E8590C;--vng-light:#FEF0E8;--vng-dark:#B8420A;
+    --bg:#F7F7F7;--surface:#FFFFFF;--surface2:#F0EEE9;
+    --border:#E2DED7;--border2:#EBEBEB;
+    --text:#1A1917;--text2:#6B6760;--text3:#9E9B96;
+    --green:#16A34A;--green-bg:#ECFDF5;
+    --amber:#B45309;--amber-bg:#FFFBEB;
+    --red:#DC2626;--red-bg:#FEF2F2;
+    --blue:#1D4ED8;--blue-bg:#EFF6FF;
+    --purple:#7C3AED;--purple-bg:#F3E8FF;
+    --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+    --r:8px;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+  .shell{display:grid;grid-template-columns:252px 1fr;min-height:100vh}
+
+  /* SIDEBAR */
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+  .sidebar-logo{padding:14px 18px;border-bottom:1px solid var(--border)}
+  .prod-name{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.06em;margin-bottom:2px}
+  .sidebar-logo h1{font-size:13px;font-weight:500}
+  .sidebar-logo .sub{font-size:11px;color:var(--text3);margin-top:2px}
+  .glabel{font-size:9.5px;font-family:var(--mono);letter-spacing:.1em;color:var(--text3);padding:12px 18px 4px;text-transform:uppercase}
+  .nbtn{display:flex;align-items:flex-start;gap:8px;width:100%;padding:7px 18px;border:none;background:none;cursor:pointer;font-family:var(--font);font-size:12px;color:var(--text2);text-align:left;transition:background .1s,color .1s;line-height:1.4}
+  .nbtn:hover{background:var(--surface2);color:var(--text)}
+  .nbtn.active{background:var(--vng-light);color:var(--vng-dark);font-weight:500}
+  .nbtn .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .d1{background:#16A34A}.d2{background:#1D4ED8}.d3{background:#7C3AED}.d4{background:#B45309}.d5{background:#DC2626}.d6{background:#9E9B96}
+  .sdiv{height:1px;background:var(--border);margin:6px 12px}
+
+  /* TOPBAR */
+  .main{display:flex;flex-direction:column;min-height:100vh}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+  .tb-group{font-size:10px;font-family:var(--mono);color:var(--text3)}
+  .tb-title{font-size:13px;font-weight:500}
+  .tb-desc{font-size:11.5px;color:var(--text2);margin-left:auto;max-width:360px;text-align:right;line-height:1.4}
+  .gbadge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-family:var(--mono);font-weight:500}
+  .bg1{background:var(--green-bg);color:var(--green)}
+  .bg2{background:var(--blue-bg);color:var(--blue)}
+  .bg3{background:var(--purple-bg);color:var(--purple)}
+  .bg4{background:var(--amber-bg);color:var(--amber)}
+  .bg5{background:var(--red-bg);color:var(--red)}
+  .bg6{background:var(--surface2);color:var(--text3)}
+
+  /* CHAT AREA */
+  .chat-wrap{flex:1;padding:28px 40px 48px;max-width:700px;width:100%;margin:0 auto}
+  .sc{display:none}.sc.active{display:block}
+
+  /* MESSAGE ROW */
+  .cb{display:flex;gap:10px;margin-bottom:2px;align-items:flex-start}
+  .cb.user{flex-direction:row-reverse}
+  .cb.agent{flex-direction:row}
+  .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;font-family:var(--mono);margin-top:18px}
+  .av-a{background:var(--vng);color:#fff}
+  .av-u{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+  .bc{max-width:85%;min-width:0}
+  .bn{font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--mono)}
+  .cb.user .bn{text-align:right}
+
+  /* BUBBLES */
+  .bt{background:var(--surface2);border-radius:4px 16px 16px 16px;padding:11px 15px;font-size:13.5px;line-height:1.7;color:var(--text);word-break:break-word}
+  .cb.user .bt{background:var(--vng);color:#fff;border-radius:16px 4px 16px 16px}
+  .bt p{margin-bottom:6px}.bt p:last-child{margin-bottom:0}
+  .bt b{font-weight:500}
+
+  /* KEY-VALUE TABLE (draft, success) */
+  .kv{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:13px}
+  .kv td{padding:5px 0;border-bottom:1px solid rgba(0,0,0,.07);vertical-align:top;line-height:1.55}
+  .kv tr:last-child td{border-bottom:none}
+  .kv td:first-child{color:var(--text3);font-size:11.5px;font-family:var(--mono);width:100px;padding-right:12px;white-space:nowrap}
+
+  /* ROOM TABLE */
+  .rtbl{width:100%;border-collapse:collapse;margin:10px 0 2px;font-size:13px}
+  .rtbl th{text-align:left;padding:4px 0;font-size:11px;font-family:var(--mono);color:var(--text3);border-bottom:1px solid rgba(0,0,0,.1);font-weight:400}
+  .rtbl td{padding:7px 0;border-bottom:1px solid rgba(0,0,0,.07);vertical-align:top;font-size:13px;line-height:1.5}
+  .rtbl tr:last-child td{border-bottom:none}
+  .rtbl td:first-child,.rtbl th:first-child{padding-right:16px}
+  .rtbl .dim td{color:var(--text3)}
+
+  /* ACTION BAR */
+  .abar{display:flex;align-items:center;gap:8px;margin:6px 0 16px 42px}
+  .aicon{font-size:14px;color:var(--text3);cursor:default;opacity:.7}
+
+  /* SUGGESTION CHIPS — căn trái bằng lề bubble agent (42px = av width + gap) */
+  .chips{margin:8px 0 4px 42px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;width:calc(100% - 42px)}
+  .chip{padding:10px 18px;border-radius:12px;font-size:13.5px;border:1px solid var(--border2);color:var(--text);display:inline-block;font-family:var(--font);text-align:left;cursor:pointer;background:var(--surface);transition:background .12s,border-color .12s;line-height:1.5;max-width:100%}
+  .chip:hover{background:#FAFAFA;border-color:#D0CEC9}
+  .chip.used{opacity:.3;pointer-events:none}
+
+  /* DIVIDER LABEL */
+  .slabel{display:flex;align-items:center;gap:10px;margin:24px 0 10px;font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.04em}
+  .slabel::before,.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+  .stag{padding:2px 10px;border-radius:999px;background:var(--surface2);color:var(--text3);white-space:nowrap;font-size:10px}
+  .stag.orange{background:var(--vng-light);color:var(--vng-dark)}
+  .stag.green{background:var(--green-bg);color:var(--green)}
+  .stag.red{background:var(--red-bg);color:var(--red)}
+
+  /* ANNOTATION */
+  .ann{background:var(--amber-bg);border:1px dashed #FCD34D;border-radius:6px;padding:7px 12px;font-size:11.5px;color:var(--amber);margin:4px 0 10px 42px;line-height:1.5}
+  .ann.blue{background:var(--blue-bg);border-color:#93C5FD;color:var(--blue)}
+
+  /* ANIMATION */
+  .injected{animation:fi .18s ease}
+  @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="prod-name">UC-BME-1 · VNG Agent</div>
+    <h1>Đặt lịch họp</h1>
+    <div class="sub">Mô phỏng trải nghiệm đặt lịch họp</div>
+  </div>
+
+  <div class="glabel">Basic Flow</div>
+  <button class="nbtn active" id="btn-s1" onclick="show('s1',this)"><span class="dot d1"></span>Tìm slot theo ngày + buổi</button>
+  <button class="nbtn" id="btn-s2" onclick="show('s2',this)"><span class="dot d1"></span>Tìm slot nhiều ngày</button>
+  <button class="nbtn" id="btn-s3" onclick="show('s3',this)"><span class="dot d1"></span>Biết giờ cụ thể → chọn phòng</button>
+  <button class="nbtn" id="btn-s4" onclick="show('s4',this)"><span class="dot d1"></span>Confirm → thành công</button>
+  <button class="nbtn" id="btn-s5" onclick="show('s5',this)"><span class="dot d1"></span>Hủy ở bước xác nhận</button>
+
+  <div class="sdiv"></div>
+  <div class="glabel">Người tham dự</div>
+  <button class="nbtn" id="btn-s6" onclick="show('s6',this)"><span class="dot d2"></span>Domain không tồn tại</button>
+  <button class="nbtn" id="btn-s7" onclick="show('s7',this)"><span class="dot d2"></span>Người tham dự có lịch bận</button>
+
+  <div class="sdiv"></div>
+  <div class="glabel">Exception</div>
+  <button class="nbtn" id="btn-s8" onclick="show('s8',this)"><span class="dot d4"></span>Không có phòng → gợi ý slot khác</button>
+  <button class="nbtn" id="btn-s9" onclick="show('s9',this)"><span class="dot d4"></span>Không có phòng cả time scope</button>
+  <button class="nbtn" id="btn-s10" onclick="show('s10',this)"><span class="dot d4"></span>Chỉnh sửa giờ → re-fetch phòng</button>
+
+  <div class="sdiv"></div>
+  <div class="glabel">Alternative</div>
+  <button class="nbtn" id="btn-s11" onclick="show('s11',this)"><span class="dot d3"></span>Remote all — không cần phòng</button>
+  <button class="nbtn" id="btn-s12" onclick="show('s12',this)"><span class="dot d3"></span>Input mơ hồ → clarify 1 câu</button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="tb-group" id="tb-group">Basic Flow</span>
+    <span id="tb-badge" class="gbadge bg1">Tìm slot</span>
+    <span class="tb-title" id="tb-title">Tìm slot theo ngày + buổi</span>
+    <span class="tb-desc" id="tb-desc">Cung cấp ngày + buổi + duration → Agent list slot available theo khung giờ</span>
+  </div>
+
+  <div class="chat-wrap">
+
+  <!-- ===== S1: Tìm slot theo ngày + buổi ===== -->
+  <div class="sc active" id="s1">
+    <div class="slabel"><span class="stag">User cung cấp ngày, buổi, duration, capacity, mục đích</span></div>
+
+    <div class="cb user">
+      <div class="av av-u">U</div>
+      <div class="bc"><div class="bn">User</div>
+        <div class="bt">Chiều thứ 6 tuần này tôi cần đặt phòng họp cho 6 người, họp khoảng 1 tiếng rưỡi để review roadmap BC06</div>
+      </div>
+    </div>
+
+    <div class="slabel"><span class="stag orange">Trích xuất đủ: ngày=27/6, buổi=chiều, duration=1.5h, capacity=6, mục đích=review roadmap BC06 → fetch phòng tại VNG Campus (office của user)</span></div>
+
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Chiều thứ 6, 27/06 tại VNG Campus — tìm thấy <b>5 phòng</b> có thể đặt cho 6+ người, thời lượng 1 tiếng rưỡi:</p>
+          <table class="rtbl">
+            <thead><tr><th>Khung giờ</th><th>Phòng</th><th>Sức chứa</th></tr></thead>
+            <tbody>
+              <tr><td>13:00 – 14:30</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>13:00 – 14:30</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>14:00 – 15:30</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>14:00 – 15:30</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>15:00 – 16:30</td><td>Rome - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+            </tbody>
+          </table>
+          <p>Bạn muốn chọn khung giờ và phòng nào?</p>
+        </div>
+        <div class="chips" id="chips-s1-room">
+          <div class="chip" onclick="pickRoom('s1','13:00 – 14:30 · Madrid - V2 - F3 - ZaloPay Zone - 6 Seats',this)">13:00 – 14:30 · Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+          <div class="chip" onclick="pickRoom('s1','14:00 – 15:30 · Madrid - V2 - F3 - ZaloPay Zone - 6 Seats',this)">14:00 – 15:30 · Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+          <div class="chip" onclick="pickRoom('s1','15:00 – 16:30 · Rome - V2 - F3 - ZaloPay Zone - 6 Seats',this)">15:00 – 16:30 · Rome - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+
+    <!-- Sau khi chọn phòng -->
+    <div id="s1-step2" style="display:none">
+      <div class="cb user">
+        <div class="av av-u">U</div>
+        <div class="bc"><div class="bn">User</div>
+          <div class="bt" id="s1-room-msg">—</div>
+        </div>
+      </div>
+      <div class="slabel"><span class="stag orange">Ghi nhận slot + phòng → hỏi người tham dự, Teams, ghi chú gộp 1 câu</span></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>Người tham dự là ai (domain VNG, ví dụ: dongdt, quylph)? Có <b>Teams Meeting</b> không? Có ghi chú gì thêm không?</p>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+      <div class="cb user">
+        <div class="av av-u">U</div>
+        <div class="bc"><div class="bn">User</div>
+          <div class="bt">Người tham dự: dongdt, quylph, duytт3. Có Teams. Không có ghi chú</div>
+        </div>
+      </div>
+      <div class="slabel"><span class="stag orange">Verify 3 domains ✓ → check free/busy → cả 3 available → generate title từ mục đích → show draft</span></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+            <table class="kv">
+              <tr><td>Tiêu đề</td><td><b>BC06 Roadmap Review</b></td></tr>
+              <tr><td>Thời gian</td><td id="s1-time-kv">—</td></tr>
+              <tr><td>Phòng</td><td id="s1-room-kv">—</td></tr>
+              <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3)</td></tr>
+              <tr><td>Teams</td><td>Có</td></tr>
+              <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+            </table>
+          </div>
+          <div class="chips" id="chips-s1-draft">
+            <div class="chip" onclick="confirmDraft('chips-s1-draft','s1-success',this)">Xác nhận tạo lịch họp</div>
+            <div class="chip" onclick="cancelDraft('chips-s1-draft','s1-cancel',this)">Hủy</div>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+      <div id="s1-success" style="display:none" class="injected">
+        <div class="cb agent">
+          <div class="av av-a">VNG</div>
+          <div class="bc"><div class="bn">VNG Agent</div>
+            <div class="bt">
+              <p>✅ Lịch họp đã được tạo thành công!</p>
+              <table class="kv">
+                <tr><td>Tiêu đề</td><td><b>BC06 Roadmap Review</b></td></tr>
+                <tr><td>Thời gian</td><td id="s1-time-ok">—</td></tr>
+                <tr><td>Phòng</td><td id="s1-room-ok">—</td></tr>
+                <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3)</td></tr>
+                <tr><td>Teams</td><td>Có</td></tr>
+                <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+              </table>
+            </div>
+            <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+          </div>
+        </div>
+      </div>
+      <div id="s1-cancel" style="display:none" class="injected">
+        <div class="cb agent">
+          <div class="av av-a">VNG</div>
+          <div class="bc"><div class="bn">VNG Agent</div>
+            <div class="bt"><p>Đã hủy. Không có lịch họp nào được tạo.</p></div>
+            <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S2: Tìm slot nhiều ngày ===== -->
+  <div class="sc" id="s2">
+    <div class="slabel"><span class="stag">User cung cấp time scope nhiều ngày</span></div>
+    <div class="cb user">
+      <div class="av av-u">U</div>
+      <div class="bc"><div class="bn">User</div>
+        <div class="bt">Tuần sau tìm phòng cho tôi họp 1 tiếng, 4 người, để sync tiến độ dự án</div>
+      </div>
+    </div>
+    <div class="slabel"><span class="stag orange">Time scope = tuần sau (23–27/06), duration=1h, capacity=4 → fetch tất cả slots cả tuần tại VNG Campus, group theo ngày, tổng 14 slot → hiển thị 10 slot đầu + chip "Xem thêm"</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Tuần 23–27/06 tại VNG Campus — tìm thấy <b>14 slot</b> có thể đặt cho 4+ người, thời lượng 1 tiếng. Dưới đây là 10 slot sớm nhất:</p>
+          <table class="rtbl">
+            <thead><tr><th>Ngày</th><th>Khung giờ</th><th>Phòng</th><th>Sức chứa</th></tr></thead>
+            <tbody>
+              <tr><td>Thứ 2, 23/06</td><td>09:00–10:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 2, 23/06</td><td>10:00–11:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 2, 23/06</td><td>14:00–15:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 3, 24/06</td><td>09:00–10:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 3, 24/06</td><td>13:00–14:00</td><td>Rome - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 4, 25/06</td><td>10:00–11:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 4, 25/06</td><td>14:00–15:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 5, 26/06</td><td>09:00–10:00</td><td>Rome - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 5, 26/06</td><td>15:00–16:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Thứ 6, 27/06</td><td>10:00–11:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+            </tbody>
+          </table>
+          <p>Bạn muốn chọn slot nào?</p>
+        </div>
+        <div class="chips" id="chips-s2">
+          <div class="chip" onclick="useChips('chips-s2',this)">Thứ 2, 23/06 · 09:00–10:00 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s2',this)">Thứ 3, 24/06 · 09:00–10:00 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="showMoreS2('chips-s2',this)">Xem thêm 4 slot còn lại</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+
+    <!-- Xem thêm → user message + agent trả 4 slot còn lại -->
+    <div id="more-s2" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xem thêm 4 slot còn lại</div></div></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>4 slot còn lại trong tuần 23–27/06:</p>
+            <table class="rtbl">
+              <thead><tr><th>Ngày</th><th>Khung giờ</th><th>Phòng</th><th>Sức chứa</th></tr></thead>
+              <tbody>
+                <tr><td>Thứ 4, 25/06</td><td>10:00–11:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+                <tr><td>Thứ 4, 25/06</td><td>14:00–15:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+                <tr><td>Thứ 5, 26/06</td><td>09:00–10:00</td><td>Rome - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+                <tr><td>Thứ 6, 27/06</td><td>10:00–11:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              </tbody>
+            </table>
+            <p>Bạn muốn chọn slot nào?</p>
+          </div>
+          <div class="chips" id="chips-s2-more">
+            <div class="chip" onclick="useChips('chips-s2-more',this)">Thứ 4, 25/06 · 10:00–11:00 · Paris - V2 - F3</div>
+            <div class="chip" onclick="useChips('chips-s2-more',this)">Thứ 4, 25/06 · 14:00–15:00 · Madrid - V2 - F3</div>
+            <div class="chip" onclick="useChips('chips-s2-more',this)">Thứ 5, 26/06 · 09:00–10:00 · Rome - V2 - F3</div>
+            <div class="chip" onclick="useChips('chips-s2-more',this)">Thứ 6, 27/06 · 10:00–11:00 · Madrid - V2 - F3</div>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S3: Biết giờ cụ thể ===== -->
+  <div class="sc" id="s3">
+    <div class="slabel"><span class="stag">User đã có start time cụ thể</span></div>
+    <div class="cb user">
+      <div class="av av-u">U</div>
+      <div class="bc"><div class="bn">User</div>
+        <div class="bt">Thứ 4 lúc 10h họp 1 tiếng để sync weekly, 4 người</div>
+      </div>
+    </div>
+    <div class="slabel"><span class="stag orange">Time scope = thứ 4, 25/06, 10:00, duration=1h, capacity=4 → fetch phòng khung giờ đó</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Thứ 4, 25/06 · 10:00–11:00 tại VNG Campus — tìm thấy <b>3 phòng</b>:</p>
+          <table class="rtbl">
+            <thead><tr><th>Phòng</th><th>Sức chứa</th></tr></thead>
+            <tbody>
+              <tr><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              <tr class="dim"><td>Lyon - V1 - F1 - Training center - 4 Seats</td><td>4 chỗ</td></tr>
+            </tbody>
+          </table>
+          <p>Bạn muốn đặt phòng nào?</p>
+        </div>
+        <div class="chips" id="chips-s3">
+          <div class="chip" onclick="useChips('chips-s3',this)">Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+          <div class="chip" onclick="useChips('chips-s3',this)">Paris - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+          <div class="chip" onclick="useChips('chips-s3',this)">Lyon - V1 - F1 - Training center - 4 Seats</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div class="ann">ℹ️ Lyon (4 chỗ) nhỏ hơn capacity yêu cầu nhưng vẫn hiển thị — user tự quyết định.</div>
+  </div>
+
+  <!-- ===== S4: Confirm → thành công ===== -->
+  <div class="sc" id="s4">
+    <div class="slabel"><span class="stag">Toàn bộ thông tin đã đủ → Agent show draft → User confirm</span></div>
+    <div class="ann blue">ℹ️ Click "Xác nhận tạo lịch họp" để xem trạng thái thành công.</div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+          <table class="kv">
+            <tr><td>Tiêu đề</td><td><b>Team Weekly Sync</b></td></tr>
+            <tr><td>Thời gian</td><td>Thứ 4, 25/06 · 10:00 – 11:00</td></tr>
+            <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+            <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3), Hải. Đào Gia (haitт)</td></tr>
+            <tr><td>Teams</td><td style="color:var(--text3)">Không</td></tr>
+            <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+          </table>
+        </div>
+        <div class="chips" id="chips-s4-draft">
+          <div class="chip" onclick="confirmDraft('chips-s4-draft','s4-success',this)">Xác nhận tạo lịch họp</div>
+          <div class="chip" onclick="cancelDraft('chips-s4-draft','s4-cancel',this)">Hủy</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div id="s4-success" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận tạo lịch họp</div></div></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>✅ Lịch họp đã được tạo thành công!</p>
+            <table class="kv">
+              <tr><td>Tiêu đề</td><td><b>Team Weekly Sync</b></td></tr>
+              <tr><td>Thời gian</td><td>Thứ 4, 25/06 · 10:00 – 11:00</td></tr>
+              <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3), Hải. Đào Gia (haitт)</td></tr>
+              <tr><td>Teams</td><td style="color:var(--text3)">Không</td></tr>
+              <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+            </table>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+    </div>
+    <div id="s4-cancel" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+      <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div><div class="bt"><p>Đã hủy. Không có lịch họp nào được tạo.</p></div><div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- ===== S5: Hủy ở bước xác nhận ===== -->
+  <div class="sc" id="s5">
+    <div class="slabel"><span class="stag">User hủy ngay ở bước xác nhận Draft</span></div>
+    <div class="ann blue">ℹ️ Click "Hủy" để xem trạng thái sau khi hủy.</div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+          <table class="kv">
+            <tr><td>Tiêu đề</td><td><b>Team Weekly Sync</b></td></tr>
+            <tr><td>Thời gian</td><td>Thứ 4, 25/06 · 10:00 – 11:00</td></tr>
+            <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+            <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph)</td></tr>
+            <tr><td>Teams</td><td style="color:var(--text3)">Không</td></tr>
+            <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+          </table>
+        </div>
+        <div class="chips" id="chips-s5-draft">
+          <div class="chip" onclick="confirmDraft('chips-s5-draft','s5-success',this)">Xác nhận tạo lịch họp</div>
+          <div class="chip" onclick="cancelDraft('chips-s5-draft','s5-cancel',this)">Hủy</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div id="s5-success" style="display:none"></div>
+    <div id="s5-cancel" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+      <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div><div class="bt"><p>Đã hủy. Không có lịch họp nào được tạo.</p></div><div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- ===== S6: Domain không tồn tại ===== -->
+  <div class="sc" id="s6">
+    <div class="slabel"><span class="stag">Domain người tham dự không tồn tại trong hệ thống</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt"><p>Đã chọn <b>Madrid - V2 - F3</b>, 13:00–14:30. Người tham dự là ai (domain VNG, ví dụ: dongdt, quylph)? Có <b>Teams Meeting</b> không? Có ghi chú gì thêm không?</p></div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div class="cb user">
+      <div class="av av-u">U</div>
+      <div class="bc"><div class="bn">User</div>
+        <div class="bt">Người tham dự: dongdt, quylph, xyzabc99</div>
+      </div>
+    </div>
+    <div class="slabel"><span class="stag orange">Verify domains → dongdt ✓, quylph ✓, xyzabc99 ✗ → báo lỗi, dừng flow</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Domain <b>xyzabc99</b> không tìm thấy trong hệ thống. Bạn kiểm tra lại và cung cấp đúng domain giúp mình nhé.</p>
+          
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div class="ann">ℹ️ Flow dừng lại. Không tiếp tục cho đến khi user cung cấp lại domain hợp lệ.</div>
+  </div>
+
+  <!-- ===== S7: Attendee có lịch bận ===== -->
+  <div class="sc" id="s7">
+    <div class="slabel"><span class="stag">Một người tham dự có trạng thái không available</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt"><p>Đã chọn <b>Madrid - V2 - F3</b>, 13:00–14:30. Người tham dự là ai (domain VNG, ví dụ: dongdt, quylph)? Có <b>Teams Meeting</b> không? Có ghi chú gì thêm không?</p></div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div class="cb user">
+      <div class="av av-u">U</div>
+      <div class="bc"><div class="bn">User</div>
+        <div class="bt">Người tham dự: dongdt, quylph, duytт3. Có Teams. Không có ghi chú</div>
+      </div>
+    </div>
+    <div class="slabel"><span class="stag orange">Verify 3 domains ✓ → check free/busy → quylph = unavailable → cảnh báo, hỏi xác nhận</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt"><p>⚠️ <b>quylph (Lê Phạm Hoàng Quý)</b> có lịch bận trong khung giờ này. Bạn vẫn muốn mời không?</p></div>
+        <div class="chips" id="chips-s7-warn">
+          <div class="chip" onclick="revealNext('chips-s7-warn','s7-cont',this)">Vẫn mời — tiếp tục tạo lịch họp</div>
+          <div class="chip" onclick="useChips('chips-s7-warn',this)">Đổi sang giờ khác</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div id="s7-cont" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Vẫn mời — tiếp tục tạo lịch họp</div></div></div>
+      <div class="slabel"><span class="stag orange">User xác nhận → generate title → show draft với cảnh báo trên người tham dự bận</span></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+            <table class="kv">
+              <tr><td>Tiêu đề</td><td><b>BC06 Roadmap Review</b></td></tr>
+              <tr><td>Thời gian</td><td>Thứ 6, 27/06 · 13:00 – 14:30</td></tr>
+              <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), <b>⚠️ Quý. Lê Phạm Hoàng (quylph) — có lịch bận</b>, DuyTT3. Trần Tiến (duytт3)</td></tr>
+              <tr><td>Teams</td><td>Có</td></tr>
+              <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+            </table>
+          </div>
+          <div class="chips" id="chips-s7-draft">
+            <div class="chip" onclick="confirmDraft('chips-s7-draft','s7-success',this)">Xác nhận tạo lịch họp</div>
+            <div class="chip" onclick="cancelDraft('chips-s7-draft','s7-cancel',this)">Hủy</div>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+      <div id="s7-success" style="display:none" class="injected">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận tạo lịch họp</div></div></div>
+        <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>✅ Lịch họp đã được tạo thành công!</p>
+            <table class="kv">
+              <tr><td>Tiêu đề</td><td><b>BC06 Roadmap Review</b></td></tr>
+              <tr><td>Thời gian</td><td>Thứ 6, 27/06 · 13:00 – 14:30</td></tr>
+              <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3)</td></tr>
+              <tr><td>Teams</td><td>Có</td></tr>
+              <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+            </table>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div></div>
+      </div>
+      <div id="s7-cancel" style="display:none" class="injected">
+        <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+        <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div><div class="bt"><p>Đã hủy. Không có lịch họp nào được tạo.</p></div><div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S8: Không có phòng → gợi ý slot khác ===== -->
+  <div class="sc" id="s8">
+    <div class="slabel"><span class="stag">Không có phòng trong khung giờ yêu cầu</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đặt phòng thứ 4 lúc 10h, 1 tiếng, 6 người</div></div></div>
+    <div class="slabel"><span class="stag orange">Fetch phòng 10:00–11:00 thứ 4, 25/06 tại VNG Campus → 0 kết quả → tìm slot gần nhất có phòng</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Khung giờ <b>10:00–11:00 thứ 4, 25/06</b> không có phòng nào available tại VNG Campus cho 6+ người.</p>
+          <p>Các slot gần nhất có phòng:</p>
+          <table class="rtbl">
+            <thead><tr><th>Khung giờ</th><th>Phòng</th></tr></thead>
+            <tbody>
+              <tr><td>11:30 – 12:30</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>14:00 – 15:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>14:00 – 15:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+            </tbody>
+          </table>
+          <p>Bạn muốn thử khung giờ nào?</p>
+        </div>
+        <div class="chips" id="chips-s8">
+          <div class="chip" onclick="useChips('chips-s8',this)">11:30 – 12:30 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s8',this)">14:00 – 15:00 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s8',this)">14:00 – 15:00 · Paris - V2 - F3</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S9: Không có phòng cả time scope ===== -->
+  <div class="sc" id="s9">
+    <div class="slabel"><span class="stag">Không có phòng nào trong toàn bộ time scope</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Tìm phòng tuần sau, 10 người, họp 3 tiếng</div></div></div>
+    <div class="slabel"><span class="stag orange">Fetch toàn tuần 23–27/06 tại VNG Campus, capacity ≥ 10, duration 3h → 0 slot phù hợp</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt"><p>Tuần 23–27/06 không có phòng nào available tại VNG Campus cho 10+ người liên tục 3 tiếng. Bạn muốn thử tuần khác, hoặc cần phòng nhỏ hơn không?</p></div>
+        <div class="chips" id="chips-s9">
+          <div class="chip" onclick="useChips('chips-s9',this)">Tìm tuần 30/06 – 04/07</div>
+          <div class="chip" onclick="useChips('chips-s9',this)">Tìm với 8 người</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S10: Chỉnh sửa giờ → re-fetch ===== -->
+  <div class="sc" id="s10">
+    <div class="slabel"><span class="stag">User muốn đổi giờ sau khi đã thấy draft</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+          <table class="kv">
+            <tr><td>Tiêu đề</td><td><b>BC06 Roadmap Review</b></td></tr>
+            <tr><td>Thời gian</td><td>Thứ 6, 27/06 · 13:00 – 14:30</td></tr>
+            <tr><td>Phòng</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+            <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph), DuyTT3. Trần Tiến (duytт3)</td></tr>
+            <tr><td>Teams</td><td>Có</td></tr>
+            <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+          </table>
+        </div>
+        <div class="chips" id="chips-s10-draft">
+          <div class="chip" onclick="useChips('chips-s10-draft',this)">Xác nhận tạo lịch họp</div>
+          <div class="chip" onclick="revealNext('chips-s10-draft','s10-edit',this)">Chỉnh sửa thời gian</div>
+          <div class="chip" onclick="useChips('chips-s10-draft',this)">Hủy</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div id="s10-edit" style="display:none">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Chỉnh sửa thời gian</div></div></div>
+      <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div><div class="bt"><p>Bạn muốn đổi sang khung giờ nào?</p></div><div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div></div></div>
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đổi sang 15h–16h30</div></div></div>
+      <div class="slabel"><span class="stag orange">Re-fetch phòng 15:00–16:30 thứ 6, 27/06 → list lại để user chọn</span></div>
+      <div class="cb agent">
+        <div class="av av-a">VNG</div>
+        <div class="bc"><div class="bn">VNG Agent</div>
+          <div class="bt">
+            <p>Thứ 6, 27/06 · 15:00–16:30 tại VNG Campus — tìm thấy <b>2 phòng</b>:</p>
+            <table class="rtbl">
+              <thead><tr><th>Phòng</th><th>Sức chứa</th></tr></thead>
+              <tbody>
+                <tr><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+                <tr><td>Rome - V2 - F3 - ZaloPay Zone - 6 Seats</td><td>6 chỗ</td></tr>
+              </tbody>
+            </table>
+            <p>Bạn muốn đặt phòng nào?</p>
+          </div>
+          <div class="chips" id="chips-s10-refetch">
+            <div class="chip" onclick="useChips('chips-s10-refetch',this)">Paris - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+            <div class="chip" onclick="useChips('chips-s10-refetch',this)">Rome - V2 - F3 - ZaloPay Zone - 6 Seats</div>
+          </div>
+          <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== S11: Remote all ===== -->
+  <div class="sc" id="s11">
+    <div class="slabel"><span class="stag">Tất cả remote — user nói rõ không cần phòng</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Tạo lịch họp thứ 3 lúc 2h chiều, 1 tiếng, kick off dự án mới. Người tham dự: dongdt, quylph. Có Teams. Mọi người đều remote nên không cần phòng</div></div></div>
+    <div class="slabel"><span class="stag orange">User nói rõ không cần phòng + Teams = có → bỏ qua bước fetch phòng → verify domains → show draft</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Mình đã tổng hợp thông tin. Vui lòng kiểm tra trước khi tạo:</p>
+          <table class="kv">
+            <tr><td>Tiêu đề</td><td><b>New Project Kick-off</b></td></tr>
+            <tr><td>Thời gian</td><td>Thứ 3, 24/06 · 14:00 – 15:00</td></tr>
+            <tr><td>Phòng</td><td style="color:var(--text3)">— (remote, không cần phòng)</td></tr>
+            <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph)</td></tr>
+            <tr><td>Teams</td><td>Có</td></tr>
+            <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+          </table>
+        </div>
+        <div class="chips" id="chips-s11-draft">
+          <div class="chip" onclick="confirmDraft('chips-s11-draft','s11-success',this)">Xác nhận tạo lịch họp</div>
+          <div class="chip" onclick="cancelDraft('chips-s11-draft','s11-cancel',this)">Hủy</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div id="s11-success" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Xác nhận tạo lịch họp</div></div></div>
+      <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>✅ Lịch họp đã được tạo thành công!</p>
+          <table class="kv">
+            <tr><td>Tiêu đề</td><td><b>New Project Kick-off</b></td></tr>
+            <tr><td>Thời gian</td><td>Thứ 3, 24/06 · 14:00 – 15:00</td></tr>
+            <tr><td>Phòng</td><td style="color:var(--text3)">—</td></tr>
+            <tr><td>Người tham dự</td><td>Đồng. Đỗ Thanh (dongdt), Quý. Lê Phạm Hoàng (quylph)</td></tr>
+            <tr><td>Teams</td><td>Có</td></tr>
+            <tr><td>Ghi chú</td><td style="color:var(--text3)">—</td></tr>
+          </table>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div></div>
+    </div>
+    <div id="s11-cancel" style="display:none" class="injected">
+      <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Hủy</div></div></div>
+      <div class="cb agent"><div class="av av-a">VNG</div><div class="bc"><div class="bn">VNG Agent</div><div class="bt"><p>Đã hủy. Không có lịch họp nào được tạo.</p></div><div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- ===== S12: Input mơ hồ ===== -->
+  <div class="sc" id="s12">
+    <div class="slabel"><span class="stag">Input mơ hồ — Agent clarify gộp 1 câu</span></div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Đặt phòng họp cho tôi</div></div></div>
+    <div class="slabel"><span class="stag orange">Thiếu: time scope, duration, mục đích → hỏi gộp 1 câu duy nhất</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt"><p>Bạn muốn họp khi nào (ngày, buổi, hoặc khung giờ cụ thể), thời lượng bao lâu, và mục đích cuộc họp là gì?</p></div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+    <div class="cb user"><div class="av av-u">U</div><div class="bc"><div class="bn">User</div><div class="bt">Ngày mai buổi sáng, 1 tiếng, review spec BC06</div></div></div>
+    <div class="slabel"><span class="stag orange">Đủ thông tin → fetch slots sáng 23/06 tại VNG Campus</span></div>
+    <div class="cb agent">
+      <div class="av av-a">VNG</div>
+      <div class="bc"><div class="bn">VNG Agent</div>
+        <div class="bt">
+          <p>Sáng 23/06 tại VNG Campus — tìm thấy <b>4 phòng</b> có thể đặt, thời lượng 1 tiếng:</p>
+          <table class="rtbl">
+            <thead><tr><th>Khung giờ</th><th>Phòng</th></tr></thead>
+            <tbody>
+              <tr><td>08:00 – 09:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>09:00 – 10:00</td><td>Madrid - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>09:00 – 10:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+              <tr><td>10:00 – 11:00</td><td>Paris - V2 - F3 - ZaloPay Zone - 6 Seats</td></tr>
+            </tbody>
+          </table>
+          <p>Bạn muốn chọn khung giờ và phòng nào?</p>
+        </div>
+        <div class="chips" id="chips-s12">
+          <div class="chip" onclick="useChips('chips-s12',this)">08:00 – 09:00 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s12',this)">09:00 – 10:00 · Madrid - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s12',this)">09:00 – 10:00 · Paris - V2 - F3</div>
+          <div class="chip" onclick="useChips('chips-s12',this)">10:00 – 11:00 · Paris - V2 - F3</div>
+        </div>
+        <div class="abar"><span class="aicon">📋</span><span class="aicon">👍</span><span class="aicon">👎</span></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- chat-wrap -->
+</main>
+</div>
+
+<script>
+const meta = {
+  's1':{g:'Basic Flow',b:'bg1',bt:'Tìm slot',t:'Tìm slot theo ngày + buổi',d:'Cung cấp ngày + buổi + duration → Agent list slot available theo khung giờ'},
+  's2':{g:'Basic Flow',b:'bg1',bt:'Tìm slot',t:'Tìm slot nhiều ngày',d:'Time scope = nhiều ngày → group theo ngày → tối đa 10 + chip "Xem thêm"'},
+  's3':{g:'Basic Flow',b:'bg1',bt:'Biết giờ',t:'Biết giờ cụ thể → chọn phòng',d:'Có start time → fetch phòng khung giờ đó → list phòng available'},
+  's4':{g:'Basic Flow',b:'bg1',bt:'Confirm',t:'Confirm → thành công',d:'Draft inline → user confirm → Success state đầy đủ thông tin'},
+  's5':{g:'Basic Flow',b:'bg1',bt:'Hủy',t:'Hủy ở bước xác nhận',d:'User click Hủy ở draft → discard toàn bộ → Agent xác nhận đã hủy'},
+  's6':{g:'Người tham dự',b:'bg2',bt:'Domain',t:'Domain không tồn tại',d:'Verify domain → không tìm thấy → báo lỗi rõ domain nào sai, dừng flow'},
+  's7':{g:'Người tham dự',b:'bg2',bt:'Free/busy',t:'Attendee có lịch bận',d:'Check free/busy → unavailable → cảnh báo + hỏi xác nhận → vẫn cho phép tiếp tục'},
+  's8':{g:'Exception',b:'bg4',bt:'Không phòng',t:'Không có phòng → gợi ý slot khác',d:'Fetch khung giờ cụ thể → 0 phòng → gợi ý slot gần nhất có phòng'},
+  's9':{g:'Exception',b:'bg4',bt:'Không phòng',t:'Không có phòng cả time scope',d:'Fetch cả time scope → 0 slot → gợi ý thử time scope khác hoặc giảm capacity'},
+  's10':{g:'Exception',b:'bg4',bt:'Chỉnh sửa',t:'Chỉnh sửa giờ → re-fetch phòng',d:'User muốn đổi giờ từ draft → Agent re-fetch → list phòng mới để chọn'},
+  's11':{g:'Alternative',b:'bg3',bt:'Remote',t:'Remote all — không cần phòng',d:'Teams = có + không cần phòng → bỏ qua bước fetch phòng'},
+  's12':{g:'Alternative',b:'bg3',bt:'Clarify',t:'Input mơ hồ → clarify 1 câu',d:'Thiếu nhiều field → hỏi gộp 1 câu → user trả lời 1 lượt → tiếp tục flow'},
+};
+
+let cur='s1';
+function show(id,btn){
+  document.getElementById(cur).classList.remove('active');
+  document.getElementById('btn-'+cur).classList.remove('active');
+  cur=id;
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  const m=meta[id];
+  document.getElementById('tb-group').textContent=m.g;
+  const badge=document.getElementById('tb-badge');
+  badge.className='gbadge '+m.b;
+  badge.textContent=m.bt;
+  document.getElementById('tb-title').textContent=m.t;
+  document.getElementById('tb-desc').textContent=m.d;
+}
+
+// Chọn phòng trong S1 — điền vào kv table rồi tiếp tục flow
+function pickRoom(sceneId, roomText, btn){
+  const chipsEl = btn.parentElement;
+  chipsEl.querySelectorAll('.chip').forEach(c=>c.classList.add('used'));
+
+  // Parse giờ và phòng từ text chip: "13:00 – 14:30 · Madrid..."
+  const parts = roomText.split(' · ');
+  const timeStr = parts[0];
+  const roomStr = parts.slice(1).join(' · ');
+
+  // Điền vào user message bubble
+  const msgEl = document.getElementById(sceneId+'-room-msg');
+  if(msgEl) msgEl.textContent = roomText;
+
+  // Điền vào kv draft
+  const timeKv = document.getElementById(sceneId+'-time-kv');
+  const roomKv = document.getElementById(sceneId+'-room-kv');
+  if(timeKv) timeKv.textContent = 'Thứ 6, 27/06 · '+timeStr;
+  if(roomKv) roomKv.textContent = roomStr+' · VNG Campus';
+
+  // Điền vào success kv
+  const timeOk = document.getElementById(sceneId+'-time-ok');
+  const roomOk = document.getElementById(sceneId+'-room-ok');
+  if(timeOk) timeOk.textContent = 'Thứ 6, 27/06 · '+timeStr;
+  if(roomOk) roomOk.textContent = roomStr+' · VNG Campus';
+
+  // Reveal step 2
+  const step2 = document.getElementById(sceneId+'-step2');
+  if(step2){
+    step2.style.display='';
+    step2.classList.add('injected');
+    setTimeout(()=>step2.scrollIntoView({behavior:'smooth',block:'start'}),80);
+  }
+}
+
+// Confirm draft → show success
+function confirmDraft(chipsId, successId, btn){
+  document.getElementById(chipsId).style.display='none';
+  const el = document.getElementById(successId);
+  if(el){ el.style.display=''; el.classList.add('injected'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+}
+
+// Cancel draft → show cancel msg
+function cancelDraft(chipsId, cancelId, btn){
+  document.getElementById(chipsId).style.display='none';
+  const el = document.getElementById(cancelId);
+  if(el){ el.style.display=''; el.classList.add('injected'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+}
+
+// Reveal next section
+function revealNext(chipsId, targetId, btn){
+  document.getElementById(chipsId).style.display='none';
+  const el = document.getElementById(targetId);
+  if(el){ el.style.display=''; el.classList.add('injected'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),60); }
+}
+
+// Dùng chip (dim all chips, không reveal gì thêm)
+function useChips(chipsId, btn){
+  const el = document.getElementById(chipsId);
+  if(el) el.querySelectorAll('.chip').forEach(c=>c.classList.add('used'));
+}
+
+// Xem thêm slot S2 — simulate user message + agent response
+function showMoreS2(chipsId, btn){
+  document.getElementById(chipsId).style.display='none';
+  const el = document.getElementById('more-s2');
+  if(el){ el.style.display=''; el.classList.add('injected'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),60); }
+}
+
+// Xem thêm slots (generic)
+function showMore(revealId, chipsId, btn){
+  btn.classList.add('used');
+  const el = document.getElementById(revealId);
+  if(el){ el.style.display=''; el.classList.add('injected'); setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+}
+</script>
+</body>
+</html>
